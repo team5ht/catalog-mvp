@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Каталог образовательных материалов">
+    <meta name="theme-color" content="#6366f1">
+    
+    <!-- PWA манифест -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Иконки для PWA (замените на свои) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <title>Каталог материалов</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Шапка с навигацией и кнопкой выхода -->
+    <header>
+        <div class="container">
+            <h1>📚 Каталог материалов</h1>
+            <div id="userInfo" style="display: none;">
+                <span id="userEmail"></span>
+                <button onclick="logout()" class="btn-secondary">Выйти</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Навигация по категориям -->
+        <nav id="categories" class="categories">
+            <!-- Категории загружаются динамически из data.json -->
+        </nav>
+
+        <!-- Сетка карточек материалов -->
+        <div id="catalog" class="catalog-grid">
+            <!-- Карточки загружаются динамически -->
+        </div>
+
+        <!-- Loader для загрузки -->
+        <div id="loader" class="loader">Загрузка...</div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Каталог материалов. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <!-- Основной скрипт приложения -->
+    <script src="app.js"></script>
+    
+    <!-- Регистрация Service Worker для PWA -->
+    <script>
+        // Проверяем поддержку Service Worker в браузере
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker зарегистрирован'))
+                    .catch(err => console.log('Ошибка регистрации SW:', err));
+            });
+        }
+    </script>
+</body>
+</html>

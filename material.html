@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="manifest.json">
+    <title>Материал</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📚 Каталог материалов</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Контейнер для детальной информации о материале -->
+        <div id="material-detail" class="material-detail">
+            <!-- Контент загружается динамически -->
+        </div>
+
+        <div id="loader" class="loader">Загрузка...</div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Каталог материалов. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Функция загрузки данных о материале
+        async function loadMaterial() {
+            // Получаем ID материала из URL (например: material.html?id=1)
+            const urlParams = new URLSearchParams(window.location.search);
+            const materialId = parseInt(urlParams.get('id'));
+
+            // Проверяем авторизацию перед показом материала
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                alert('Войдите в систему для просмотра материалов');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                // Загружаем данные из JSON
+                const response = await fetch('data.json');
+                const data = await response.json();
+                
+                // Находим нужный материал по ID
+                const material = data.materials.find(m => m.id === materialId);
+                
+                if (!material) {
+                    document.getElementById('material-detail').innerHTML = 
+                        '<p class="error">Материал не найден</p>';
+                    return;
+                }
+
+                // Находим категорию материала
+                const category = data.categories.find(c => c.id === material.categoryId);
+
+                // Скрываем loader
+                document.getElementById('loader').style.display = 'none';
+
+                // Отображаем детали материала
+                document.getElementById('material-detail').innerHTML = `
+                    <a href="index.html?category=${category.slug}" class="back-link">← Назад к каталогу</a>
+                    
+                    <div class="material-content">
+                        <div class="material-image">
+                            <img src="${material.cover}" alt="${material.title}">
+                        </div>
+                        
+                        <div class="material-info">
+                            <span class="category-badge">${category.name}</span>
+                            <h1>${material.title}</h1>
+                            <p class="material-description">${material.description}</p>
+                            
+                            <!-- Кнопка скачивания PDF с Google Drive -->
+                            <a href="${material.pdfUrl}" 
+                               target="_blank" 
+                               class="btn-primary download-btn"
+                               onclick="trackDownload('${material.title}')">
+                                📥 Скачать PDF
+                            </a>
+                            
+                            <p class="download-hint">
+                                Файл откроется в новой вкладке. Нажмите "Скачать" в Google Drive.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Ошибка загрузки материала:', error);
+                document.getElementById('material-detail').innerHTML = 
+                    '<p class="error">Ошибка загрузки данных</p>';
+            }
+        }
+
+        // Функция отслеживания скачиваний (для будущей аналитики)
+        function trackDownload(title) {
+            console.log('Скачан материал:', title);
+            // Здесь можно добавить отправку данных в Google Analytics или Яндекс.Метрику
+        }
+
+        // Запускаем загрузку при открытии страницы
+        loadMaterial();
+    </script>
+</body>
+</html>

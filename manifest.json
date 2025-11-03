@@ -1,0 +1,33 @@
+{
+    "name": "Каталог материалов",
+    "short_name": "Каталог",
+    "description": "Образовательные материалы и PDF-ресурсы",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#6366f1",
+    "orientation": "portrait-primary",
+    "icons": [
+      {
+        "src": "icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ],
+    "categories": ["education", "books"],
+    "screenshots": [
+      {
+        "src": "screenshot.png",
+        "sizes": "540x720",
+        "type": "image/png"
+      }
+    ]
+  }
+  

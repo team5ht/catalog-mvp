@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="manifest.json">
+    <title>Вход в систему</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h1>🔐 Вход в каталог</h1>
+            <p class="login-subtitle">Введите email для доступа к материалам</p>
+
+            <!-- Форма входа -->
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="your@email.com" 
+                        required 
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        placeholder="Введите пароль" 
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <button type="submit" class="btn-primary btn-full">Войти</button>
+            </form>
+
+            <p class="login-note">
+                ℹ️ Для MVP: пароль не проверяется. В будущем будет реальная авторизация.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Проверяем, не авторизован ли уже пользователь
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            window.location.href = 'index.html';
+        }
+
+        // Обработка отправки формы
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Предотвращаем перезагрузку страницы
+
+            // Получаем данные из формы
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Базовая валидация email
+            if (!email.includes('@') || !email.includes('.')) {
+                alert('Введите корректный email');
+                return;
+            }
+
+            // Для MVP: просто сохраняем email в localStorage
+            // В будущем здесь будет проверка через backend (Supabase/Firebase)
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('loginDate', new Date().toISOString());
+
+            // Опционально: отправить email себе для сбора лидов
+            // fetch('https://formspree.io/f/YOUR_FORM_ID', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ email: email, timestamp: new Date() })
+            // });
+
+            // Перенаправляем на главную страницу
+            alert('✅ Вы успешно вошли в систему!');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
