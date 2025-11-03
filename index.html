@@ -52,14 +52,19 @@
     <!-- Основной скрипт приложения -->
     <script src="app.js"></script>
     
-    <!-- Регистрация Service Worker для PWA -->
+    <!-- Регистрация Service Worker для PWA (ИСПРАВЛЕНО) -->
     <script>
         // Проверяем поддержку Service Worker в браузере
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker зарегистрирован'))
-                    .catch(err => console.log('Ошибка регистрации SW:', err));
+                // Используем относительный путь для совместимости с подпапками
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .then(reg => {
+                        console.log('Service Worker зарегистрирован:', reg.scope);
+                    })
+                    .catch(err => {
+                        console.log('Ошибка регистрации SW:', err);
+                    });
             });
         }
     </script>

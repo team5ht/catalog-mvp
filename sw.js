@@ -3,18 +3,19 @@
 // Обеспечивает работу оффлайн и установку на устройство
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v1';
+const CACHE_NAME = 'catalog-mvp-v2';
 
 // Список файлов для кэширования (оффлайн доступ)
+// Используем относительные пути для совместимости с подпапками
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/material.html',
-  '/login.html',
-  '/style.css',
-  '/app.js',
-  '/data.json',
-  '/manifest.json'
+  './',
+  './index.html',
+  './material.html',
+  './login.html',
+  './style.css',
+  './app.js',
+  './data.json',
+  './manifest.json'
 ];
 
 // Установка Service Worker
@@ -83,7 +84,7 @@ self.addEventListener('fetch', event => {
           })
           .catch(() => {
             // Если нет сети и нет в кэше — показываем fallback
-            return caches.match('/index.html');
+            return caches.match('./index.html');
           });
       })
   );

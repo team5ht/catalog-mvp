@@ -84,6 +84,15 @@
             alert('✅ Вы успешно вошли в систему!');
             window.location.href = 'index.html';
         });
+
+        // Регистрация Service Worker (ИСПРАВЛЕНО)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .then(reg => console.log('Service Worker зарегистрирован'))
+                    .catch(err => console.log('Ошибка регистрации SW:', err));
+            });
+        }
     </script>
 </body>
 </html>
