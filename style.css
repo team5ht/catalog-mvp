@@ -474,3 +474,47 @@ footer {
         padding: 1rem;
     }
 }
+
+/* =================================
+   БЛОКИРОВКА ОРИЕНТАЦИИ (FALLBACK)
+   ================================= */
+html.force-portrait {
+    min-height: 100%;
+}
+
+html.force-portrait body {
+    position: relative;
+}
+
+#orientation-lock-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.95);
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    z-index: 1000;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+#orientation-lock-overlay .orientation-lock-message {
+    max-width: 320px;
+}
+
+html.force-portrait-landscape #orientation-lock-overlay {
+    display: flex;
+}
+
+@media screen and (orientation: landscape) {
+    html.force-portrait body {
+        width: 100vh;
+        min-height: 100vw;
+        transform: rotate(90deg);
+        transform-origin: center;
+        overflow: hidden;
+    }
+}
