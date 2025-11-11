@@ -56,9 +56,11 @@ function renderCatalog(materials) {
     card.style.backgroundImage = `url(${m.cover})`;
     card.title = m.title;
     card.textContent = m.title;
+    card.onclick = () => location.href = `material.html?id=${m.id}`;
     container.appendChild(card);
   });
 }
+
 
 function filterCatalog(categoryId) {
   if (!categoryId) {
