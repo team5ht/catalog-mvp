@@ -1,122 +1,111 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#6366f1">
-    <link rel="manifest" href="manifest.json">
-    <title>Материал</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Материал</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>📚 Каталог материалов</h1>
-        </div>
-    </header>
+<main class="material-page">
+  <!-- Кнопка назад -->
+  <button class="back-btn" onclick="history.back()" aria-label="Назад">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
-    <main class="container">
-        <!-- Контейнер для детальной информации о материале -->
-        <div id="material-detail" class="material-detail">
-            <!-- Контент загружается динамически -->
-        </div>
+  <!-- Обложка материала -->
+  <div class="material-cover-wrapper">
+    <div id="materialCover" class="material-cover"></div>
+  </div>
 
-        <div id="loader" class="loader">Загрузка...</div>
-    </main>
+  <!-- Кнопка действия -->
+  <button id="downloadBtn" class="btn-download">Скачать</button>
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 Каталог материалов. Все права защищены.</p>
-        </div>
-    </footer>
+  <!-- Контент -->
+  <div class="material-content">
+    <h1 id="materialTitle" class="material-title">Загрузка...</h1>
+    
+    <section class="material-section">
+      <h2>О материале</h2>
+      <p id="materialDescription" class="material-description"></p>
+    </section>
 
-    <script>
-        // Функция загрузки данных о материале
-        async function loadMaterial() {
-            // Получаем ID материала из URL (например: material.html?id=1)
-            const urlParams = new URLSearchParams(window.location.search);
-            const materialId = parseInt(urlParams.get('id'));
+    <section class="material-section">
+      <h2>Теги</h2>
+      <div id="materialTags" class="material-tags"></div>
+    </section>
+  </div>
+</main>
 
-            // Проверяем авторизацию перед показом материала
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            if (!isLoggedIn) {
-                alert('Войдите в систему для просмотра материалов');
-                window.location.href = 'login.html';
-                return;
-            }
+<nav class="bottom-nav">
+  <button id="nav-home" class="nav-btn" aria-label="Главная">
+    <svg width="24" height="24"><path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-9z" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+  </button>
+  <button id="nav-catalog" class="nav-btn" aria-label="Каталог">
+    <svg width="24" height="24"><rect x="3" y="4" width="18" height="16" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+  </button>
+  <button id="nav-login" class="nav-btn" aria-label="Профиль">
+    <svg width="24" height="24"><circle cx="12" cy="8" r="4" fill="none" stroke="#64748b" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+  </button>
+</nav>
 
-            try {
-                // Загружаем данные из JSON
-                const response = await fetch('data.json');
-                const data = await response.json();
-                
-                // Находим нужный материал по ID
-                const material = data.materials.find(m => m.id === materialId);
-                
-                if (!material) {
-                    document.getElementById('material-detail').innerHTML = 
-                        '<p class="error">Материал не найден</p>';
-                    return;
-                }
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-home').onclick = () => location.href = 'index.html';
+document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
+document.getElementById('nav-login').onclick = () => location.href = 'login.html';
 
-                // Находим категорию материала
-                const category = data.categories.find(c => c.id === material.categoryId);
+// Получаем ID материала из URL
+const urlParams = new URLSearchParams(window.location.search);
+const materialId = parseInt(urlParams.get('id'));
 
-                // Скрываем loader
-                document.getElementById('loader').style.display = 'none';
+if (!materialId) {
+  location.href = 'index.html';
+}
 
-                // Отображаем детали материала
-                document.getElementById('material-detail').innerHTML = `
-                    <a href="index.html?category=${category.slug}" class="back-link">← Назад к каталогу</a>
-                    
-                    <div class="material-content">
-                        <div class="material-image">
-                            <img src="${material.cover}" alt="${material.title}">
-                        </div>
-                        
-                        <div class="material-info">
-                            <span class="category-badge">${category.name}</span>
-                            <h1>${material.title}</h1>
-                            <p class="material-description">${material.description}</p>
-                            
-                            <!-- Кнопка скачивания PDF с Google Drive -->
-                            <a href="${material.pdfUrl}" 
-                               target="_blank" 
-                               class="btn-primary download-btn"
-                               onclick="trackDownload('${material.title}')">
-                                📥 Скачать PDF
-                            </a>
-                            
-                            <p class="download-hint">
-                                Файл откроется в новой вкладке. Нажмите "Скачать" в Google Drive.
-                            </p>
-                        </div>
-                    </div>
-                `;
-            } catch (error) {
-                console.error('Ошибка загрузки материала:', error);
-                document.getElementById('material-detail').innerHTML = 
-                    '<p class="error">Ошибка загрузки данных</p>';
-            }
-        }
+// Загружаем данные и отображаем материал
+fetch('data.json')
+  .then(r => r.json())
+  .then(data => {
+    const material = data.materials.find(m => m.id === materialId);
+    if (!material) {
+      location.href = 'index.html';
+      return;
+    }
 
-        // Функция отслеживания скачиваний (для будущей аналитики)
-        function trackDownload(title) {
-            console.log('Скачан материал:', title);
-            // Здесь можно добавить отправку данных в Google Analytics или Яндекс.Метрику
-        }
+    // Обложка
+    document.getElementById('materialCover').style.backgroundImage = `url(${material.cover})`;
+    
+    // Название
+    document.getElementById('materialTitle').textContent = material.title;
+    
+    // Описание
+    document.getElementById('materialDescription').textContent = material.description;
+    
+    // Теги
+    const tagsContainer = document.getElementById('materialTags');
+    if (material.tags && material.tags.length > 0) {
+      material.tags.forEach(tag => {
+        const tagEl = document.createElement('span');
+        tagEl.className = 'tag';
+        tagEl.textContent = tag;
+        tagsContainer.appendChild(tagEl);
+      });
+    } else {
+      tagsContainer.innerHTML = '<span class="tag">Без тегов</span>';
+    }
 
-        // Запускаем загрузку при открытии страницы
-        loadMaterial();
-
-        // Регистрация Service Worker (ИСПРАВЛЕНО)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js', { scope: './' })
-                    .then(reg => console.log('Service Worker зарегистрирован'))
-                    .catch(err => console.log('Ошибка регистрации SW:', err));
-            });
-        }
-    </script>
+    // Кнопка скачать
+    document.getElementById('downloadBtn').onclick = () => {
+      if (material.pdfUrl) {
+        window.open(material.pdfUrl, '_blank');
+      } else {
+        alert('Ссылка на материал недоступна');
+      }
+    };
+  });
+</script>
 </body>
 </html>
