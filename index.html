@@ -1,72 +1,50 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Каталог образовательных материалов">
-    <meta name="theme-color" content="#6366f1">
-    
-    <!-- PWA манифест -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Иконки для PWA (замените на свои) -->
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    
-    <title>Каталог материалов</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Главная</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <!-- Шапка с навигацией и кнопкой выхода -->
-    <header>
-        <div class="container">
-            <h1>📚 Каталог материалов</h1>
-            <div id="userInfo" style="display: none;">
-                <span id="userEmail"></span>
-                <button onclick="logout()" class="btn-secondary">Выйти</button>
-            </div>
-        </div>
-    </header>
+<main>
+  <section id="main-materials" class="horizontal-scroll">
+    <!-- Карточки материалов будут вставлены скриптом -->
+  </section>
+</main>
 
-    <main class="container">
-        <!-- Навигация по категориям -->
-        <nav id="categories" class="categories">
-            <!-- Категории загружаются динамически из data.json -->
-        </nav>
+<nav class="bottom-nav">
+  <button id="nav-home" class="nav-btn active" aria-label="Главная">
+    <svg width="24" height="24"><path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-9z" fill="none" stroke="#6366f1" stroke-width="2"/></svg>
+  </button>
+  <button id="nav-catalog" class="nav-btn" aria-label="Каталог">
+    <svg width="24" height="24"><rect x="3" y="4" width="18" height="16" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+  </button>
+  <button id="nav-login" class="nav-btn" aria-label="Профиль">
+    <svg width="24" height="24"><circle cx="12" cy="8" r="4" fill="none" stroke="#64748b" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+  </button>
+</nav>
 
-        <!-- Сетка карточек материалов -->
-        <div id="catalog" class="catalog-grid">
-            <!-- Карточки загружаются динамически -->
-        </div>
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
+document.getElementById('nav-login').onclick = () => location.href = 'login.html';
 
-        <!-- Loader для загрузки -->
-        <div id="loader" class="loader">Загрузка...</div>
-    </main>
+function renderMainMaterials(materials) {
+  const container = document.getElementById('main-materials');
+  container.innerHTML = '';
+  materials.forEach((m, i) => {
+    if(i >= 5) return; // сколько показываем на главной
+    const card = document.createElement('div');
+    card.className = 'book-card narrow';
+    card.style.backgroundImage = `url(${m.cover})`;
+    card.title = m.title;
+    card.textContent = m.title;
+    container.appendChild(card);
+  });
+}
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 Каталог материалов. Все права защищены.</p>
-        </div>
-    </footer>
-
-    <!-- Основной скрипт приложения -->
-    <script src="app.js"></script>
-    
-    <!-- Регистрация Service Worker для PWA (ИСПРАВЛЕНО) -->
-    <script>
-        // Проверяем поддержку Service Worker в браузере
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // Используем относительный путь для совместимости с подпапками
-                navigator.serviceWorker.register('./sw.js', { scope: './' })
-                    .then(reg => {
-                        console.log('Service Worker зарегистрирован:', reg.scope);
-                    })
-                    .catch(err => {
-                        console.log('Ошибка регистрации SW:', err);
-                    });
-            });
-        }
-    </script>
+fetch('data.json').then(r=>r.json()).then(data => renderMainMaterials(data.materials));
+</script>
 </body>
 </html>
