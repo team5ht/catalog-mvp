@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Каталог</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<main>
+  <section id="categories" class="categories-scroll">
+    <!-- Категории будут вставлены скриптом -->
+  </section>
+  <section id="catalog-list" class="catalog-list-vertical">
+    <!-- Лента карточек каталога -->
+  </section>
+</main>
+
+<nav class="bottom-nav">
+  <button id="nav-home" class="nav-btn" aria-label="Главная">
+    <svg width="24" height="24"><path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-9z" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+  </button>
+  <button id="nav-catalog" class="nav-btn active" aria-label="Каталог">
+    <svg width="24" height="24"><rect x="3" y="4" width="18" height="16" fill="none" stroke="#6366f1" stroke-width="2"/></svg>
+  </button>
+  <button id="nav-login" class="nav-btn" aria-label="Профиль">
+    <svg width="24" height="24"><circle cx="12" cy="8" r="4" fill="none" stroke="#64748b" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+  </button>
+</nav>
+
+<script src="app.js"></script>
+<script>
+function renderCategories(categories) {
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'category-btn';
+    btn.textContent = cat.name;
+    btn.dataset.slug = cat.slug;
+    btn.onclick = () => {
+      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterCatalog(cat.id);
+    };
+    container.appendChild(btn);
+  });
+}
+
+function renderCatalog(materials) {
+  const container = document.getElementById('catalog-list');
+  container.innerHTML = '';
+  materials.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'book-card narrow';
+    card.style.backgroundImage = `url(${m.cover})`;
+    card.title = m.title;
+    card.textContent = m.title;
+    container.appendChild(card);
+  });
+}
+
+function filterCatalog(categoryId) {
+  if (!categoryId) {
+    renderCatalog(appData.materials);
+  } else {
+    const filtered = appData.materials.filter(m => m.categoryId === categoryId);
+    renderCatalog(filtered);
+  }
+}
+
+document.getElementById('nav-home').onclick = () => location.href = 'index.html';
+document.getElementById('nav-login').onclick = () => location.href = 'login.html';
+
+fetch('data.json').then(r => r.json()).then(data => {
+  appData = data;
+  renderCategories(data.categories);
+  renderCatalog(data.materials);
+});
+</script>
+</body>
+</html>
