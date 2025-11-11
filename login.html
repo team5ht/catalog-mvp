@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Авторизация</title>
 <link rel="stylesheet" href="style.css" />
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6366f1">
 </head>
 <body>
 <div class="login-container">
@@ -22,6 +24,13 @@ document.getElementById('loginForm').addEventListener('submit', e => {
   localStorage.setItem('userEmail', document.getElementById('email').value);
   location.href = 'index.html';
 });
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
 </script>
 </body>
 </html>

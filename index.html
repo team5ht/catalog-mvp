@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Главная</title>
 <link rel="stylesheet" href="style.css" />
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6366f1">
 </head>
 <body>
 <main>
@@ -47,6 +49,13 @@ function renderMainMaterials(materials) {
 
 
 fetch('data.json').then(r=>r.json()).then(data => renderMainMaterials(data.materials));
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
 </script>
 </body>
 </html>
