@@ -24,8 +24,8 @@ main {
   padding: 1rem 0.75rem 5rem; /* снизу под навигацию */
   overflow-x: hidden;
   /* Ensure content clears taller bottom nav + safe area */
-  padding-bottom: calc(5rem + 8px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(5rem + 8px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(5rem + 12px + constant(safe-area-inset-bottom));
+  padding-bottom: calc(5rem + 12px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Навигация внизу */
@@ -42,8 +42,8 @@ main {
   align-items: center;
   box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.05);
   /* Add safe-area space so bottom UI (home indicator) doesn't overlap */
-  padding-bottom: calc(8px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(12px + constant(safe-area-inset-bottom));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 .nav-btn {
@@ -218,8 +218,8 @@ main {
   main {
     padding: 1rem 0.5rem 5rem;
     /* Match bottom padding with nav safe-area on small screens */
-    padding-bottom: calc(5rem + 8px + constant(safe-area-inset-bottom));
-    padding-bottom: calc(5rem + 8px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(5rem + 12px + constant(safe-area-inset-bottom));
+    padding-bottom: calc(5rem + 12px + env(safe-area-inset-bottom, 0px));
   }
 
   .horizontal-scroll {
@@ -246,8 +246,8 @@ main {
   padding: 0;
   padding-bottom: 5rem;
   /* Respect safe-area when bottom nav is present */
-  padding-bottom: calc(5rem + 8px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(5rem + 8px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(5rem + 12px + constant(safe-area-inset-bottom));
+  padding-bottom: calc(5rem + 12px + env(safe-area-inset-bottom, 0px));
   background: var(--bg-color);
 }
 
