@@ -148,12 +148,15 @@ main {
 
 /* Логин */
 .login-container {
+  width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 2rem;
+  box-sizing: border-box;
+  align-self: stretch;
 }
 
 .login-card {
@@ -220,6 +223,8 @@ main {
   .catalog-list-vertical {
     padding: 1rem 0.5rem;
   }
+
+}
 
   /* =================================
    СТРАНИЦА МАТЕРИАЛА
