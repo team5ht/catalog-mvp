@@ -102,15 +102,23 @@ main {
 }
 
 .category-btn {
+  /* Скопировано оформление из .tag для точного совпадения внешнего вида с тегами на странице материала */
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
   background: var(--card-bg);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
-  padding: 0.4rem 1rem;
-  color: var(--text-color);
+  font-size: 0.9rem;
+  color: var(--text-light);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
+
+  /* Исправление: унаследовать системный/встроенный шрифт страницы (как у .tag) */
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .category-btn.active {
