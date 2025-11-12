@@ -53,13 +53,29 @@ function renderCatalog(materials) {
   const container = document.getElementById('catalog-list');
   container.innerHTML = '';
   materials.forEach(m => {
-    const card = document.createElement('div');
-    card.className = 'book-card narrow';
-    card.style.backgroundImage = `url(${m.cover})`;
-    card.title = m.title;
-    card.textContent = m.title;
-    card.onclick = () => location.href = `material.html?id=${m.id}`;
-    container.appendChild(card);
+    const item = document.createElement('div');
+    item.className = 'catalog-item';
+
+    const coverLink = document.createElement('a');
+    coverLink.className = 'catalog-cover';
+    coverLink.style.backgroundImage = `url(${m.cover})`;
+    coverLink.href = `material.html?id=${m.id}`;
+    coverLink.setAttribute('aria-label', m.title);
+
+    const info = document.createElement('div');
+    info.className = 'catalog-info';
+
+    const title = document.createElement('h3');
+    title.className = 'catalog-title';
+    const titleLink = document.createElement('a');
+    titleLink.href = `material.html?id=${m.id}`;
+    titleLink.textContent = m.title;
+    title.appendChild(titleLink);
+
+    info.appendChild(title);
+    item.appendChild(coverLink);
+    item.appendChild(info);
+    container.appendChild(item);
   });
 }
 
