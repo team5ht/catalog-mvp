@@ -132,6 +132,14 @@ main {
   color: var(--primary-color);
 }
 
+/* Ensure active state keeps readable text even on hover/focus */
+.category-btn.active:hover,
+.category-btn.active:focus {
+  color: #ffffff;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
 /* Карточка книги узкая вертикальная */
 .book-card.narrow {
   flex: 0 0 140px;
