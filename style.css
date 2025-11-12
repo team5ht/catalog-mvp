@@ -175,9 +175,12 @@ main {
 }
 
 .login-card input {
+  /* Исправлено: сделаем input блочным и учтём padding/border в ширине */
+  display: block;
   width: 100%;
+  box-sizing: border-box;
   padding: 0.75rem 1rem;
-  margin-bottom: 1.25rem;
+  margin: 0 0 1.25rem; /* верх 0, низ 1.25rem */
   border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
