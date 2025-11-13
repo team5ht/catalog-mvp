@@ -2,11 +2,19 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Главная</title>
 <link rel="stylesheet" href="style.css" />
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#f8fafc">
+<!-- Allow web content to extend into the display cutout / safe area on iOS -->
+<meta name="viewport-fit" content="cover">
+<!-- Make app behave like a standalone app on mobile (recommended for PWAs) -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- On iOS, black-translucent lets the page show under the status bar when added to home screen -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Try to make the status bar visually transparent on supporting browsers -->
+<meta name="theme-color" content="#00000000">
 </head>
 <body>
 <main>
