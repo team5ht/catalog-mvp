@@ -306,7 +306,9 @@ main {
 /* Кнопка назад */
 .back-btn {
   position: fixed;
-  top: 1rem;
+  /* Keep the back button below the system/status area on devices with a notch / safe-area
+     Use a small offset (12px) plus the safe-area inset when available. */
+  top: calc(12px + env(safe-area-inset-top, 0px));
   left: 1rem;
   width: 40px;
   height: 40px;
