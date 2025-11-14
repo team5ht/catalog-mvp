@@ -7,6 +7,9 @@
   --bg-color: #f8fafc;
   --card-bg: #ffffff;
   --border-color: #e2e8f0;
+  --bottom-nav-height: 56px;
+  --bottom-nav-spacing: 12px;
+  --bottom-nav-offset: calc(var(--bottom-nav-height) + var(--bottom-nav-spacing));
 }
 
 body {
@@ -21,11 +24,11 @@ body {
 
 main {
   flex: 1;
-  padding: 1rem 0.75rem 5rem; /* снизу под навигацию */
+  padding: 1rem 0.75rem var(--bottom-nav-offset); /* снизу под навигацию */
   overflow-x: hidden;
   /* Ensure content clears taller bottom nav + safe area */
-  padding-bottom: calc(5rem + 12px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(5rem + 12px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--bottom-nav-offset) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--bottom-nav-offset) + env(safe-area-inset-bottom, 0px));
 }
 
 /* Навигация внизу */
@@ -34,7 +37,7 @@ main {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
+  height: var(--bottom-nav-height);
   background: var(--card-bg);
   border-top: 1px solid var(--border-color);
   display: flex;
@@ -42,34 +45,34 @@ main {
   align-items: center;
   box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.05);
   /* Add safe-area space so bottom UI (home indicator) doesn't overlap */
-  padding-bottom: calc(12px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--bottom-nav-spacing) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--bottom-nav-spacing) + env(safe-area-inset-bottom, 0px));
 }
 
 .nav-btn {
   background: none;
   border: none;
   cursor: pointer;
-  fill: var(--text-light);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   width: 48px;
   height: 48px;
-  transition: fill 0.2s ease;
 }
 
-.nav-btn.active svg path,
-.nav-btn.active svg rect,
-.nav-btn.active svg circle {
+.nav-btn svg * {
+  fill: transparent;
+  stroke: var(--text-light);
+  transition: stroke 0.2s ease, fill 0.2s ease;
+}
+
+.nav-btn.active svg * {
   stroke: var(--primary-color);
   fill: var(--primary-color);
 }
 
-.nav-btn:hover svg path,
-.nav-btn:hover svg rect,
-.nav-btn:hover svg circle {
+.nav-btn:hover svg * {
   stroke: var(--primary-hover);
   fill: var(--primary-hover);
 }
@@ -99,10 +102,17 @@ main {
   overflow-x: auto;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border-color);
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;    /* Firefox */
 }
 
-.category-btn {
-  /* Скопировано оформление из .tag для точного совпадения внешнего вида с тегами на странице материала */
+.categories-scroll::-webkit-scrollbar { /* Chrome/Safari */
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.pill {
   display: inline-block;
   padding: 0.4rem 0.9rem;
   background: var(--card-bg);
@@ -111,14 +121,16 @@ main {
   font-size: 0.9rem;
   color: var(--text-light);
   font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-
-  /* Исправление: унаследовать системный/встроенный шрифт страницы (как у .tag) */
   font-family: inherit;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.category-btn {
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .category-btn.active {
@@ -232,10 +244,10 @@ main {
 /* Адаптивность */
 @media (max-width: 480px) {
   main {
-    padding: 1rem 0.5rem 5rem;
+    padding: 1rem 0.5rem var(--bottom-nav-offset);
     /* Match bottom padding with nav safe-area on small screens */
-    padding-bottom: calc(5rem + 12px + constant(safe-area-inset-bottom));
-    padding-bottom: calc(5rem + 12px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--bottom-nav-offset) + constant(safe-area-inset-bottom));
+    padding-bottom: calc(var(--bottom-nav-offset) + env(safe-area-inset-bottom, 0px));
   }
 
   .horizontal-scroll {
@@ -257,17 +269,6 @@ main {
 /* =================================
    Catalog layout overrides
    ================================= */
-
-/* Hide horizontal scrollbar for categories while keeping scroll */
-.categories-scroll {
-  -ms-overflow-style: none; /* IE/Edge */
-  scrollbar-width: none;    /* Firefox */
-}
-.categories-scroll::-webkit-scrollbar { /* Chrome/Safari */
-  display: none;
-  width: 0;
-  height: 0;
-}
 
 /* Row item: narrow book cover + title on the right */
 .catalog-item { display: flex; gap: 12px; align-items: center; }
@@ -296,10 +297,10 @@ main {
 
 .material-page {
   padding: 0;
-  padding-bottom: 5rem;
+  padding-bottom: var(--bottom-nav-offset);
   /* Respect safe-area when bottom nav is present */
-  padding-bottom: calc(5rem + 12px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(5rem + 12px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--bottom-nav-offset) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--bottom-nav-offset) + env(safe-area-inset-bottom, 0px));
   background: var(--bg-color);
 }
 
@@ -413,14 +414,7 @@ main {
 }
 
 .tag {
-  display: inline-block;
-  padding: 0.4rem 0.9rem;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  font-size: 0.9rem;
-  color: var(--text-light);
-  font-weight: 500;
+  cursor: default;
 }
 
 /* Адаптивность для маленьких экранов */

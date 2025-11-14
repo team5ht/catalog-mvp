@@ -40,7 +40,7 @@ function renderCategories(categories) {
   container.innerHTML = '';
   categories.forEach(cat => {
     const btn = document.createElement('button');
-    btn.className = 'category-btn';
+    btn.className = 'category-btn pill';
     btn.textContent = cat.name;
     btn.dataset.id = cat.id;
     btn.onclick = () => {
