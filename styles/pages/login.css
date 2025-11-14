@@ -1,0 +1,43 @@
+/* === Страница авторизации === */
+.auth-page {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.auth-form {
+  background: var(--color-surface);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow-strong);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+.auth-form__title {
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.auth-form__input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1.25rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.auth-form__input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}

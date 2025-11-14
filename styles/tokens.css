@@ -1,0 +1,17 @@
+/* === Цвета и размеры === */
+:root {
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #e2e8f0;
+  --shadow-strong: 0 10px 40px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 0 -1px 6px rgba(0, 0, 0, 0.05);
+  --shadow-button: 0 4px 12px rgba(147, 51, 234, 0.3);
+  --bottom-nav-height: 56px;
+  --bottom-nav-spacing: 12px;
+  --bottom-nav-offset: calc(var(--bottom-nav-height) + var(--bottom-nav-spacing));
+}
