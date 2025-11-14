@@ -25,7 +25,7 @@ function renderMainMaterials(materials) {
   container.innerHTML = '';
   materials.slice(0, 5).forEach(m => {
     const card = document.createElement('div');
-    card.className = 'book-card narrow';
+    card.className = 'material-card material-card--narrow';
     card.style.backgroundImage = `url(${m.cover})`;
     card.title = m.title;
     card.textContent = m.title;
@@ -39,17 +39,30 @@ function renderCategories(categories) {
   if (!container) return;
   container.innerHTML = '';
   categories.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'category-btn pill';
-    btn.textContent = cat.name;
-    btn.dataset.id = cat.id;
-    btn.onclick = () => {
-      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+    const button = document.createElement('button');
+    button.className = 'catalog-categories__button';
+    button.dataset.id = cat.id;
+
+    const chip = document.createElement('span');
+    chip.className = 'chip chip--interactive';
+    chip.textContent = cat.name;
+    button.appendChild(chip);
+
+    button.onclick = () => {
+      document
+        .querySelectorAll('.catalog-categories__button .chip')
+        .forEach(chipEl => chipEl.classList.remove('chip--active'));
+      chip.classList.add('chip--active');
       filterCatalog(cat.id);
     };
-    container.appendChild(btn);
+
+    container.appendChild(button);
   });
+
+  const firstChip = container.querySelector('.catalog-categories__button .chip');
+  if (firstChip) {
+    firstChip.classList.add('chip--active');
+  }
 }
 
 // Каталог: рендер материалов списка
@@ -58,11 +71,32 @@ function renderCatalog(materials) {
   if (!container) return;
   container.innerHTML = '';
   materials.forEach(m => {
-    const card = document.createElement('div');
-    card.className = 'book-card narrow';
-    card.style.backgroundImage = `url(${m.cover})`;
-    card.title = m.title;
-    card.textContent = m.title;
+    const card = document.createElement('article');
+    card.className = 'catalog-card';
+
+    const coverLink = document.createElement('a');
+    coverLink.className = 'catalog-card__cover';
+    coverLink.style.backgroundImage = `url(${m.cover})`;
+    coverLink.href = `material.html?id=${m.id}`;
+    coverLink.setAttribute('aria-label', m.title);
+
+    const info = document.createElement('div');
+    info.className = 'catalog-card__info';
+
+    const title = document.createElement('h3');
+    title.className = 'catalog-card__title';
+
+    const titleLink = document.createElement('a');
+    titleLink.className = 'catalog-card__title-link';
+    titleLink.href = `material.html?id=${m.id}`;
+    titleLink.textContent = m.title;
+
+    title.appendChild(titleLink);
+    info.appendChild(title);
+
+    card.appendChild(coverLink);
+    card.appendChild(info);
+
     container.appendChild(card);
   });
 }
