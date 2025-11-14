@@ -4,19 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Авторизация</title>
-<link rel="stylesheet" href="styles/tokens.css" />
-<link rel="stylesheet" href="styles/base.css" />
-<link rel="stylesheet" href="styles/components/buttons.css" />
-<link rel="stylesheet" href="styles/pages/login.css" />
+<link rel="stylesheet" href="style.css" />
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f8fafc">
 </head>
 <body>
-<div class="auth-page">
-  <form id="loginForm" class="auth-form">
-    <h1 class="auth-form__title">Введите email</h1>
-    <input type="email" id="email" class="auth-form__input" placeholder="Ваш Email" required />
-    <button type="submit" class="button button--primary">Войти</button>
+<div class="login-container">
+  <form id="loginForm" class="login-card">
+    <h1>Введите email</h1>
+    <input type="email" id="email" placeholder="Ваш Email" required />
+    <button type="submit" class="btn-primary">Войти</button>
   </form>
 </div>
 <script src="app.js"></script>
