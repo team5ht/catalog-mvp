@@ -25,9 +25,9 @@
 /* === Категории каталога === */
 .catalog-categories {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   overflow-x: auto;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 0.75rem;
   border-bottom: 1px solid var(--color-border);
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -47,6 +47,15 @@
   padding: 0;
   flex: 0 0 auto;
   cursor: pointer;
+}
+
+.catalog-categories__button .chip {
+  padding: 0.5rem 1.2rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  border-color: rgba(148, 163, 184, 0.7);
 }
 
 .catalog-categories__button .chip.chip--active,
