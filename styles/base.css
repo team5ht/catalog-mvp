@@ -17,10 +17,36 @@ main {
   padding-bottom: calc(var(--bottom-nav-offset) + env(safe-area-inset-bottom, 0px));
 }
 
+.home-banner {
+  margin: 0 0 1.5rem;
+}
+
+.home-banner__link {
+  display: block;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-elevated);
+  background-color: var(--color-surface);
+}
+
+.home-banner__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 @media (max-width: 480px) {
   main {
     padding: 1rem 0.5rem var(--bottom-nav-offset);
     padding-bottom: calc(var(--bottom-nav-offset) + constant(safe-area-inset-bottom));
     padding-bottom: calc(var(--bottom-nav-offset) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .home-banner {
+    margin-bottom: 1.25rem;
+  }
+
+  .home-banner__link {
+    border-radius: 12px;
   }
 }
