@@ -5,15 +5,14 @@
   overflow-x: auto;
   padding-left: 0.75rem;
   scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .materials-carousel::-webkit-scrollbar {
-  height: 6px;
-}
-
-.materials-carousel::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 @media (max-width: 480px) {
