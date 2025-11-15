@@ -25,8 +25,9 @@ main {
   display: block;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: var(--shadow-elevated);
   background-color: var(--color-surface);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: none;
 }
 
 .home-banner__image {

@@ -6,6 +6,7 @@
   background-color: var(--color-surface);
   background-position: center;
   background-size: cover;
+  box-shadow: var(--shadow-card);
   color: #ffffff;
   font-weight: 600;
   font-size: 1rem;
