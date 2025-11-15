@@ -3,7 +3,8 @@
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  padding-left: 0.75rem;
+  overflow-y: visible;
+  padding: 0.5rem 0 0.5rem 0.75rem;
   scroll-snap-type: x mandatory;
   -ms-overflow-style: none;
   scrollbar-width: none;
