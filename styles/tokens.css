@@ -15,4 +15,5 @@
   --bottom-nav-height: 56px;
   --bottom-nav-spacing: 12px;
   --bottom-nav-offset: calc(var(--bottom-nav-height) + var(--bottom-nav-spacing));
+  --page-horizontal-padding: clamp(0.75rem, 3vw, 1.5rem);
 }

@@ -7,21 +7,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.75rem;
+  padding: 0;
   margin-bottom: 0.75rem;
 }
 
 .materials-section__title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 0.9rem + 0.8vw, 1.4rem);
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .materials-carousel {
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  padding: 0 0.75rem;
+  padding: 0;
   scroll-snap-type: x mandatory;
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -36,10 +37,6 @@
 @media (max-width: 480px) {
   .materials-section {
     margin-bottom: 1.5rem;
-  }
-
-  .materials-section__title {
-    font-size: 1.1rem;
   }
 
   .materials-carousel {
