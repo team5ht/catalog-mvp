@@ -22,9 +22,18 @@
   </section>
   <section class="materials-section">
     <div class="materials-section__header">
-      <h2 class="materials-section__title">Перерводы</h2>
+      <h2 class="materials-section__title">Переводы</h2>
     </div>
     <div id="main-materials" class="materials-carousel">
+      <!-- Карточки материалов будут вставлены скриптом -->
+    </div>
+  </section>
+
+  <section class="materials-section">
+    <div class="materials-section__header">
+      <h2 class="materials-section__title">Материалы 5HT</h2>
+    </div>
+    <div id="materials-5ht" class="materials-carousel">
       <!-- Карточки материалов будут вставлены скриптом -->
     </div>
   </section>
@@ -47,11 +56,13 @@
 document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
 document.getElementById('nav-login').onclick = () => location.href = 'login.html';
 
-function renderMainMaterials(materials) {
-  const container = document.getElementById('main-materials');
+function renderMaterialsCarousel(containerId, materials, limit = 5) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
   container.innerHTML = '';
-  materials.forEach((m, i) => {
-    if(i >= 5) return;
+
+  materials.slice(0, limit).forEach((m) => {
     const card = document.createElement('div');
     card.className = 'material-card material-card--narrow';
     card.title = m.title;
@@ -72,7 +83,10 @@ function renderMainMaterials(materials) {
 }
 
 
-fetch('data.json').then(r=>r.json()).then(data => renderMainMaterials(data.materials));
+fetch('data.json').then(r=>r.json()).then(data => {
+  renderMaterialsCarousel('main-materials', data.materials);
+  renderMaterialsCarousel('materials-5ht', data.materials);
+});
 </script>
 <script>
 if ('serviceWorker' in navigator) {
