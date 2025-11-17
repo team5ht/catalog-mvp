@@ -26,9 +26,19 @@ function renderMainMaterials(materials) {
   materials.slice(0, 5).forEach(m => {
     const card = document.createElement('div');
     card.className = 'material-card material-card--narrow';
-    card.style.backgroundImage = `url(${m.cover})`;
     card.title = m.title;
-    card.textContent = m.title;
+    card.onclick = () => location.href = `material.html?id=${m.id}`;
+
+    const cover = document.createElement('div');
+    cover.className = 'material-card__cover';
+    cover.style.backgroundImage = `url(${m.cover})`;
+
+    const title = document.createElement('p');
+    title.className = 'material-card__title';
+    title.textContent = m.title;
+
+    card.appendChild(cover);
+    card.appendChild(title);
     container.appendChild(card);
   });
 }

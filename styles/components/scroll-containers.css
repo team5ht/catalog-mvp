@@ -1,4 +1,22 @@
 /* === Горизонтальные скроллы === */
+.materials-section {
+  margin-bottom: 2rem;
+}
+
+.materials-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.materials-section__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
 .materials-carousel {
   display: flex;
   gap: 16px;
@@ -16,6 +34,14 @@
 }
 
 @media (max-width: 480px) {
+  .materials-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .materials-section__title {
+    font-size: 1.1rem;
+  }
+
   .materials-carousel {
     gap: 12px;
   }
