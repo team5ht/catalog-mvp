@@ -42,8 +42,10 @@
   <button id="nav-login" class="bottom-nav__button" aria-label="Профиль">
     <svg class="bottom-nav__icon" width="24" height="24"><circle cx="12" cy="8" r="4" fill="none" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke-width="2"/></svg>
   </button>
+  <button type="button" class="bottom-nav__text-button" data-auth-logout hidden>Выйти</button>
 </nav>
 
+<script src="auth-state.js"></script>
 <script src="app.js"></script>
 <script>
 function renderCategories(categories) {

@@ -53,3 +53,26 @@
   stroke: var(--color-primary);
   fill: var(--color-primary);
 }
+
+.bottom-nav__text-button {
+  display: none;
+  border: none;
+  background: none;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.75rem;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav__text-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.bottom-nav__text-button--visible {
+  display: inline-flex;
+}
