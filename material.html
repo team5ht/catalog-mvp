@@ -57,6 +57,7 @@
   </button>
 </nav>
 
+<script src="auth-state.js"></script>
 <script src="app.js"></script>
 <script>
 document.getElementById('nav-home').onclick = () => location.href = 'index.html';
@@ -104,7 +105,23 @@ fetch('data.json')
     }
 
     // Кнопка скачать
-    document.getElementById('downloadBtn').onclick = () => {
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.onclick = () => {
+      const authState = window.AuthState;
+      const isAuthed = authState && typeof authState.isAuthenticated === 'function'
+        ? authState.isAuthenticated()
+        : false;
+
+      if (!isAuthed) {
+        const currentUrl = window.location.href;
+        if (authState && typeof authState.setRedirectUrl === 'function') {
+          authState.setRedirectUrl(currentUrl);
+        }
+        const loginUrl = `auth-login.html?redirect=${encodeURIComponent(currentUrl)}`;
+        window.location.href = loginUrl;
+        return;
+      }
+
       if (material.pdfUrl) {
         window.open(material.pdfUrl, '_blank');
       } else {
