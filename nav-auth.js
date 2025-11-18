@@ -1,7 +1,7 @@
 (function() {
   const AUTH_STORAGE_KEY = 'auth_logged_in';
-  const BODY_AUTH_LOGGED_IN = 'auth-logged-in';
-  const BODY_AUTH_LOGGED_OUT = 'auth-logged-out';
+  const LOGIN_ICON = '<svg class="bottom-nav__icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4" fill="none" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke-width="2"/></svg>';
+  const LOGOUT_ICON = '<svg class="bottom-nav__icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 16l4-4-4-4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h10" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function getAuthModule() {
     return typeof window !== 'undefined' ? window.AuthState : null;
@@ -50,15 +50,9 @@
     showToast('Вы вышли из аккаунта.');
   }
 
-  function setBodyAuthState(authed) {
-    if (!document.body) return;
-    document.body.classList.remove(BODY_AUTH_LOGGED_IN, BODY_AUTH_LOGGED_OUT);
-    document.body.classList.add(authed ? BODY_AUTH_LOGGED_IN : BODY_AUTH_LOGGED_OUT);
-  }
-
   function updateAccountState(button) {
     const authed = isAuthenticated();
-    setBodyAuthState(authed);
+    button.innerHTML = authed ? LOGOUT_ICON : LOGIN_ICON;
     button.setAttribute('aria-label', authed ? 'Выйти из аккаунта' : 'Профиль');
   }
 
