@@ -53,7 +53,8 @@
   function updateAccountState(button) {
     const authed = isAuthenticated();
     button.innerHTML = authed ? LOGOUT_ICON : LOGIN_ICON;
-    button.setAttribute('aria-label', authed ? 'Выйти из аккаунта' : 'Профиль');
+    button.setAttribute('aria-label', authed ? 'Выйти из аккаунта' : 'Войти');
+    button.classList.remove('is-loading');
   }
 
   document.addEventListener('DOMContentLoaded', () => {
