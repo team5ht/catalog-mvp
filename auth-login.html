@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Вход в 5HT</title>
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/components/buttons.css" />
+  <link rel="stylesheet" href="styles/pages/login.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f8fafc" />
+</head>
+<body>
+  <div class="auth-page">
+    <form class="auth-form" id="authLoginForm" novalidate>
+      <h1 class="auth-form__title">Вход в 5HT</h1>
+      <p class="auth-form__subtitle">Чтобы скачать материалы, введите ваш email. Мы пришлём ссылку для входа.</p>
+      <input
+        type="email"
+        id="authEmail"
+        class="auth-form__input"
+        placeholder="name@example.com"
+        required
+        autocomplete="email"
+        inputmode="email"
+        aria-label="Email"
+      />
+      <button type="submit" class="button button--primary">Получить ссылку для входа</button>
+      <p class="auth-form__note">Нажимая кнопку, вы подтверждаете согласие с Условиями использования и Политикой конфиденциальности.</p>
+    </form>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('authLoginForm');
+      const emailInput = document.getElementById('authEmail');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const email = emailInput.value.trim();
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!email || !emailPattern.test(email)) {
+          emailInput.setCustomValidity('Введите корректный email');
+          emailInput.reportValidity();
+          return;
+        }
+
+        emailInput.setCustomValidity('');
+        const encoded = encodeURIComponent(email);
+        window.location.href = `auth-check-email.html?email=${encoded}`;
+      });
+    });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

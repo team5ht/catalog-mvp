@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Проверьте почту</title>
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/components/buttons.css" />
+  <link rel="stylesheet" href="styles/pages/login.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f8fafc" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-form" id="authCheckEmail">
+      <h1 class="auth-form__title">Проверьте почту</h1>
+      <p class="auth-form__paragraph">
+        Мы отправили письмо на адрес <span id="authEmailTarget"></span>. Перейдите по ссылке, чтобы войти и скачать материал. Если письма нет 1–2 минуты, проверьте папку «Спам».
+      </p>
+      <a class="button button--primary" href="index.html">Вернуться на главную</a>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const target = document.getElementById('authEmailTarget');
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get('email');
+      target.textContent = email && email.trim() ? email : 'указанный email';
+    });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
