@@ -37,35 +37,6 @@
   transition: stroke 0.2s ease, fill 0.2s ease;
 }
 
-.nav-account-icon {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-account-icon--login,
-.nav-account-icon--logout {
-  display: none;
-}
-
-html.auth-logged-out .nav-account-icon--login {
-  display: inline-flex;
-}
-
-html.auth-logged-out .nav-account-icon--logout {
-  display: none;
-}
-
-html.auth-logged-in .nav-account-icon--login {
-  display: none;
-}
-
-html.auth-logged-in .nav-account-icon--logout {
-  display: inline-flex;
-}
-
 @media (hover: hover) and (pointer: fine) {
   .bottom-nav__button:hover .bottom-nav__icon * {
     stroke: var(--color-primary-hover);
