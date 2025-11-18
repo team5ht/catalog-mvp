@@ -31,6 +31,15 @@
   display: block;
 }
 
+.bottom-nav__account-icon {
+  display: none;
+}
+
+body.auth-logged-out .bottom-nav__account-icon--login,
+body.auth-logged-in .bottom-nav__account-icon--logout {
+  display: block;
+}
+
 .bottom-nav__icon * {
   fill: transparent;
   stroke: var(--color-text-muted);
