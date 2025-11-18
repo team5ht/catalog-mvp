@@ -22,6 +22,8 @@
 
 .auth-form .button {
   width: 100%;
+  box-sizing: border-box;
+  display: flex;
 }
 
 .auth-form__title {
