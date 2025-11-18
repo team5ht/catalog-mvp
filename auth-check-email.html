@@ -18,15 +18,20 @@
       <p class="auth-form__paragraph">
         Мы отправили письмо на адрес <span id="authEmailTarget"></span>. Перейдите по ссылке, чтобы войти и скачать материал. Если письма нет 1–2 минуты, проверьте папку «Спам».
       </p>
+      <a class="button button--secondary" id="authMagicLink" href="#">Продолжить</a>
       <a class="button button--primary" href="index.html">Вернуться на главную</a>
     </div>
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const target = document.getElementById('authEmailTarget');
+      const magicLink = document.getElementById('authMagicLink');
       const params = new URLSearchParams(window.location.search);
       const email = params.get('email');
+      const redirect = params.get('redirect');
+      const callbackUrl = `auth-callback.html?redirect=${encodeURIComponent(redirect || 'index.html')}`;
       target.textContent = email && email.trim() ? email : 'указанный email';
+      magicLink.href = callbackUrl;
     });
   </script>
   <script>
