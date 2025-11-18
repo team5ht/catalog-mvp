@@ -1,8 +1,14 @@
 (function(global) {
   const REDIRECT_STORAGE_KEY = 'authRedirectUrl';
+  const AUTH_STORAGE_KEY = 'auth_logged_in';
 
   function isAuthenticated() {
-    return false;
+    try {
+      return Boolean(localStorage.getItem(AUTH_STORAGE_KEY));
+    } catch (err) {
+      console.warn('Не удалось проверить состояние авторизации', err);
+      return false;
+    }
   }
 
   function setRedirectUrl(url) {

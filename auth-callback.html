@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Возвращаем вас…</title>
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f8fafc" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-surface, #f8fafc);
+      color: var(--color-text-primary, #0f172a);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+
+    .callback-card {
+      max-width: 420px;
+      width: 100%;
+      background: #fff;
+      padding: 2.5rem 2rem;
+      border-radius: 24px;
+      box-shadow: 0 20px 80px rgba(15, 23, 42, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      color: var(--color-text-secondary, #475569);
+      font-size: 1rem;
+    }
+
+    .loader {
+      width: 48px;
+      height: 48px;
+      margin: 2rem auto 0;
+      border-radius: 50%;
+      border: 4px solid rgba(15, 23, 42, 0.15);
+      border-top-color: var(--color-primary, #2563eb);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="callback-card">
+    <h1>Вход выполнен</h1>
+    <p>Сейчас вернём вас туда, где вы были.</p>
+    <div class="loader" aria-hidden="true"></div>
+  </div>
+  <script>
+    (function() {
+      const AUTH_STORAGE_KEY = 'auth_logged_in';
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+
+      try {
+        localStorage.setItem(AUTH_STORAGE_KEY, '1');
+      } catch (err) {
+        console.warn('Не удалось сохранить состояние авторизации', err);
+      }
+
+      const target = redirect && redirect.trim() ? redirect : 'index.html';
+
+      setTimeout(() => {
+        window.location.href = target;
+      }, 1200);
+    })();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
