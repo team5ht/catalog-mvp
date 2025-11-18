@@ -1,7 +1,5 @@
 (function() {
   const AUTH_STORAGE_KEY = 'auth_logged_in';
-  const LOGIN_ICON = '<svg class="bottom-nav__icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4" fill="none" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke-width="2"/></svg>';
-  const LOGOUT_ICON = '<svg class="bottom-nav__icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 16l4-4-4-4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h10" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function getAuthModule() {
     return typeof window !== 'undefined' ? window.AuthState : null;
@@ -31,6 +29,15 @@
     }, 2000);
   }
 
+  function setRootAuthClass(authed) {
+    const root = document.documentElement;
+    if (!root) {
+      return;
+    }
+    root.classList.remove('auth-logged-in', 'auth-logged-out');
+    root.classList.add(authed ? 'auth-logged-in' : 'auth-logged-out');
+  }
+
   function handleAccountClick(event, button) {
     if (!isAuthenticated()) {
       event.preventDefault();
@@ -52,7 +59,7 @@
 
   function updateAccountState(button) {
     const authed = isAuthenticated();
-    button.innerHTML = authed ? LOGOUT_ICON : LOGIN_ICON;
+    setRootAuthClass(authed);
     button.setAttribute('aria-label', authed ? 'Выйти из аккаунта' : 'Профиль');
   }
 
