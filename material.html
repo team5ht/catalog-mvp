@@ -12,8 +12,8 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f1f5f9">
 </head>
-<body class="material-page-body">
-<main class="material-page">
+<body class="app-shell material-page-body">
+<main class="material-page app-container">
   <!-- Кнопка назад -->
   <button class="material-page__back-button" onclick="history.back()" aria-label="Назад">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -31,15 +31,15 @@
 
   <!-- Контент -->
   <div class="material-page__content">
-    <h1 id="materialTitle" class="material-page__title">Загрузка...</h1>
+    <h1 id="materialTitle" class="material-page__title page-title">Загрузка...</h1>
 
-    <section class="material-page__section">
-      <h2 class="material-page__section-title">О материале</h2>
+    <section class="material-page__section section">
+      <h2 class="material-page__section-title section-title">О материале</h2>
       <p id="materialDescription" class="material-page__description"></p>
     </section>
 
-    <section class="material-page__section">
-      <h2 class="material-page__section-title">Теги</h2>
+    <section class="material-page__section section">
+      <h2 class="material-page__section-title section-title">Теги</h2>
       <div id="materialTags" class="material-page__tags"></div>
     </section>
   </div>
