@@ -27,7 +27,7 @@
   </div>
 
   <!-- Кнопка действия -->
-  <button id="downloadBtn" class="button button--download is-loading" type="button">Скачать</button>
+  <button id="downloadBtn" class="btn btn-primary-soft button--download is-loading" type="button">Скачать</button>
 
   <!-- Контент -->
   <div class="material-page__content">
@@ -102,8 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const authed = isUserAuthenticated();
     button.textContent = authed ? 'Скачать' : 'Войти и скачать';
     button.setAttribute('aria-label', authed ? 'Скачать материал' : 'Войти и скачать материал');
-    button.classList.toggle('button--download--authed', authed);
-    button.classList.toggle('button--download--guest', !authed);
+    button.classList.toggle('btn-primary', authed);
+    button.classList.toggle('btn-primary-soft', !authed);
     button.classList.remove('is-loading');
   }
 
