@@ -1,4 +1,41 @@
 /* === Базовые кнопки === */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-elevated);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: var(--accent-strong);
+  color: var(--text-on-accent);
+}
+
+.btn-primary-soft {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.btn:focus {
+  outline: none;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -29,42 +66,10 @@
   margin: 1.5rem 1rem;
   padding: 1rem;
   font-size: 1.1rem;
-  border-radius: 12px;
-  box-shadow: var(--shadow-button);
 }
 
 .button--download.is-loading {
   visibility: hidden;
-}
-
-.button--download--guest {
-  background: linear-gradient(135deg, #d9f99d 0%, #a7f3d0 100%);
-  color: #064e3b;
-}
-
-.button--download--guest:hover {
-  background: linear-gradient(135deg, #bef264 0%, #86efac 100%);
-  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.25);
-  transform: translateY(-2px);
-}
-
-.button--download--guest:active {
-  transform: translateY(0);
-}
-
-.button--download--authed {
-  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
-  color: #f0fdf4;
-}
-
-.button--download--authed:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #166534 100%);
-  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
-  transform: translateY(-2px);
-}
-
-.button--download--authed:active {
-  transform: translateY(0);
 }
 
 /* === Чипы/бейджи === */
