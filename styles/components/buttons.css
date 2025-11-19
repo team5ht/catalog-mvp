@@ -4,14 +4,15 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.9rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border: none;
   border-radius: var(--radius-lg);
-  font-weight: 700;
+  font-weight: 600;
   font-family: inherit;
+  font-size: 0.95rem;
   cursor: pointer;
   box-shadow: var(--shadow-elevated);
-  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
 }
 
 .btn:hover {
@@ -19,7 +20,8 @@
 }
 
 .btn:active {
-  transform: translateY(0);
+  transform: translateY(1px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
 }
 
 .btn-primary {
@@ -62,10 +64,10 @@
 }
 
 .button--download {
-  width: calc(100% - 2rem);
-  margin: 1.5rem 1rem;
-  padding: 1rem;
-  font-size: 1.1rem;
+  width: 100%;
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  font-size: var(--font-size-lg);
 }
 
 .button--download.is-loading {
