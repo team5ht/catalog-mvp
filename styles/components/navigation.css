@@ -19,8 +19,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: max(56px, var(--bottom-nav-height));
+  height: var(--bottom-nav-height);
   padding: 0;
   border: none;
   background: none;
@@ -34,6 +34,8 @@
 
 .bottom-nav__icon {
   display: block;
+  width: var(--bottom-nav-icon-size);
+  height: var(--bottom-nav-icon-size);
 }
 
 .bottom-nav__icon * {
@@ -68,7 +70,7 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0 0.75rem;
-  height: 48px;
+  height: var(--bottom-nav-height);
   align-items: center;
   justify-content: center;
 }
