@@ -47,6 +47,9 @@
       console.warn('Не удалось удалить состояние авторизации', err);
     }
     updateAccountState(button);
+    window.dispatchEvent(new CustomEvent('authstatechange', {
+      detail: { isAuthenticated: false }
+    }));
     showToast('Вы вышли из аккаунта.');
   }
 
@@ -64,6 +67,9 @@
     }
 
     updateAccountState(accountButton);
+    window.dispatchEvent(new CustomEvent('authstatechange', {
+      detail: { isAuthenticated: isAuthenticated() }
+    }));
     accountButton.addEventListener('click', (event) => handleAccountClick(event, accountButton));
   });
 })();

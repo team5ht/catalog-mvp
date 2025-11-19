@@ -27,7 +27,7 @@
   </div>
 
   <!-- Кнопка действия -->
-  <button id="downloadBtn" class="button button--download">Скачать</button>
+  <button id="downloadBtn" class="button button--download is-loading" type="button">Скачать</button>
 
   <!-- Контент -->
   <div class="material-page__content">
@@ -61,73 +61,120 @@
 <script src="app.js"></script>
 <script src="nav-auth.js"></script>
 <script>
-document.getElementById('nav-home').onclick = () => location.href = 'index.html';
-document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
+document.addEventListener('DOMContentLoaded', () => {
+  const navHome = document.getElementById('nav-home');
+  const navCatalog = document.getElementById('nav-catalog');
+  if (navHome) {
+    navHome.onclick = () => location.href = 'index.html';
+  }
+  if (navCatalog) {
+    navCatalog.onclick = () => location.href = 'catalog.html';
+  }
 
-// Получаем ID материала из URL
-const urlParams = new URLSearchParams(window.location.search);
-const materialId = parseInt(urlParams.get('id'));
+  // Получаем ID материала из URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const materialId = parseInt(urlParams.get('id'));
 
-if (!materialId) {
-  location.href = 'index.html';
-}
+  if (!materialId) {
+    location.href = 'index.html';
+    return;
+  }
 
-// Загружаем данные и отображаем материал
-fetch('data.json')
-  .then(r => r.json())
-  .then(data => {
-    const material = data.materials.find(m => m.id === materialId);
-    if (!material) {
-      location.href = 'index.html';
+  const AUTH_STORAGE_KEY = 'auth_logged_in';
+
+  function getAuthModule() {
+    return typeof window !== 'undefined' ? window.AuthState : null;
+  }
+
+  function isUserAuthenticated() {
+    const authModule = getAuthModule();
+    if (authModule && typeof authModule.isAuthenticated === 'function') {
+      return authModule.isAuthenticated();
+    }
+    return false;
+  }
+
+  function renderDownloadButtonState(button) {
+    if (!button) {
       return;
     }
 
-    // Обложка
-    document.getElementById('materialCover').style.backgroundImage = `url(${material.cover})`;
-    
-    // Название
-    document.getElementById('materialTitle').textContent = material.title;
-    
-    // Описание
-    document.getElementById('materialDescription').textContent = material.description;
-    
-    // Теги
-    const tagsContainer = document.getElementById('materialTags');
-    if (material.tags && material.tags.length > 0) {
-      material.tags.forEach(tag => {
-        const tagEl = document.createElement('span');
-        tagEl.className = 'material-page__tag chip chip--tag';
-        tagEl.textContent = tag;
-        tagsContainer.appendChild(tagEl);
-      });
-    } else {
-      tagsContainer.innerHTML = '<span class="material-page__tag chip chip--tag">Без тегов</span>';
+    const authed = isUserAuthenticated();
+    button.textContent = authed ? 'Скачать' : 'Войти и скачать';
+    button.setAttribute('aria-label', authed ? 'Скачать материал' : 'Войти и скачать материал');
+    button.classList.toggle('button--download--authed', authed);
+    button.classList.toggle('button--download--guest', !authed);
+    button.classList.remove('is-loading');
+  }
+
+  const downloadBtn = document.getElementById('downloadBtn');
+  renderDownloadButtonState(downloadBtn);
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === AUTH_STORAGE_KEY) {
+      renderDownloadButtonState(downloadBtn);
     }
+  });
 
-    // Кнопка скачать
-    const downloadBtn = document.getElementById('downloadBtn');
-    downloadBtn.onclick = () => {
-      const isAuthed = typeof window.isUserAuthenticated === 'function'
-        ? window.isUserAuthenticated()
-        : false;
+  window.addEventListener('authstatechange', () => {
+    renderDownloadButtonState(downloadBtn);
+  });
 
-      if (!isAuthed) {
-        const currentUrl = window.location.href;
-        if (window.AuthState && typeof window.AuthState.setRedirectUrl === 'function') {
-          window.AuthState.setRedirectUrl(currentUrl);
-        }
-        const loginUrl = `auth-login.html?redirect=${encodeURIComponent(currentUrl)}`;
-        window.location.href = loginUrl;
+  // Загружаем данные и отображаем материал
+  fetch('data.json')
+    .then(r => r.json())
+    .then(data => {
+      const material = data.materials.find(m => m.id === materialId);
+      if (!material) {
+        location.href = 'index.html';
         return;
       }
 
-      if (material.pdfUrl) {
-        window.open(material.pdfUrl, '_blank');
+      // Обложка
+      document.getElementById('materialCover').style.backgroundImage = `url(${material.cover})`;
+
+      // Название
+      document.getElementById('materialTitle').textContent = material.title;
+
+      // Описание
+      document.getElementById('materialDescription').textContent = material.description;
+
+      // Теги
+      const tagsContainer = document.getElementById('materialTags');
+      if (material.tags && material.tags.length > 0) {
+        material.tags.forEach(tag => {
+          const tagEl = document.createElement('span');
+          tagEl.className = 'material-page__tag chip chip--tag';
+          tagEl.textContent = tag;
+          tagsContainer.appendChild(tagEl);
+        });
       } else {
-        alert('Ссылка на материал недоступна');
+        tagsContainer.innerHTML = '<span class="material-page__tag chip chip--tag">Без тегов</span>';
       }
-    };
-  });
+
+      // Кнопка скачать
+      if (downloadBtn) {
+        downloadBtn.onclick = () => {
+          const authed = isUserAuthenticated();
+          if (!authed) {
+            const currentUrl = window.location.href;
+            if (window.AuthState && typeof window.AuthState.setRedirectUrl === 'function') {
+              window.AuthState.setRedirectUrl(currentUrl);
+            }
+            const loginUrl = `auth-login.html?redirect=${encodeURIComponent(currentUrl)}`;
+            window.location.href = loginUrl;
+            return;
+          }
+
+          if (material.pdfUrl) {
+            window.open(material.pdfUrl, '_blank');
+          } else {
+            alert('Ссылка на материал недоступна');
+          }
+        };
+      }
+    });
+});
 </script>
 <script>
 if ('serviceWorker' in navigator) {
