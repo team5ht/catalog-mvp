@@ -60,6 +60,12 @@ body.material-page-body {
   padding: 0 var(--space-4) var(--space-6);
 }
 
+.material-download {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 24px;
+}
+
 .material-page__title {
   font-size: var(--font-size-3xl);
   font-weight: 700;
