@@ -2,9 +2,9 @@
 :root {
   --bg-app: #f5f6f8;
 
-  --accent: #6366f1;
-  --accent-strong: #4f46e5;
-  --accent-soft: #e0e7ff;
+  --accent: #3b82f6;
+  --accent-strong: #2563eb;
+  --accent-soft: #dbeafe;
 
   --text-on-accent: #ffffff;
   --text-normal: #111827;
