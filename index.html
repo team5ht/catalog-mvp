@@ -32,6 +32,12 @@
   </button>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = 'https://dgdnmenvpkyzdvhtmhmz.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZG5tZW52cGt5emR2aHRtaG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTgwOTUsImV4cCI6MjA4MDI3NDA5NX0.QMjrfa88nV5MWZ01V8jkqASNnt-sWkapPMpQpgSyqDA';
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseAnonKey);
+</script>
 <script src="app.js"></script>
 <script>
 document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
