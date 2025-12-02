@@ -15,45 +15,79 @@
 </head>
 <body>
 <main>
-  <section id="main-materials" class="materials-carousel">
-    <!-- Карточки материалов будут вставлены скриптом -->
+  <section class="home-banner">
+    <a class="home-banner__link" href="https://forms.yandex.ru/u/68f26331f47e7388d5a2a27a/" target="_blank" rel="noopener noreferrer">
+      <img class="home-banner__image" src="banner.png" alt="Баннер приглашения к участию" loading="lazy" />
+    </a>
+  </section>
+  <section class="materials-section">
+    <div class="materials-section__header">
+      <h2 class="materials-section__title">Переводы</h2>
+    </div>
+    <div id="main-materials" class="materials-carousel">
+      <!-- Карточки материалов будут вставлены скриптом -->
+    </div>
+  </section>
+
+  <section class="materials-section">
+    <div class="materials-section__header">
+      <h2 class="materials-section__title">Материалы 5HT</h2>
+    </div>
+    <div id="materials-5ht" class="materials-carousel">
+      <!-- Карточки материалов будут вставлены скриптом -->
+    </div>
   </section>
 </main>
 
 <nav class="bottom-nav">
   <button id="nav-home" class="bottom-nav__button bottom-nav__button--active" aria-label="Главная">
-    <svg class="bottom-nav__icon" width="24" height="24"><path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-9z" fill="none" stroke-width="2"/></svg>
+    <svg class="bottom-nav__icon" width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-9z" fill="none" stroke-width="2"/></svg>
   </button>
   <button id="nav-catalog" class="bottom-nav__button" aria-label="Каталог">
-    <svg class="bottom-nav__icon" width="24" height="24"><rect x="3" y="4" width="18" height="16" fill="none" stroke-width="2"/></svg>
+    <svg class="bottom-nav__icon" width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" fill="none" stroke-width="2"/></svg>
   </button>
-  <button id="nav-login" class="bottom-nav__button" aria-label="Профиль">
-    <svg class="bottom-nav__icon" width="24" height="24"><circle cx="12" cy="8" r="4" fill="none" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke-width="2"/></svg>
+  <button id="nav-account" class="bottom-nav__button nav-account is-loading" aria-label="Профиль">
+    <!-- Иконка вставляется скриптом -->
   </button>
 </nav>
 
+<script src="auth-state.js"></script>
 <script src="app.js"></script>
+<script src="nav-auth.js"></script>
 <script>
 document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
-document.getElementById('nav-login').onclick = () => location.href = 'login.html';
 
-function renderMainMaterials(materials) {
-  const container = document.getElementById('main-materials');
+function renderMaterialsCarousel(containerId, materials, limit = 5) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
   container.innerHTML = '';
-  materials.forEach((m, i) => {
-    if(i >= 5) return;
+
+  materials.slice(0, limit).forEach((m) => {
     const card = document.createElement('div');
     card.className = 'material-card material-card--narrow';
-    card.style.backgroundImage = `url(${m.cover})`;
     card.title = m.title;
-    card.textContent = m.title;
     card.onclick = () => location.href = `material.html?id=${m.id}`;
+
+    const cover = document.createElement('div');
+    cover.className = 'material-card__cover';
+    cover.style.backgroundImage = `url(${m.cover})`;
+
+    const title = document.createElement('p');
+    title.className = 'material-card__title';
+    title.textContent = m.title;
+
+    card.appendChild(cover);
+    card.appendChild(title);
     container.appendChild(card);
   });
 }
 
 
-fetch('data.json').then(r=>r.json()).then(data => renderMainMaterials(data.materials));
+fetch('data.json').then(r=>r.json()).then(data => {
+  renderMaterialsCarousel('main-materials', data.materials);
+  renderMaterialsCarousel('materials-5ht', data.materials);
+});
 </script>
 <script>
 if ('serviceWorker' in navigator) {

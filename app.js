@@ -1,4 +1,20 @@
+const AUTH_STORAGE_KEY = 'auth_logged_in';
 let appData = null;
+
+function getAuthModule() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return window.AuthState || null;
+}
+
+function isUserAuthenticated() {
+  const authModule = getAuthModule();
+  if (authModule && typeof authModule.isAuthenticated === 'function') {
+    return authModule.isAuthenticated();
+  }
+  return false;
+}
 
 function checkAuth() {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -10,12 +26,46 @@ function checkAuth() {
 }
 
 function logout() {
-  if (confirm('Вы уверены, что хотите выйти?')) {
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('loginDate');
-    location.href = 'login.html';
+  try {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (err) {
+    console.warn('Не удалось удалить состояние авторизации', err);
   }
+
+  alert('Вы вышли из аккаунта.');
+  window.location.href = 'index.html';
+}
+
+function setupLogoutAction() {
+  if (typeof document === 'undefined') {
+    return;
+  }
+  const logoutBtn = document.querySelector('[data-auth-logout]');
+  if (!logoutBtn) {
+    return;
+  }
+
+  const isAuthed = isUserAuthenticated();
+  logoutBtn.hidden = !isAuthed;
+  logoutBtn.classList.toggle('bottom-nav__text-button--visible', isAuthed);
+
+  if (!isAuthed || logoutBtn.dataset.logoutBound === 'true') {
+    return;
+  }
+
+  logoutBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    logout();
+  });
+  logoutBtn.dataset.logoutBound = 'true';
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', setupLogoutAction);
+}
+
+if (typeof window !== 'undefined') {
+  window.isUserAuthenticated = isUserAuthenticated;
 }
 
 // Главная страница: рендер горизонтального скролла
@@ -26,9 +76,19 @@ function renderMainMaterials(materials) {
   materials.slice(0, 5).forEach(m => {
     const card = document.createElement('div');
     card.className = 'material-card material-card--narrow';
-    card.style.backgroundImage = `url(${m.cover})`;
     card.title = m.title;
-    card.textContent = m.title;
+    card.onclick = () => location.href = `material.html?id=${m.id}`;
+
+    const cover = document.createElement('div');
+    cover.className = 'material-card__cover';
+    cover.style.backgroundImage = `url(${m.cover})`;
+
+    const title = document.createElement('p');
+    title.className = 'material-card__title';
+    title.textContent = m.title;
+
+    card.appendChild(cover);
+    card.appendChild(title);
     container.appendChild(card);
   });
 }

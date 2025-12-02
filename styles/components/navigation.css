@@ -19,16 +19,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: max(56px, var(--bottom-nav-height));
+  height: var(--bottom-nav-height);
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
 }
 
+#nav-account.is-loading,
+.nav-account.is-loading {
+  visibility: hidden;
+}
+
 .bottom-nav__icon {
   display: block;
+  width: var(--bottom-nav-icon-size);
+  height: var(--bottom-nav-icon-size);
 }
 
 .bottom-nav__icon * {
@@ -37,12 +44,64 @@
   transition: stroke 0.2s ease, fill 0.2s ease;
 }
 
-.bottom-nav__button:hover .bottom-nav__icon * {
-  stroke: var(--color-primary-hover);
-  fill: var(--color-primary-hover);
+@media (hover: hover) and (pointer: fine) {
+  .bottom-nav__button:hover .bottom-nav__icon * {
+    stroke: var(--color-primary-hover);
+    fill: var(--color-primary-hover);
+  }
+}
+
+.bottom-nav__button:focus-visible .bottom-nav__icon * {
+  stroke: var(--color-primary);
+  fill: var(--color-primary);
 }
 
 .bottom-nav__button.bottom-nav__button--active .bottom-nav__icon * {
   stroke: var(--color-primary);
   fill: var(--color-primary);
+}
+
+.bottom-nav__text-button {
+  display: none;
+  border: none;
+  background: none;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.75rem;
+  height: var(--bottom-nav-height);
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav__text-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.bottom-nav__text-button--visible {
+  display: inline-flex;
+}
+
+.auth-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottom-nav-offset) + 12px);
+  transform: translate(-50%, 16px);
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+.auth-toast--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }

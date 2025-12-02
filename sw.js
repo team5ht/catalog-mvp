@@ -55,37 +55,40 @@ self.addEventListener('activate', event => {
 
 // Обработка запросов (стратегия: сначала кэш, потом сеть)
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Если есть в кэше — возвращаем из кэша
-        if (response) {
-          return response;
-        }
-        
-        // Иначе загружаем из сети
-        return fetch(event.request)
-          .then(response => {
-            // Проверяем корректность ответа
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-            
-            // Клонируем ответ (response можно прочитать только раз)
-            const responseToCache = response.clone();
-            
-            // Сохраняем в кэш для следующего раза
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-            
-            return response;
-          })
-          .catch(() => {
-            // Если нет сети и нет в кэше — показываем fallback
-            return caches.match('./index.html');
-          });
-      })
-  );
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+
+  // Для сторонних ресурсов оставляем стандартное поведение браузера
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+
+    try {
+      const networkResponse = await fetch(event.request);
+
+      if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        cache.put(event.request, networkResponse.clone());
+      }
+
+      return networkResponse;
+    } catch (error) {
+      const cachedResponse = await cache.match(event.request);
+
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      if (event.request.mode === 'navigate') {
+        return cache.match('./index.html');
+      }
+
+      throw error;
+    }
+  })());
 });

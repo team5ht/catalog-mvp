@@ -1,31 +1,53 @@
 /* === Карточки материалов === */
 .material-card {
   flex: 0 0 140px;
-  height: 210px;
-  border-radius: 12px;
-  background-color: var(--color-surface);
-  background-position: center;
-  background-size: cover;
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 8px;
   display: flex;
-  align-items: flex-end;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  flex-direction: column;
+  gap: 0.5rem;
   cursor: pointer;
   user-select: none;
   scroll-snap-align: start;
+  color: var(--color-text);
+  text-decoration: none;
 }
 
 .material-card--narrow {
   flex-basis: 140px;
 }
 
+.material-card__cover {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
+}
+
+@supports not (aspect-ratio: 2 / 3) {
+  .material-card__cover {
+    position: relative;
+    padding-top: 150%;
+  }
+}
+
+.material-card__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
 @media (max-width: 480px) {
   .material-card {
     flex-basis: 120px;
-    height: 180px;
+  }
+
+  .material-card__title {
     font-size: 0.9rem;
   }
 }
