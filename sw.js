@@ -31,7 +31,7 @@ const urlsToCache = [
   './styles/pages/catalog.css',
   './styles/pages/material.css',
   './styles/pages/login.css',
-  './banner.png',
+  './home-hero.png',
   './icon-192.png',
   './icon-512.png'
 ];
@@ -41,12 +41,20 @@ self.addEventListener('install', event => {
   console.log('Service Worker: Установка');
   
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Service Worker: Кэширование файлов');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => self.skipWaiting()) // Активировать сразу
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      console.log('Service Worker: Кэширование файлов');
+
+      for (const url of urlsToCache) {
+        try {
+          await cache.add(url);
+        } catch (error) {
+          console.warn('Service Worker: Пропуск ресурса при кэшировании', url, error);
+        }
+      }
+
+      await self.skipWaiting(); // Активировать сразу
+    })()
   );
 });
 
