@@ -15,7 +15,7 @@
 <body class="app-shell material-page-body">
 <main class="material-page app-container">
   <!-- Кнопка назад -->
-  <button class="material-page__back-button" onclick="history.back()" aria-label="Назад">
+  <button class="material-page__back-button" aria-label="Назад">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
@@ -82,6 +82,68 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!materialId) {
     location.href = 'index.html';
     return;
+  }
+
+  const backButton = document.querySelector('.material-page__back-button');
+  const BACK_URL_DEFAULTS = ['catalog.html', 'index.html'];
+  const AUTH_PAGES = ['auth-login.html', 'auth-check-email.html', 'auth-callback.html'];
+  const STORAGE_KEY = `materialBackUrl:${materialId}`;
+
+  function isAuthPage(url) {
+    try {
+      const parsed = new URL(url, window.location.origin);
+      const path = parsed.pathname;
+      return AUTH_PAGES.some(page => path.endsWith(`/${page}`) || path.endsWith(page));
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function deriveBackUrlFromReferrer() {
+    if (!document.referrer) {
+      return null;
+    }
+    try {
+      const refUrl = new URL(document.referrer);
+      const sameOrigin = refUrl.origin === window.location.origin;
+      if (!sameOrigin || isAuthPage(refUrl.href)) {
+        return null;
+      }
+      return refUrl.href;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function getFallbackBackUrl() {
+    return BACK_URL_DEFAULTS[0] || '/';
+  }
+
+  function resolveBackUrl() {
+    const referrerBack = deriveBackUrlFromReferrer();
+
+    if (referrerBack) {
+      sessionStorage.setItem(STORAGE_KEY, referrerBack);
+      return referrerBack;
+    }
+
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return stored;
+    }
+
+    const fallback = getFallbackBackUrl();
+    sessionStorage.setItem(STORAGE_KEY, fallback);
+    return fallback;
+  }
+
+  const resolvedBackUrl = resolveBackUrl();
+
+  if (backButton) {
+    backButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.location.href = resolvedBackUrl;
+    });
   }
 
   const AUTH_STORAGE_KEY = 'auth_logged_in';
