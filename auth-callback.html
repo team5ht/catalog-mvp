@@ -72,6 +72,7 @@
   <script>
     (function() {
       const AUTH_STORAGE_KEY = 'auth_logged_in';
+      const AUTH_SYNC_CHANNEL = 'auth-session-sync';
       const params = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
       const redirect = params.get('redirect');
@@ -101,13 +102,57 @@
         if (loaderEl) loaderEl.style.display = 'none';
       }
 
-      async function syncFromUrl() {
+      function getCodeFromUrl() {
+        // Поддержка query (?code=...) и hash (#code=...) из Supabase
+        const queryCode = params.get('code');
+        const hashCode = hashParams.get('code');
+        return queryCode || hashCode;
+      }
+
+      function getTokensFromHash() {
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        if (accessToken && refreshToken) {
+          return { access_token: accessToken, refresh_token: refreshToken };
+        }
+        return null;
+      }
+
+      function shareSession(session) {
+        const payload = session ? {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          expires_at: session.expires_at || null
+        } : null;
+
+        if (!payload) {
+          return;
+        }
+
+        try {
+          localStorage.setItem(AUTH_STORAGE_KEY, '1');
+        } catch (err) {
+          console.warn('Не удалось сохранить состояние авторизации', err);
+        }
+
+        // Синхронизируем с установленной PWA через BroadcastChannel и service worker
+        if ('BroadcastChannel' in window) {
+          const channel = new BroadcastChannel(AUTH_SYNC_CHANNEL);
+          channel.postMessage({ type: 'auth-session', session: payload });
+        }
+
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'auth-session', session: payload });
+        }
+      }
+
+      async function resolveSessionFromUrl() {
         const supabaseClient = window.supabaseClient;
         if (!supabaseClient || !supabaseClient.auth) {
           return null;
         }
 
-        const code = params.get('code');
+        const code = getCodeFromUrl();
         if (code) {
           const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
           if (error) {
@@ -118,13 +163,9 @@
           }
         }
 
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        if (accessToken && refreshToken) {
-          const { data, error } = await supabaseClient.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
+        const tokens = getTokensFromHash();
+        if (tokens) {
+          const { data, error } = await supabaseClient.auth.setSession(tokens);
           if (error) {
             console.warn('Ошибка при установке сессии из hash', error);
           }
@@ -146,18 +187,20 @@
         }
 
         let session = null;
+
         try {
           const { data, error } = await supabaseClient.auth.getSession();
           if (error) {
-            console.warn('Ошибка при получении сессии Supabase', error);
+            console.warn('Ошибка при получении текущей сессии Supabase', error);
           }
           session = data && data.session ? data.session : null;
         } catch (err) {
-          console.warn('Ошибка при чтении сессии Supabase', err);
+          console.warn('Ошибка при чтении текущей сессии Supabase', err);
         }
 
+        // Сначала пробуем обменять код PKCE, затем fallback для старых ссылок через hash
         if (!session) {
-          session = await syncFromUrl();
+          session = await resolveSessionFromUrl();
         }
 
         if (!session) {
@@ -165,11 +208,7 @@
           return;
         }
 
-        try {
-          localStorage.setItem(AUTH_STORAGE_KEY, '1');
-        } catch (err) {
-          console.warn('Не удалось сохранить состояние авторизации', err);
-        }
+        shareSession(session);
 
         if (window.AuthState && typeof window.AuthState.refreshSession === 'function') {
           window.AuthState.refreshSession();
@@ -177,7 +216,7 @@
 
         setTimeout(() => {
           window.location.href = target;
-        }, 800);
+        }, 600);
       }
 
       init();

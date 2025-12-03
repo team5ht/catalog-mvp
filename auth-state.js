@@ -1,9 +1,11 @@
 (function(global) {
   const REDIRECT_STORAGE_KEY = 'authRedirectUrl';
   const AUTH_STORAGE_KEY = 'auth_logged_in';
+  const AUTH_SYNC_CHANNEL = 'auth-session-sync';
   let currentSession = null;
   let lastAuthState = null;
   let isSyncing = false;
+  let broadcastChannel = null;
 
   function setLocalAuthFlag(isAuthed) {
     try {
@@ -77,6 +79,36 @@
     }
   }
 
+  async function applyExternalSession(sessionPayload) {
+    // Подхватываем токены, пришедшие из другого окна/браузера/воркера, и синхронизируем с Supabase
+    if (!sessionPayload || !sessionPayload.access_token || !sessionPayload.refresh_token) {
+      return;
+    }
+
+    if (currentSession && currentSession.access_token === sessionPayload.access_token) {
+      return;
+    }
+
+    if (!global.supabaseClient || !global.supabaseClient.auth || typeof global.supabaseClient.auth.setSession !== 'function') {
+      return;
+    }
+
+    try {
+      const { data, error } = await global.supabaseClient.auth.setSession({
+        access_token: sessionPayload.access_token,
+        refresh_token: sessionPayload.refresh_token
+      });
+      if (error) {
+        console.warn('Не удалось применить внешнюю сессию', error);
+        return;
+      }
+      currentSession = data && data.session ? data.session : null;
+      notifyAuthChange(Boolean(currentSession), currentSession ? currentSession.user : null);
+    } catch (err) {
+      console.warn('Не удалось установить внешнюю сессию', err);
+    }
+  }
+
   function setRedirectUrl(url) {
     try {
       if (typeof url === 'string') {
@@ -111,8 +143,46 @@
     });
   }
 
+  function setupCrossContextSync() {
+    // Передаём сессию между браузером и установленным PWA через BroadcastChannel
+    if ('BroadcastChannel' in global) {
+      try {
+        broadcastChannel = new BroadcastChannel(AUTH_SYNC_CHANNEL);
+        broadcastChannel.addEventListener('message', (event) => {
+          const data = event && event.data ? event.data : null;
+          if (data && data.type === 'auth-session' && data.session) {
+            applyExternalSession(data.session);
+          }
+        });
+      } catch (err) {
+        console.warn('Не удалось инициализировать BroadcastChannel', err);
+      }
+    }
+
+    // И через сервис-воркер, чтобы поймать клики по ссылке из внешнего браузера даже без открытого PWA
+    if (global.navigator && global.navigator.serviceWorker) {
+      global.navigator.serviceWorker.addEventListener('message', (event) => {
+        const data = event && event.data ? event.data : null;
+        if (data && data.type === 'auth-session' && data.session) {
+          applyExternalSession(data.session);
+        }
+      });
+
+      global.navigator.serviceWorker.ready
+        .then((registration) => {
+          if (registration && registration.active) {
+            registration.active.postMessage({ type: 'auth-session-request' });
+          }
+        })
+        .catch(() => {
+          // Воркер не контролирует страницу или ещё не готов — пропускаем
+        });
+    }
+  }
+
   function init() {
     bindSupabaseAuthListener();
+    setupCrossContextSync();
     refreshSession();
   }
 
