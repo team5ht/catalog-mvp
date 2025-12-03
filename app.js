@@ -27,6 +27,17 @@ function checkAuth() {
 
 function logout() {
   try {
+    const supabaseClient = typeof window !== 'undefined' ? window.supabaseClient : null;
+    if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.signOut === 'function') {
+      supabaseClient.auth.signOut().catch((error) => {
+        console.warn('Ошибка при выходе из Supabase', error);
+      });
+    }
+  } catch (err) {
+    console.warn('Не удалось выполнить выход из Supabase', err);
+  }
+
+  try {
     localStorage.removeItem(AUTH_STORAGE_KEY);
   } catch (err) {
     console.warn('Не удалось удалить состояние авторизации', err);

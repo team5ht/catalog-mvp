@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="styles/pages/login.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#f8fafc" />
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth-state.js"></script>
 </head>
 <body>
   <div class="auth-page">
@@ -26,6 +29,7 @@
         inputmode="email"
         aria-label="Email"
       />
+      <p id="authError" class="auth-form__note" role="alert" aria-live="polite" style="color:#b91c1c;display:none;"></p>
       <button type="submit" class="button button--primary">Получить ссылку для входа</button>
       <p class="auth-form__note">Нажимая кнопку, вы подтверждаете согласие с Условиями использования и Политикой конфиденциальности.</p>
     </form>
@@ -34,9 +38,23 @@
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('authLoginForm');
       const emailInput = document.getElementById('authEmail');
+      const errorEl = document.getElementById('authError');
+      const params = new URLSearchParams(window.location.search);
+
+      function getRedirectTarget() {
+        const redirectParam = params.get('redirect');
+        const redirectFromStorage = window.AuthState && typeof window.AuthState.getRedirectUrl === 'function'
+          ? window.AuthState.getRedirectUrl()
+          : null;
+        return redirectParam || redirectFromStorage || 'index.html';
+      }
 
       form.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (errorEl) {
+          errorEl.style.display = 'none';
+          errorEl.textContent = '';
+        }
         const email = emailInput.value.trim();
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -47,8 +65,50 @@
         }
 
         emailInput.setCustomValidity('');
-        const encoded = encodeURIComponent(email);
-        window.location.href = `auth-check-email.html?email=${encoded}`;
+
+        const redirectTarget = getRedirectTarget();
+        const supabaseClient = window.supabaseClient;
+
+        if (!supabaseClient || !supabaseClient.auth || typeof supabaseClient.auth.signInWithOtp !== 'function') {
+          if (errorEl) {
+            errorEl.textContent = 'Не удалось подключиться к сервису авторизации. Попробуйте позже.';
+            errorEl.style.display = 'block';
+          }
+          return;
+        }
+
+        const callbackUrl = new URL('auth-callback.html', window.location.href);
+        if (redirectTarget) {
+          callbackUrl.searchParams.set('redirect', redirectTarget);
+        }
+
+        if (window.AuthState && typeof window.AuthState.setRedirectUrl === 'function') {
+          window.AuthState.setRedirectUrl(redirectTarget);
+        }
+
+        supabaseClient.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: callbackUrl.toString()
+          }
+        }).then(({ error }) => {
+          if (error) {
+            if (errorEl) {
+              errorEl.textContent = 'Не удалось отправить письмо. Попробуйте снова или позже.';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+
+          const encodedEmail = encodeURIComponent(email);
+          const encodedRedirect = encodeURIComponent(redirectTarget);
+          window.location.href = `auth-check-email.html?email=${encodedEmail}&redirect=${encodedRedirect}`;
+        }).catch(() => {
+          if (errorEl) {
+            errorEl.textContent = 'Что-то пошло не так. Попробуйте ещё раз.';
+            errorEl.style.display = 'block';
+          }
+        });
       });
     });
   </script>

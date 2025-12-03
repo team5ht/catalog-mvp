@@ -3,19 +3,37 @@
 // Обеспечивает работу оффлайн и установку на устройство
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v2';
+const CACHE_NAME = 'catalog-mvp-v3';
 
 // Список файлов для кэширования (оффлайн доступ)
 // Используем относительные пути для совместимости с подпапками
 const urlsToCache = [
   './',
   './index.html',
+  './catalog.html',
   './material.html',
+  './auth-login.html',
+  './auth-check-email.html',
+  './auth-callback.html',
   './login.html',
-  './style.css',
   './app.js',
+  './auth-state.js',
+  './nav-auth.js',
+  './supabase-client.js',
   './data.json',
-  './manifest.json'
+  './manifest.json',
+  './styles/tokens.css',
+  './styles/base.css',
+  './styles/components/buttons.css',
+  './styles/components/cards.css',
+  './styles/components/scroll-containers.css',
+  './styles/components/navigation.css',
+  './styles/pages/catalog.css',
+  './styles/pages/material.css',
+  './styles/pages/login.css',
+  './banner.png',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 // Установка Service Worker

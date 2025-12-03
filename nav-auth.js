@@ -34,7 +34,11 @@
   function handleAccountClick(event, button) {
     if (!isAuthenticated()) {
       event.preventDefault();
-      const currentUrl = window.location.pathname + window.location.search;
+      const currentUrl = window.location.href;
+      const authModule = getAuthModule();
+      if (authModule && typeof authModule.setRedirectUrl === 'function') {
+        authModule.setRedirectUrl(currentUrl);
+      }
       const loginUrl = `auth-login.html?redirect=${encodeURIComponent(currentUrl)}`;
       window.location.href = loginUrl;
       return;
@@ -46,6 +50,12 @@
     } catch (err) {
       console.warn('Не удалось удалить состояние авторизации', err);
     }
+    const supabaseClient = window.supabaseClient;
+    if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.signOut === 'function') {
+      supabaseClient.auth.signOut().catch((error) => {
+        console.warn('Ошибка при выходе из Supabase', error);
+      });
+    }
     updateAccountState(button);
     window.dispatchEvent(new CustomEvent('authstatechange', {
       detail: { isAuthenticated: false }
@@ -54,6 +64,9 @@
   }
 
   function updateAccountState(button) {
+    if (!button) {
+      return;
+    }
     const authed = isAuthenticated();
     button.innerHTML = authed ? LOGOUT_ICON : LOGIN_ICON;
     button.setAttribute('aria-label', authed ? 'Выйти из аккаунта' : 'Войти');
@@ -66,7 +79,19 @@
       return;
     }
 
-    updateAccountState(accountButton);
+    const authModule = getAuthModule();
+    if (authModule && typeof authModule.refreshSession === 'function') {
+      Promise.resolve(authModule.refreshSession()).finally(() => {
+        updateAccountState(accountButton);
+      });
+    } else {
+      updateAccountState(accountButton);
+    }
+
+    window.addEventListener('authstatechange', () => {
+      updateAccountState(accountButton);
+    });
+
     window.dispatchEvent(new CustomEvent('authstatechange', {
       detail: { isAuthenticated: isAuthenticated() }
     }));

@@ -59,6 +59,8 @@
   </button>
 </nav>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
 <script src="auth-state.js"></script>
 <script src="app.js"></script>
 <script src="nav-auth.js"></script>
@@ -111,6 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const downloadBtn = document.getElementById('downloadBtn');
   renderDownloadButtonState(downloadBtn);
+
+  if (window.AuthState && typeof window.AuthState.refreshSession === 'function') {
+    window.AuthState.refreshSession().then(() => renderDownloadButtonState(downloadBtn));
+  }
 
   window.addEventListener('storage', (event) => {
     if (event.key === AUTH_STORAGE_KEY) {
