@@ -4,14 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 if (!window.supabaseClient) {
   if (window.supabase && typeof window.supabase.createClient === 'function') {
-    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        // Явно включаем PKCE для magic-link и автоподдержку сессии, чтобы её можно было обменять на callback-странице
-        flowType: 'pkce',
-        persistSession: true,
-        autoRefreshToken: true
-      }
-    });
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } else {
     console.warn('Supabase JS SDK is not loaded. Make sure the CDN script is included before supabase-client.js');
     window.supabaseClient = null;
