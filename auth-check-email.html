@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Проверьте почту</title>
+  <title>Вход по паролю</title>
   <link rel="stylesheet" href="styles/tokens.css" />
   <link rel="stylesheet" href="styles/base.css" />
   <link rel="stylesheet" href="styles/components/buttons.css" />
@@ -15,12 +15,12 @@
 <body>
   <div class="auth-page">
     <div class="auth-form" id="authCheckEmail">
-      <h1 class="auth-form__title">Проверьте почту</h1>
+      <h1 class="auth-form__title">Вход по паролю</h1>
       <p class="auth-form__paragraph">
-        Мы отправили письмо на адрес <span id="authEmailTarget"></span>. Перейдите по ссылке, чтобы войти и скачать материал. Если письма нет 1–2 минуты, проверьте папку «Спам».
+        Магические ссылки больше не используются. Воспользуйтесь формой входа с email и паролем. Мы сохранили ваш адрес <span id="authEmailTarget"></span>, чтобы не вводить его заново.
       </p>
-      <a class="button button--secondary" id="authMagicLink" href="#">Продолжить</a>
-      <a class="button button--primary" href="index.html">Вернуться на главную</a>
+      <a class="button button--secondary" id="authMagicLink" href="#">Открыть форму входа</a>
+      <a class="button button--primary" href="index.html" style="margin-top:0.75rem;">Вернуться на главную</a>
     </div>
   </div>
   <script>
@@ -34,9 +34,9 @@
         ? window.AuthState.getRedirectUrl()
         : null;
       const redirect = redirectParam || storedRedirect || 'index.html';
-      const callbackUrl = `auth-callback.html?redirect=${encodeURIComponent(redirect)}`;
+      const loginUrl = `auth-login.html?redirect=${encodeURIComponent(redirect)}${email ? `&email=${encodeURIComponent(email)}` : ''}`;
       target.textContent = email && email.trim() ? email : 'указанный email';
-      magicLink.href = callbackUrl;
+      magicLink.href = loginUrl;
     });
   </script>
   <script>

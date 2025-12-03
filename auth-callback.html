@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Возвращаем вас…</title>
+  <title>Парольный вход</title>
   <link rel="stylesheet" href="styles/tokens.css" />
   <link rel="stylesheet" href="styles/base.css" />
   <link rel="manifest" href="manifest.json" />
@@ -64,21 +64,21 @@
 </head>
 <body>
   <div class="callback-card">
-    <h1 id="callbackTitle">Вход выполнен</h1>
-    <p id="callbackMessage">Сейчас вернём вас туда, где вы были.</p>
+    <h1 id="callbackTitle">Перешли на парольный вход</h1>
+    <p id="callbackMessage">Перенаправляем вас на новую форму входа.</p>
     <p id="callbackError" style="margin-top:0.75rem;color:#b91c1c;display:none;"></p>
     <div class="loader" aria-hidden="true"></div>
+    <a id="callbackManualLink" href="#" style="display:block;margin-top:1.25rem;color:var(--color-primary,#2563eb);font-weight:600;text-decoration:none;">Перейти вручную</a>
   </div>
   <script>
     (function() {
-      const AUTH_STORAGE_KEY = 'auth_logged_in';
       const params = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
       const redirect = params.get('redirect');
       const titleEl = document.getElementById('callbackTitle');
       const messageEl = document.getElementById('callbackMessage');
       const errorEl = document.getElementById('callbackError');
       const loaderEl = document.querySelector('.loader');
+      const manualLink = document.getElementById('callbackManualLink');
 
       function getRedirectTarget() {
         if (redirect && redirect.trim()) {
@@ -91,93 +91,35 @@
         return 'index.html';
       }
 
-      function showError(message) {
-        if (titleEl) titleEl.textContent = 'Не удалось войти';
-        if (messageEl) messageEl.textContent = 'Ссылка для входа устарела или уже использована. Запросите новую ссылку и попробуйте снова.';
-        if (errorEl) {
-          errorEl.textContent = message || '';
-          errorEl.style.display = message ? 'block' : 'none';
+      function redirectToLogin(target) {
+        const loginUrl = `auth-login.html?redirect=${encodeURIComponent(target)}`;
+        if (manualLink) {
+          manualLink.href = loginUrl;
         }
-        if (loaderEl) loaderEl.style.display = 'none';
-      }
-
-      async function syncFromUrl() {
-        const supabaseClient = window.supabaseClient;
-        if (!supabaseClient || !supabaseClient.auth) {
-          return null;
-        }
-
-        const code = params.get('code');
-        if (code) {
-          const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
-          if (error) {
-            console.warn('Ошибка при обмене кода на сессию', error);
-          }
-          if (data && data.session) {
-            return data.session;
-          }
-        }
-
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        if (accessToken && refreshToken) {
-          const { data, error } = await supabaseClient.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-          if (error) {
-            console.warn('Ошибка при установке сессии из hash', error);
-          }
-          if (data && data.session) {
-            return data.session;
-          }
-        }
-
-        return null;
+        window.location.replace(loginUrl);
       }
 
       async function init() {
-        const supabaseClient = window.supabaseClient;
         const target = getRedirectTarget();
-
-        if (!supabaseClient || !supabaseClient.auth) {
-          showError('Сервис авторизации недоступен. Попробуйте снова.');
-          return;
+        if (titleEl) {
+          titleEl.textContent = 'Перешли на парольный вход';
         }
-
-        let session = null;
-        try {
-          const { data, error } = await supabaseClient.auth.getSession();
-          if (error) {
-            console.warn('Ошибка при получении сессии Supabase', error);
-          }
-          session = data && data.session ? data.session : null;
-        } catch (err) {
-          console.warn('Ошибка при чтении сессии Supabase', err);
+        if (messageEl) {
+          messageEl.textContent = 'Мы отключили магические ссылки. Откроем форму входа с паролем.';
         }
-
-        if (!session) {
-          session = await syncFromUrl();
+        if (errorEl) {
+          errorEl.textContent = 'Если перенаправление не сработало автоматически, воспользуйтесь ссылкой ниже.';
+          errorEl.style.display = 'block';
         }
-
-        if (!session) {
-          showError();
-          return;
+        if (loaderEl) {
+          loaderEl.style.display = 'block';
         }
-
-        try {
-          localStorage.setItem(AUTH_STORAGE_KEY, '1');
-        } catch (err) {
-          console.warn('Не удалось сохранить состояние авторизации', err);
+        if (manualLink) {
+          manualLink.href = `auth-login.html?redirect=${encodeURIComponent(target)}`;
         }
-
-        if (window.AuthState && typeof window.AuthState.refreshSession === 'function') {
-          window.AuthState.refreshSession();
-        }
-
         setTimeout(() => {
-          window.location.href = target;
-        }, 800);
+          redirectToLogin(target);
+        }, 600);
       }
 
       init();
