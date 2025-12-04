@@ -21,10 +21,11 @@
 
 ## Авторизация и состояние
 
-- `supabase-client.js` — создаёт shared-клиент Supabase из CDN, читает `VITE_SUPABASE_URL` и `VITE_SUPABASE_PUBLISHABLE_KEY` (publishable/public key). При отсутствии SDK выводит warn и даёт `supabaseClient = null`.
-- `auth-state.js` — модуль `window.AuthState`: синхронизирует сессию Supabase, кладёт флаг `auth_logged_in` в `localStorage`, хранит `authRedirectUrl`, отдаёт `isAuthenticated()`, `refreshSession()`, `getUser()` и шлёт `CustomEvent('authstatechange', { detail: { isAuthenticated, user } })`.
-- `nav-auth.js` — управление кнопкой профиля: проверяет `AuthState`, подставляет иконку, сохраняет redirect, выполняет выход (включая `supabaseClient.auth.signOut()`), очищает `auth_logged_in` и транслирует `authstatechange`.
-- `app.js` — вспомогательные проверки `isUserAuthenticated`, обработчик logout, рендер главных блоков, категорий и каталога. Использует `AuthState` при наличии.
+- `supabase-config.js` - объявляет `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY` (publishable/public key). Скрипт подключается до Supabase SDK и `supabase-client.js`; для другого проекта обновите значения здесь или проставьте их инлайном до загрузки клиента.
+- `supabase-client.js` - создаёт shared-клиент Supabase из CDN, читает `window.SUPABASE_URL`/`window.SUPABASE_PUBLISHABLE_KEY`. При отсутствии SDK/конфигурации выводит warn и даёт `supabaseClient = null`.
+- `auth-state.js` - модуль `window.AuthState`: синхронизирует сессию Supabase, кладёт флаг `auth_logged_in` в `localStorage`, хранит `authRedirectUrl`, отдаёт `isAuthenticated()`, `refreshSession()`, `getUser()` и шлёт `CustomEvent('authstatechange', { detail: { isAuthenticated, user } })`.
+- `nav-auth.js` - управление кнопкой профиля: проверяет `AuthState`, подставляет иконку, сохраняет redirect, выполняет выход (включая `supabaseClient.auth.signOut()`), очищает `auth_logged_in` и транслирует `authstatechange`.
+- `app.js` - вспомогательные проверки `isUserAuthenticated`, обработчик logout, рендер главных блоков, категорий и каталога. Использует `AuthState` при наличии.
 - Inline-скрипты на страницах используют эти функции для рендера и навигации; кнопка скачивания на `material.html` переключает текст/стили в зависимости от авторизации.
 
 ## Стили
@@ -51,7 +52,7 @@ npx serve .
 ## Известные ограничения
 
 - Поиск в каталоге пока заглушка.
-- Supabase publishable key хранится на клиенте; secret key не используется и не должен попадать в браузер. Проверки email/пароля полностью на стороне Supabase, без собственного backend.
+- Конфигурация Supabase задаётся в `supabase-config.js` как `window.SUPABASE_URL/PUBLISHABLE_KEY`. Храните здесь только publishable key (secret не нужен и не должен попадать в браузер). Проверки email/пароля полностью на стороне Supabase, без собственного backend.
 - В `data.json` стоят плейсхолдеры `pdfUrl`; для реальных материалов нужны валидные ссылки.
 - Список кэша в `sw.js` поддерживается вручную; новый ассет/страницу нужно добавить в `urlsToCache` и поднять версию.
-- Дублирование ключей авторизации (`auth_logged_in` vs `isLoggedIn`) сохранено для обратной совместимости — используйте `auth_logged_in`/`AuthState`.
+- Дублирование ключей авторизации (`auth_logged_in` vs `isLoggedIn`) сохранено для обратной совместимости - используйте `auth_logged_in`/`AuthState`.
