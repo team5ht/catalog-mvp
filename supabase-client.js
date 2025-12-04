@@ -1,12 +1,37 @@
-// Shared Supabase client (loaded via CDN in HTML). Replace placeholders with real project settings.
-const SUPABASE_URL = 'https://dgdnmenvpkyzdvhtmhmz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZG5tZW52cGt5emR2aHRtaG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTgwOTUsImV4cCI6MjA4MDI3NDA5NX0.QMjrfa88nV5MWZ01V8jkqASNnt-sWkapPMpQpgSyqDA';
+// Shared Supabase client (CDN-friendly). Configure via publishable key, never embed the secret key in the browser.
+(function initSupabaseClient(global) {
+  const supabaseUrl =
+    (typeof import.meta !== 'undefined' &&
+      import.meta.env &&
+      import.meta.env.VITE_SUPABASE_URL) ||
+    global.SUPABASE_URL ||
+    '';
 
-if (!window.supabaseClient) {
-  if (window.supabase && typeof window.supabase.createClient === 'function') {
-    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabasePublishableKey =
+    (typeof import.meta !== 'undefined' &&
+      import.meta.env &&
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) ||
+    global.SUPABASE_PUBLISHABLE_KEY ||
+    '';
+
+  if (global.supabaseClient) {
+    return;
+  }
+
+  if (!supabaseUrl || !supabasePublishableKey) {
+    console.warn(
+      'Supabase config is missing. Provide VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (publishable/public key only).'
+    );
+    global.supabaseClient = null;
+    return;
+  }
+
+  const { createClient } = global.supabase || {};
+
+  if (typeof createClient === 'function') {
+    global.supabaseClient = createClient(supabaseUrl, supabasePublishableKey);
   } else {
     console.warn('Supabase JS SDK is not loaded. Make sure the CDN script is included before supabase-client.js');
-    window.supabaseClient = null;
+    global.supabaseClient = null;
   }
-}
+})(window);
