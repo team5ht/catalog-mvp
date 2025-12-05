@@ -1,247 +1,275 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Вход в 5HT</title>
-  <link rel="stylesheet" href="styles/tokens.css" />
-  <link rel="stylesheet" href="styles/base.css" />
-  <link rel="stylesheet" href="styles/components/buttons.css" />
-  <link rel="stylesheet" href="styles/pages/login.css" />
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#f8fafc" />
-  <script src="supabase-config.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js"></script>
-  <script src="auth-state.js"></script>
-</head>
-<body>
-  <div class="auth-page">
-    <form class="auth-form" id="authLoginForm" novalidate>
-      <h1 class="auth-form__title">Вход или регистрация</h1>
-      <p class="auth-form__subtitle">Используйте email и пароль, чтобы войти или создать аккаунт.</p>
-      <input
-        type="email"
-        id="authEmail"
-        class="auth-form__input"
-        placeholder="name@example.com"
-        required
-        autocomplete="email"
-        inputmode="email"
-        aria-label="Email"
-      />
-      <input
-        type="password"
-        id="authPassword"
-        class="auth-form__input"
-        placeholder="Пароль (мин. 6 символов)"
-        required
-        autocomplete="current-password"
-        aria-label="Пароль"
-      />
-      <p id="authError" class="auth-form__note" role="alert" aria-live="polite" style="color:#b91c1c;display:none;"></p>
-      <button type="submit" class="button button--primary" data-action="login">Войти</button>
-      <button type="submit" class="button button--secondary" data-action="signup" style="margin-top:0.75rem;">Зарегистрироваться</button>
-      <p class="auth-form__note">Пароль должен содержать минимум 6 символов. После успешного входа мы вернём вас на предыдущую страницу.</p>
-    </form>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('authLoginForm');
+    const emailInput = document.getElementById('authEmail');
+    const passwordInput = document.getElementById('authPassword');
+    const errorEl = document.getElementById('authError');
+    const sessionBlock = document.getElementById('authSessionBlock');
+    const userInfoEl = document.getElementById('authUserInfo');
+    const logoutBtn = document.getElementById('authLogoutButton');
+    const continueBtn = document.getElementById('authContinueButton');
+    const params = new URLSearchParams(window.location.search);
+    const supabaseClient = window.supabaseClient;
+    let submitAction = 'login';
 
-    <div class="auth-form" id="authSessionBlock" hidden>
-      <h2 class="auth-form__title">Вы уже вошли</h2>
-      <p id="authUserInfo" class="auth-form__paragraph"></p>
-      <button type="button" class="button button--primary" id="authContinueButton">Продолжить</button>
-      <button type="button" class="button button--secondary" id="authLogoutButton" style="margin-top:0.75rem;">Выйти</button>
-    </div>
-  </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('authLoginForm');
-      const emailInput = document.getElementById('authEmail');
-      const passwordInput = document.getElementById('authPassword');
-      const errorEl = document.getElementById('authError');
-      const sessionBlock = document.getElementById('authSessionBlock');
-      const userInfoEl = document.getElementById('authUserInfo');
-      const logoutBtn = document.getElementById('authLogoutButton');
-      const continueBtn = document.getElementById('authContinueButton');
-      const params = new URLSearchParams(window.location.search);
-      const supabaseClient = window.supabaseClient;
-      let submitAction = 'login';
+    // === DEBUG ПАНЕЛЬ ДЛЯ iPHONE ===
+    const debugBox = document.createElement('pre');
+    debugBox.id = 'authDebug';
+    debugBox.style.fontSize = '10px';
+    debugBox.style.whiteSpace = 'pre-wrap';
+    debugBox.style.background = '#fee2e2';
+    debugBox.style.color = '#111827';
+    debugBox.style.padding = '8px';
+    debugBox.style.margin = '12px auto';
+    debugBox.style.maxWidth = '420px';
+    debugBox.style.borderRadius = '8px';
+    debugBox.textContent = 'DEBUG LOG:\n';
+    document.body.appendChild(debugBox);
 
-      const presetEmail = params.get('email');
-      if (presetEmail && emailInput) {
-        emailInput.value = presetEmail;
-      }
+    function debug(label, data) {
+      if (!debugBox) return;
+      const line =
+        '\n[' +
+        new Date().toISOString() +
+        '] ' +
+        label +
+        ':\n' +
+        JSON.stringify(data, null, 2) +
+        '\n';
+      debugBox.textContent += line;
+    }
 
-      function getRedirectTarget() {
-        const redirectParam = params.get('redirect');
-        const redirectFromStorage = window.AuthState && typeof window.AuthState.getRedirectUrl === 'function'
+    // Логируем стартовую конфигурацию
+    debug('initial_config', {
+      SUPABASE_URL: window.SUPABASE_URL,
+      hasPublishableKey: !!window.SUPABASE_PUBLISHABLE_KEY,
+      hasSupabaseClient: !!supabaseClient
+    });
+
+    const presetEmail = params.get('email');
+    if (presetEmail && emailInput) {
+      emailInput.value = presetEmail;
+    }
+
+    function getRedirectTarget() {
+      const redirectParam = params.get('redirect');
+      const redirectFromStorage =
+        window.AuthState && typeof window.AuthState.getRedirectUrl === 'function'
           ? window.AuthState.getRedirectUrl()
           : null;
-        return redirectParam || redirectFromStorage || 'index.html';
-      }
+      return redirectParam || redirectFromStorage || 'index.html';
+    }
 
-      function setError(message) {
-        if (!errorEl) return;
-        if (message) {
-          errorEl.textContent = message;
-          errorEl.style.display = 'block';
-        } else {
-          errorEl.textContent = '';
-          errorEl.style.display = 'none';
-        }
+    function setError(message) {
+      if (!errorEl) return;
+      if (message) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+      } else {
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
       }
+      debug('setError', { message });
+    }
 
-      function setLoading(isLoading) {
-        const buttons = form ? form.querySelectorAll('button[data-action]') : [];
-        buttons.forEach(btn => {
-          btn.disabled = isLoading;
-        });
-        if (emailInput) emailInput.disabled = isLoading;
-        if (passwordInput) passwordInput.disabled = isLoading;
+    function setLoading(isLoading) {
+      const buttons = form ? form.querySelectorAll('button[data-action]') : [];
+      buttons.forEach((btn) => {
+        btn.disabled = isLoading;
+      });
+      if (emailInput) emailInput.disabled = isLoading;
+      if (passwordInput) passwordInput.disabled = isLoading;
+      debug('setLoading', { isLoading });
+    }
+
+    function renderSession(user) {
+      const authed = Boolean(user);
+      if (sessionBlock) sessionBlock.hidden = !authed;
+      if (form) form.style.display = authed ? 'none' : 'block';
+      if (userInfoEl) {
+        userInfoEl.textContent = authed
+          ? `Вы вошли как ${user.email || 'пользователь'}.`
+          : 'Вы не авторизованы.';
       }
+      debug('renderSession', {
+        authed,
+        userEmail: user && user.email ? user.email : null
+      });
+    }
 
-      function renderSession(user) {
-        const authed = Boolean(user);
-        if (sessionBlock) sessionBlock.hidden = !authed;
-        if (form) form.style.display = authed ? 'none' : 'block';
-        if (userInfoEl) {
-          userInfoEl.textContent = authed
-            ? `Вы вошли как ${user.email || 'пользователь'}.`
-            : 'Вы не авторизованы.';
-        }
-      }
-
-      async function syncSession() {
+    async function syncSession() {
+      debug('syncSession_start', {});
+      try {
         if (window.AuthState && typeof window.AuthState.refreshSession === 'function') {
-          return window.AuthState.refreshSession();
+          const session = await window.AuthState.refreshSession();
+          debug('syncSession_AuthState', { session });
+          return session;
         }
         if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.getSession === 'function') {
-          const { data } = await supabaseClient.auth.getSession();
+          const { data, error } = await supabaseClient.auth.getSession();
+          debug('syncSession_supabase', { data, errorMessage: error && error.message });
           return data ? data.session : null;
         }
-        return null;
+      } catch (err) {
+        debug('syncSession_error', { message: err.message, stack: String(err.stack || '') });
+      }
+      return null;
+    }
+
+    function getCurrentUser() {
+      if (window.AuthState && typeof window.AuthState.getUser === 'function') {
+        const user = window.AuthState.getUser();
+        debug('getCurrentUser_AuthState', { user });
+        return user;
+      }
+      debug('getCurrentUser_none', {});
+      return null;
+    }
+
+    async function handleAuth(action) {
+      setError('');
+      debug('handleAuth_start', { action });
+
+      if (!supabaseClient || !supabaseClient.auth) {
+        setError('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
+        debug('handleAuth_noClient', {});
+        return;
       }
 
-      function getCurrentUser() {
-        if (window.AuthState && typeof window.AuthState.getUser === 'function') {
-          return window.AuthState.getUser();
-        }
-        return null;
+      const email = (emailInput.value || '').trim();
+      const password = passwordInput.value || '';
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!email || !emailPattern.test(email)) {
+        emailInput.setCustomValidity('Введите корректный email');
+        emailInput.reportValidity();
+        debug('handleAuth_invalidEmail', { email });
+        return;
       }
 
-      async function handleAuth(action) {
-        setError('');
-        if (!supabaseClient || !supabaseClient.auth) {
-          setError('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
-          return;
+      if (!password || password.length < 6) {
+        passwordInput.setCustomValidity('Минимум 6 символов в пароле');
+        passwordInput.reportValidity();
+        debug('handleAuth_invalidPassword', { length: password.length });
+        return;
+      }
+
+      emailInput.setCustomValidity('');
+      passwordInput.setCustomValidity('');
+
+      setLoading(true);
+      try {
+        let result;
+        if (action === 'signup') {
+          result = await supabaseClient.auth.signUp({ email, password });
+        } else {
+          result = await supabaseClient.auth.signInWithPassword({ email, password });
         }
 
-        const email = (emailInput.value || '').trim();
-        const password = passwordInput.value || '';
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const { data, error } = result || {};
+        debug('auth_result', {
+          action,
+          data,
+          errorMessage: error && error.message,
+          error
+        });
 
-        if (!email || !emailPattern.test(email)) {
-          emailInput.setCustomValidity('Введите корректный email');
-          emailInput.reportValidity();
-          return;
-        }
-
-        if (!password || password.length < 6) {
-          passwordInput.setCustomValidity('Минимум 6 символов в пароле');
-          passwordInput.reportValidity();
-          return;
-        }
-
-        emailInput.setCustomValidity('');
-        passwordInput.setCustomValidity('');
-
-        setLoading(true);
-        try {
-          const { data, error } = action === 'signup'
-            ? await supabaseClient.auth.signUp({ email, password })
-            : await supabaseClient.auth.signInWithPassword({ email, password });
-
-          if (error) {
-            setError(action === 'signup'
+        if (error) {
+          setError(
+            action === 'signup'
               ? 'Не удалось зарегистрироваться. Попробуйте снова.'
-              : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
-            return;
-          }
-
-          const session = (data && data.session) ? data.session : await syncSession();
-          const user = (session && session.user) || getCurrentUser();
-
-          if (!user && action === 'signup') {
-            setError('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.');
-            renderSession(null);
-            return;
-          }
-
-          if (!user) {
-            setError('Не удалось получить сессию. Попробуйте снова.');
-            renderSession(null);
-            return;
-          }
-
-          renderSession(user);
-          window.location.href = getRedirectTarget();
-        } catch (err) {
-          console.warn('Ошибка авторизации', err);
-          setError('Что-то пошло не так. Попробуйте ещё раз.');
-        } finally {
-          setLoading(false);
+              : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.'
+          );
+          return;
         }
+
+        const session = data && data.session ? data.session : await syncSession();
+        const user = (session && session.user) || getCurrentUser();
+
+        debug('auth_session_user', { session, user });
+
+        if (!user && action === 'signup') {
+          setError('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.');
+          renderSession(null);
+          return;
+        }
+
+        if (!user) {
+          setError('Не удалось получить сессию. Попробуйте снова.');
+          renderSession(null);
+          return;
+        }
+
+        renderSession(user);
+        const target = getRedirectTarget();
+        debug('auth_redirect', { target });
+        window.location.href = target;
+      } catch (err) {
+        debug('handleAuth_exception', { message: err.message, stack: String(err.stack || '') });
+        console.warn('Ошибка авторизации', err);
+        setError('Что-то пошло не так. Попробуйте ещё раз.');
+      } finally {
+        setLoading(false);
       }
+    }
 
-      form.addEventListener('click', (event) => {
-        const actionBtn = event.target.closest('button[data-action]');
-        if (actionBtn && actionBtn.dataset.action) {
-          submitAction = actionBtn.dataset.action;
-        }
-      });
+    // Отслеживаем, по какой кнопке кликнули
+    form.addEventListener('click', (event) => {
+      const actionBtn = event.target.closest('button[data-action]');
+      if (actionBtn && actionBtn.dataset.action) {
+        submitAction = actionBtn.dataset.action;
+        debug('click_action', { submitAction });
+      }
+    });
 
-      form.addEventListener('submit', (event) => {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      debug('form_submit', { submitAction });
+      handleAuth(submitAction);
+    });
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async (event) => {
         event.preventDefault();
-        handleAuth(submitAction);
-      });
-
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async (event) => {
-          event.preventDefault();
-          try {
-            if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.signOut === 'function') {
-              await supabaseClient.auth.signOut();
-            }
-          } catch (err) {
-            console.warn('Ошибка при выходе из Supabase', err);
+        debug('logout_click', {});
+        try {
+          if (
+            supabaseClient &&
+            supabaseClient.auth &&
+            typeof supabaseClient.auth.signOut === 'function'
+          ) {
+            await supabaseClient.auth.signOut();
           }
-          await syncSession();
-          renderSession(getCurrentUser());
-        });
-      }
-
-      if (continueBtn) {
-        continueBtn.addEventListener('click', () => {
-          window.location.href = getRedirectTarget();
-        });
-      }
-
-      syncSession().then((session) => {
+        } catch (err) {
+          debug('logout_error', { message: err.message, stack: String(err.stack || '') });
+          console.warn('Ошибка при выходе из Supabase', err);
+        }
+        const session = await syncSession();
         const user = session && session.user ? session.user : getCurrentUser();
         renderSession(user);
       });
+    }
 
-      window.addEventListener('authstatechange', (event) => {
-        const user = event && event.detail ? event.detail.user : getCurrentUser();
-        renderSession(user);
-      });
-    });
-  </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js');
+    if (continueBtn) {
+      continueBtn.addEventListener('click', () => {
+        const target = getRedirectTarget();
+        debug('continue_click', { target });
+        window.location.href = target;
       });
     }
-  </script>
-</body>
-</html>
+
+    // Первичная синхронизация сессии
+    syncSession().then((session) => {
+      const user = session && session.user ? session.user : getCurrentUser();
+      debug('initial_syncSession_done', { session, user });
+      renderSession(user);
+    });
+
+    // Реакция на события AuthState
+    window.addEventListener('authstatechange', (event) => {
+      const user = event && event.detail ? event.detail.user : getCurrentUser();
+      debug('authstatechange_event', { eventDetail: event && event.detail, user });
+      renderSession(user);
+    });
+  });
+</script>
