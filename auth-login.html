@@ -51,13 +51,6 @@
       <button type="button" class="button button--primary" id="authContinueButton">Продолжить</button>
       <button type="button" class="button button--secondary" id="authLogoutButton" style="margin-top:0.75rem;">Выйти</button>
     </div>
-
-    <div class="auth-form" id="authDebugPanel" aria-live="polite" style="margin-top:1.5rem;">
-      <h2 class="auth-form__title">Дебаг регистрации/логина</h2>
-      <p class="auth-form__note">Выводим ключевые проверки, чтобы понять, почему не создаётся пользователь или не приходит письмо.</p>
-      <div id="authDebugLog" style="background:#0f172a; color:#e2e8f0; padding:0.75rem; border-radius:0.75rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:0.9rem; max-height:240px; overflow:auto;">Загружаем дебаг...</div>
-      <button type="button" class="button button--secondary" id="authDebugClear" style="margin-top:0.75rem;">Очистить лог</button>
-    </div>
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -69,8 +62,6 @@
       const userInfoEl = document.getElementById('authUserInfo');
       const logoutBtn = document.getElementById('authLogoutButton');
       const continueBtn = document.getElementById('authContinueButton');
-      const debugLogEl = document.getElementById('authDebugLog');
-      const debugClearBtn = document.getElementById('authDebugClear');
       const params = new URLSearchParams(window.location.search);
       const supabaseClient = window.supabaseClient;
       let submitAction = 'login';
@@ -119,31 +110,6 @@
         }
       }
 
-      function maskValue(value) {
-        if (!value) return 'не задано';
-        const str = String(value);
-        if (str.length <= 6) return `${str[0]}***${str[str.length - 1]}`;
-        return `${str.slice(0, 3)}***${str.slice(-3)}`;
-      }
-
-      function appendDebug(message, details) {
-        if (!debugLogEl) return;
-        const entry = document.createElement('div');
-        const time = new Date().toLocaleTimeString();
-        const detailText = details === undefined ? '' : ` | ${typeof details === 'string' ? details : JSON.stringify(details)}`;
-        entry.textContent = `[${time}] ${message}${detailText}`;
-        debugLogEl.appendChild(entry);
-        debugLogEl.scrollTop = debugLogEl.scrollHeight;
-      }
-
-      if (debugClearBtn) {
-        debugClearBtn.addEventListener('click', () => {
-          if (debugLogEl) {
-            debugLogEl.textContent = 'Лог очищен';
-          }
-        });
-      }
-
       async function syncSession() {
         if (window.AuthState && typeof window.AuthState.refreshSession === 'function') {
           return window.AuthState.refreshSession();
@@ -164,10 +130,8 @@
 
       async function handleAuth(action) {
         setError('');
-        appendDebug('Запуск обработки действия', { action });
         if (!supabaseClient || !supabaseClient.auth) {
           setError('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
-          appendDebug('Нет клиента Supabase, регистрация/логин невозможны');
           return;
         }
 
@@ -178,14 +142,12 @@
         if (!email || !emailPattern.test(email)) {
           emailInput.setCustomValidity('Введите корректный email');
           emailInput.reportValidity();
-          appendDebug('Валидация email не пройдена', { email });
           return;
         }
 
         if (!password || password.length < 6) {
           passwordInput.setCustomValidity('Минимум 6 символов в пароле');
           passwordInput.reportValidity();
-          appendDebug('Пароль короче 6 символов');
           return;
         }
 
@@ -194,56 +156,37 @@
 
         setLoading(true);
         try {
-          appendDebug('Отправляем запрос в Supabase', { action, email });
           const { data, error } = action === 'signup'
             ? await supabaseClient.auth.signUp({ email, password })
             : await supabaseClient.auth.signInWithPassword({ email, password });
-
-          appendDebug('Ответ Supabase получен', {
-            action,
-            hasUser: Boolean(data && data.user),
-            hasSession: Boolean(data && data.session),
-            error: error ? { message: error.message, status: error.status, name: error.name } : null,
-          });
 
           if (error) {
             setError(action === 'signup'
               ? 'Не удалось зарегистрироваться. Попробуйте снова.'
               : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
-            appendDebug('Supabase вернул ошибку', { message: error.message, status: error.status, name: error.name });
             return;
           }
 
           const session = (data && data.session) ? data.session : await syncSession();
           const user = (session && session.user) || getCurrentUser();
 
-          appendDebug('Результат после попытки получить сессию', {
-            session: Boolean(session),
-            user: Boolean(user),
-            email: user && user.email,
-          });
-
           if (!user && action === 'signup') {
             setError('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.');
             renderSession(null);
-            appendDebug('Пользователь не вернулся сразу после регистрации (возможно, включено подтверждение email)');
             return;
           }
 
           if (!user) {
             setError('Не удалось получить сессию. Попробуйте снова.');
             renderSession(null);
-            appendDebug('Сессия не получена даже после логина');
             return;
           }
 
           renderSession(user);
-          appendDebug('Успешно, перенаправляем пользователя', { redirect: getRedirectTarget(), email: user.email });
           window.location.href = getRedirectTarget();
         } catch (err) {
           console.warn('Ошибка авторизации', err);
           setError('Что-то пошло не так. Попробуйте ещё раз.');
-          appendDebug('Исключение во время авторизации', { message: err && err.message });
         } finally {
           setLoading(false);
         }
@@ -285,44 +228,12 @@
       syncSession().then((session) => {
         const user = session && session.user ? session.user : getCurrentUser();
         renderSession(user);
-        appendDebug('Инициализация завершена, сессия синхронизирована', { hasSession: Boolean(session), email: user && user.email });
       });
 
       window.addEventListener('authstatechange', (event) => {
         const user = event && event.detail ? event.detail.user : getCurrentUser();
         renderSession(user);
-        appendDebug('Получено событие authstatechange', { email: user && user.email });
       });
-
-      (function runStartupDebugChecks() {
-        appendDebug('Стартуем дебаг регистрации/логина');
-        appendDebug('Supabase URL', maskValue(window.SUPABASE_URL));
-        appendDebug('Supabase ключ', maskValue(window.SUPABASE_PUBLISHABLE_KEY));
-        appendDebug('Supabase SDK доступен', typeof window.supabase === 'object' && typeof window.supabase.createClient === 'function');
-        appendDebug('Supabase клиент создан', Boolean(supabaseClient));
-        appendDebug('Поддержка методов auth', {
-          signUp: Boolean(supabaseClient && supabaseClient.auth && supabaseClient.auth.signUp),
-          signInWithPassword: Boolean(supabaseClient && supabaseClient.auth && supabaseClient.auth.signInWithPassword),
-          signOut: Boolean(supabaseClient && supabaseClient.auth && supabaseClient.auth.signOut),
-        });
-
-        const supabaseUrl = window.SUPABASE_URL || '';
-        if (supabaseUrl) {
-          const healthUrl = `${supabaseUrl.replace(/\/$/, '')}/auth/v1/health`;
-          fetch(healthUrl)
-            .then((res) => {
-              appendDebug('Проверка доступности Supabase /auth/v1/health', { status: res.status, ok: res.ok });
-              if (!res.ok) {
-                appendDebug('Supabase отвечает ошибкой, письмо может не отправляться');
-              }
-            })
-            .catch((err) => {
-              appendDebug('Ошибка сети при обращении к Supabase', { message: err && err.message });
-            });
-        } else {
-          appendDebug('Supabase URL не задан, запросы не будут уходить');
-        }
-      })();
     });
   </script>
   <script>
