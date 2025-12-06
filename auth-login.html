@@ -64,6 +64,8 @@
       const continueBtn = document.getElementById('authContinueButton');
       const params = new URLSearchParams(window.location.search);
       const supabaseClient = window.supabaseClient;
+      // Supabase формулирует коллизию email как "User already registered/exists" — ловим оба варианта через error.
+      const USER_EXISTS_PATTERN = /(user already (registered|exists))/i;
       let submitAction = 'login';
 
       const presetEmail = params.get('email');
@@ -162,7 +164,7 @@
 
           if (error) {
             const message = error.message || '';
-            if (action === 'signup' && /user already registered/i.test(message)) {
+            if (action === 'signup' && USER_EXISTS_PATTERN.test(message)) {
               setError('Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
               return;
             }
