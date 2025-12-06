@@ -161,6 +161,12 @@
             : await supabaseClient.auth.signInWithPassword({ email, password });
 
           if (error) {
+            const message = error.message || '';
+            if (action === 'signup' && /user already registered/i.test(message)) {
+              setError('Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
+              return;
+            }
+
             setError(action === 'signup'
               ? 'Не удалось зарегистрироваться. Попробуйте снова.'
               : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
