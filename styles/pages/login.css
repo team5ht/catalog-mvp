@@ -57,6 +57,23 @@
   color: var(--color-text-secondary, rgba(15, 23, 42, 0.7));
 }
 
+.auth-form__message {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.auth-form__message--error {
+  color: #b91c1c;
+}
+
+.auth-form__message--info {
+  color: var(--color-text-secondary, rgba(15, 23, 42, 0.8));
+}
+
+.auth-form__message--success {
+  color: #15803d;
+}
+
 .auth-form__paragraph {
   margin: 0 0 1.5rem;
   font-size: 1rem;
