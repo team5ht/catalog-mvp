@@ -39,13 +39,7 @@
         autocomplete="current-password"
         aria-label="Пароль"
       />
-      <p
-        id="authMessage"
-        class="auth-form__note auth-form__message"
-        role="alert"
-        aria-live="polite"
-        hidden
-      ></p>
+      <p id="authError" class="auth-form__note" role="alert" aria-live="polite" style="color:#b91c1c;display:none;"></p>
       <button type="submit" class="button button--primary" data-action="login">Войти</button>
       <button type="submit" class="button button--secondary" data-action="signup" style="margin-top:0.75rem;">Зарегистрироваться</button>
       <p class="auth-form__note">Пароль должен содержать минимум 6 символов. После успешного входа мы вернём вас на предыдущую страницу.</p>
@@ -63,7 +57,7 @@
       const form = document.getElementById('authLoginForm');
       const emailInput = document.getElementById('authEmail');
       const passwordInput = document.getElementById('authPassword');
-      const messageEl = document.getElementById('authMessage');
+      const errorEl = document.getElementById('authError');
       const sessionBlock = document.getElementById('authSessionBlock');
       const userInfoEl = document.getElementById('authUserInfo');
       const logoutBtn = document.getElementById('authLogoutButton');
@@ -85,22 +79,14 @@
         return redirectParam || redirectFromStorage || 'index.html';
       }
 
-      function setMessage(message, variant = 'error') {
-        if (!messageEl) return;
-
-        const normalizedVariant = ['error', 'info', 'success'].includes(variant)
-          ? variant
-          : 'error';
-
-        messageEl.classList.remove('auth-form__message--error', 'auth-form__message--info', 'auth-form__message--success');
-
+      function setError(message) {
+        if (!errorEl) return;
         if (message) {
-          messageEl.textContent = message;
-          messageEl.classList.add(`auth-form__message--${normalizedVariant}`);
-          messageEl.hidden = false;
+          errorEl.textContent = message;
+          errorEl.style.display = 'block';
         } else {
-          messageEl.textContent = '';
-          messageEl.hidden = true;
+          errorEl.textContent = '';
+          errorEl.style.display = 'none';
         }
       }
 
@@ -143,9 +129,9 @@
       }
 
       async function handleAuth(action) {
-        setMessage('');
+        setError('');
         if (!supabaseClient || !supabaseClient.auth) {
-          setMessage('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
+          setError('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
           return;
         }
 
@@ -177,11 +163,11 @@
           if (error) {
             const message = error.message || '';
             if (action === 'signup' && /user already registered/i.test(message)) {
-              setMessage('Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
+              setError('Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
               return;
             }
 
-            setMessage(action === 'signup'
+            setError(action === 'signup'
               ? 'Не удалось зарегистрироваться. Попробуйте снова.'
               : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
             return;
@@ -191,13 +177,13 @@
           const user = (session && session.user) || getCurrentUser();
 
           if (!user && action === 'signup') {
-            setMessage('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.', 'info');
+            setError('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.');
             renderSession(null);
             return;
           }
 
           if (!user) {
-            setMessage('Не удалось получить сессию. Попробуйте снова.');
+            setError('Не удалось получить сессию. Попробуйте снова.');
             renderSession(null);
             return;
           }
@@ -206,7 +192,7 @@
           window.location.href = getRedirectTarget();
         } catch (err) {
           console.warn('Ошибка авторизации', err);
-          setMessage('Что-то пошло не так. Попробуйте ещё раз.');
+          setError('Что-то пошло не так. Попробуйте ещё раз.');
         } finally {
           setLoading(false);
         }
