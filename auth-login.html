@@ -79,11 +79,12 @@
         return redirectParam || redirectFromStorage || 'index.html';
       }
 
-      function setError(message) {
+      function setMessage(message, type = 'error') {
         if (!errorEl) return;
         if (message) {
           errorEl.textContent = message;
           errorEl.style.display = 'block';
+          errorEl.style.color = type === 'success' ? '#15803d' : '#b91c1c';
         } else {
           errorEl.textContent = '';
           errorEl.style.display = 'none';
@@ -129,9 +130,9 @@
       }
 
       async function handleAuth(action) {
-        setError('');
+        setMessage('');
         if (!supabaseClient || !supabaseClient.auth) {
-          setError('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
+          setMessage('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
           return;
         }
 
@@ -161,7 +162,12 @@
             : await supabaseClient.auth.signInWithPassword({ email, password });
 
           if (error) {
-            setError(action === 'signup'
+            if (action === 'signup' && typeof error.message === 'string' && error.message.toLowerCase().includes('registered')) {
+              setMessage('Такой email уже зарегистрирован. Войдите с паролем.', 'error');
+              return;
+            }
+
+            setMessage(action === 'signup'
               ? 'Не удалось зарегистрироваться. Попробуйте снова.'
               : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
             return;
@@ -171,13 +177,13 @@
           const user = (session && session.user) || getCurrentUser();
 
           if (!user && action === 'signup') {
-            setError('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.');
+            setMessage('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.', 'success');
             renderSession(null);
             return;
           }
 
           if (!user) {
-            setError('Не удалось получить сессию. Попробуйте снова.');
+            setMessage('Не удалось получить сессию. Попробуйте снова.');
             renderSession(null);
             return;
           }
@@ -186,7 +192,7 @@
           window.location.href = getRedirectTarget();
         } catch (err) {
           console.warn('Ошибка авторизации', err);
-          setError('Что-то пошло не так. Попробуйте ещё раз.');
+          setMessage('Что-то пошло не так. Попробуйте ещё раз.');
         } finally {
           setLoading(false);
         }
