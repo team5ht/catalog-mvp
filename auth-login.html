@@ -64,8 +64,6 @@
       const continueBtn = document.getElementById('authContinueButton');
       const params = new URLSearchParams(window.location.search);
       const supabaseClient = window.supabaseClient;
-      // Supabase формулирует коллизию email как "User already registered/exists" — ловим оба варианта через error.
-      const USER_EXISTS_PATTERN = /(user already (registered|exists))/i;
       let submitAction = 'login';
 
       const presetEmail = params.get('email');
@@ -113,28 +111,11 @@
       }
 
       async function syncSession() {
-        if (window.AuthState && typeof window.AuthState.refreshSession === 'function') {
-          return window.AuthState.refreshSession();
-        }
         if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.getSession === 'function') {
           const { data } = await supabaseClient.auth.getSession();
           return data ? data.session : null;
         }
         return null;
-      }
-
-      function getCurrentUser() {
-        if (window.AuthState && typeof window.AuthState.getUser === 'function') {
-          return window.AuthState.getUser();
-        }
-        return null;
-      }
-
-      function isUserAlreadyExistsFallback(data, action) {
-        // Fallback на случай, если Supabase не прислал error, но вернул обфусцированный user.
-        if (action !== 'signup' || !data || !data.user) return false;
-        const identities = data.user.identities;
-        return Array.isArray(identities) && identities.length === 0;
       }
 
       async function handleAuth(action) {
@@ -170,27 +151,14 @@
             : await supabaseClient.auth.signInWithPassword({ email, password });
 
           if (error) {
-            const code = error.code || '';
-            const message = error.message || '';
-            if (action === 'signup' && (code === 'user_already_exists' || USER_EXISTS_PATTERN.test(message))) {
-              setError('Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
-              return;
-            }
-
             setError(action === 'signup'
-              ? 'Не удалось зарегистрироваться. Попробуйте снова.'
+              ? 'Не удалось зарегистрироваться. Возможно, email уже используется или письмо не может быть отправлено. Попробуйте войти или воспользуйтесь восстановлением пароля.'
               : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
             return;
           }
 
-          if (isUserAlreadyExistsFallback(data, action)) {
-            setError('Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
-            renderSession(null);
-            return;
-          }
-
           const session = (data && data.session) ? data.session : await syncSession();
-          const user = (session && session.user) || getCurrentUser();
+          const user = session ? session.user : null;
 
           if (!user && action === 'signup') {
             setError('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.');
@@ -236,8 +204,8 @@
           } catch (err) {
             console.warn('Ошибка при выходе из Supabase', err);
           }
-          await syncSession();
-          renderSession(getCurrentUser());
+          const session = await syncSession();
+          renderSession(session ? session.user : null);
         });
       }
 
@@ -248,13 +216,7 @@
       }
 
       syncSession().then((session) => {
-        const user = session && session.user ? session.user : getCurrentUser();
-        renderSession(user);
-      });
-
-      window.addEventListener('authstatechange', (event) => {
-        const user = event && event.detail ? event.detail.user : getCurrentUser();
-        renderSession(user);
+        renderSession(session ? session.user : null);
       });
     });
   </script>
