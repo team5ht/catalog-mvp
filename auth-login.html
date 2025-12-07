@@ -130,6 +130,13 @@
         return null;
       }
 
+      function isUserAlreadyExistsFallback(data, action) {
+        // Fallback на случай, если Supabase не прислал error, но вернул обфусцированный user.
+        if (action !== 'signup' || !data || !data.user) return false;
+        const identities = data.user.identities;
+        return Array.isArray(identities) && identities.length === 0;
+      }
+
       async function handleAuth(action) {
         setError('');
         if (!supabaseClient || !supabaseClient.auth) {
@@ -172,6 +179,12 @@
             setError(action === 'signup'
               ? 'Не удалось зарегистрироваться. Попробуйте снова.'
               : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
+            return;
+          }
+
+          if (isUserAlreadyExistsFallback(data, action)) {
+            setError('Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
+            renderSession(null);
             return;
           }
 
