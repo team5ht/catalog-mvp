@@ -19,7 +19,9 @@
   <div class="auth-page">
     <form class="auth-form" id="authLoginForm" novalidate>
       <h1 class="auth-form__title">Вход или регистрация</h1>
-      <p class="auth-form__subtitle">Используйте email и пароль, чтобы войти или создать аккаунт.</p>
+      <p class="auth-form__subtitle">
+        Используйте email и пароль, чтобы войти или создать аккаунт.
+      </p>
       <input
         type="email"
         id="authEmail"
@@ -42,15 +44,12 @@
       <p id="authError" class="auth-form__note" role="alert" aria-live="polite" style="color:#b91c1c;display:none;"></p>
       <button type="submit" class="button button--primary" data-action="login">Войти</button>
       <button type="submit" class="button button--secondary" data-action="signup" style="margin-top:0.75rem;">Зарегистрироваться</button>
-      <p class="auth-form__note">Пароль должен содержать минимум 6 символов. После успешного входа мы вернём вас на предыдущую страницу.</p>
+      <p class="auth-form__note">
+        Пароль должен содержать минимум 6 символов.
+        После регистрации мы отправим письмо для подтверждения.
+        После подтверждения зайдите с паролем через форму входа.
+      </p>
     </form>
-
-    <div class="auth-form" id="authSessionBlock" hidden>
-      <h2 class="auth-form__title">Вы уже вошли</h2>
-      <p id="authUserInfo" class="auth-form__paragraph"></p>
-      <button type="button" class="button button--primary" id="authContinueButton">Продолжить</button>
-      <button type="button" class="button button--secondary" id="authLogoutButton" style="margin-top:0.75rem;">Выйти</button>
-    </div>
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -58,25 +57,13 @@
       const emailInput = document.getElementById('authEmail');
       const passwordInput = document.getElementById('authPassword');
       const errorEl = document.getElementById('authError');
-      const sessionBlock = document.getElementById('authSessionBlock');
-      const userInfoEl = document.getElementById('authUserInfo');
-      const logoutBtn = document.getElementById('authLogoutButton');
-      const continueBtn = document.getElementById('authContinueButton');
       const params = new URLSearchParams(window.location.search);
       const supabaseClient = window.supabaseClient;
       let submitAction = 'login';
 
-      const presetEmail = params.get('email');
-      if (presetEmail && emailInput) {
-        emailInput.value = presetEmail;
-      }
-
       function getRedirectTarget() {
         const redirectParam = params.get('redirect');
-        const redirectFromStorage = window.AuthState && typeof window.AuthState.getRedirectUrl === 'function'
-          ? window.AuthState.getRedirectUrl()
-          : null;
-        return redirectParam || redirectFromStorage || 'index.html';
+        return redirectParam || 'index.html';
       }
 
       function setError(message) {
@@ -91,31 +78,13 @@
       }
 
       function setLoading(isLoading) {
-        const buttons = form ? form.querySelectorAll('button[data-action]') : [];
-        buttons.forEach(btn => {
+        if (!form) return;
+        const buttons = form.querySelectorAll('button[data-action]');
+        buttons.forEach((btn) => {
           btn.disabled = isLoading;
         });
         if (emailInput) emailInput.disabled = isLoading;
         if (passwordInput) passwordInput.disabled = isLoading;
-      }
-
-      function renderSession(user) {
-        const authed = Boolean(user);
-        if (sessionBlock) sessionBlock.hidden = !authed;
-        if (form) form.style.display = authed ? 'none' : 'block';
-        if (userInfoEl) {
-          userInfoEl.textContent = authed
-            ? `Вы вошли как ${user.email || 'пользователь'}.`
-            : 'Вы не авторизованы.';
-        }
-      }
-
-      async function syncSession() {
-        if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.getSession === 'function') {
-          const { data } = await supabaseClient.auth.getSession();
-          return data ? data.session : null;
-        }
-        return null;
       }
 
       async function handleAuth(action) {
@@ -130,49 +99,33 @@
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!email || !emailPattern.test(email)) {
-          emailInput.setCustomValidity('Введите корректный email');
-          emailInput.reportValidity();
+          setError('Введите корректный email.');
           return;
         }
 
         if (!password || password.length < 6) {
-          passwordInput.setCustomValidity('Минимум 6 символов в пароле');
-          passwordInput.reportValidity();
+          setError('Минимум 6 символов в пароле.');
           return;
         }
 
-        emailInput.setCustomValidity('');
-        passwordInput.setCustomValidity('');
-
         setLoading(true);
         try {
-          const { data, error } = action === 'signup'
-            ? await supabaseClient.auth.signUp({ email, password })
-            : await supabaseClient.auth.signInWithPassword({ email, password });
+          if (action === 'signup') {
+            const { error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) {
+              setError('Не удалось зарегистрироваться. Возможно, email уже используется или письмо не может быть отправлено. Попробуйте войти или воспользуйтесь восстановлением пароля.');
+              return;
+            }
+            setError('Мы отправили письмо для подтверждения. После подтверждения вернитесь и войдите с паролем.');
+            return;
+          }
 
+          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
           if (error) {
-            setError(action === 'signup'
-              ? 'Не удалось зарегистрироваться. Возможно, email уже используется или письмо не может быть отправлено. Попробуйте войти или воспользуйтесь восстановлением пароля.'
-              : 'Не удалось войти. Проверьте данные и попробуйте ещё раз.');
+            setError('Не удалось войти. Проверьте email и пароль и попробуйте ещё раз.');
             return;
           }
 
-          const session = (data && data.session) ? data.session : await syncSession();
-          const user = session ? session.user : null;
-
-          if (!user && action === 'signup') {
-            setError('Мы отправили письмо для подтверждения. После подтверждения войдите с паролем.');
-            renderSession(null);
-            return;
-          }
-
-          if (!user) {
-            setError('Не удалось получить сессию. Попробуйте снова.');
-            renderSession(null);
-            return;
-          }
-
-          renderSession(user);
           window.location.href = getRedirectTarget();
         } catch (err) {
           console.warn('Ошибка авторизации', err);
@@ -192,31 +145,6 @@
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         handleAuth(submitAction);
-      });
-
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async (event) => {
-          event.preventDefault();
-          try {
-            if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.signOut === 'function') {
-              await supabaseClient.auth.signOut();
-            }
-          } catch (err) {
-            console.warn('Ошибка при выходе из Supabase', err);
-          }
-          const session = await syncSession();
-          renderSession(session ? session.user : null);
-        });
-      }
-
-      if (continueBtn) {
-        continueBtn.addEventListener('click', () => {
-          window.location.href = getRedirectTarget();
-        });
-      }
-
-      syncSession().then((session) => {
-        renderSession(session ? session.user : null);
       });
     });
   </script>
