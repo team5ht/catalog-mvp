@@ -62,7 +62,6 @@
 <script src="supabase-config.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
-<script src="auth-state.js"></script>
 <script src="app.js"></script>
 <script src="nav-auth.js"></script>
 <script>
@@ -147,18 +146,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const AUTH_STORAGE_KEY = 'auth_logged_in';
+  let currentSession = null;
 
-  function getAuthModule() {
-    return typeof window !== 'undefined' ? window.AuthState : null;
+  function getClient() {
+    return typeof window !== 'undefined' ? window.supabaseClient : null;
+  }
+
+  async function refreshSession() {
+    const client = getClient();
+    if (!client || !client.auth || typeof client.auth.getSession !== 'function') {
+      currentSession = null;
+      return currentSession;
+    }
+    try {
+      const { data } = await client.auth.getSession();
+      currentSession = data ? data.session : null;
+    } catch (err) {
+      console.warn('Не удалось получить сессию Supabase', err);
+      currentSession = null;
+    }
+    return currentSession;
   }
 
   function isUserAuthenticated() {
-    const authModule = getAuthModule();
-    if (authModule && typeof authModule.isAuthenticated === 'function') {
-      return authModule.isAuthenticated();
-    }
-    return false;
+    return Boolean(currentSession && currentSession.user);
   }
 
   function renderDownloadButtonState(button) {
@@ -175,21 +186,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const downloadBtn = document.getElementById('downloadBtn');
-  renderDownloadButtonState(downloadBtn);
+  refreshSession().then(() => renderDownloadButtonState(downloadBtn));
 
-  if (window.AuthState && typeof window.AuthState.refreshSession === 'function') {
-    window.AuthState.refreshSession().then(() => renderDownloadButtonState(downloadBtn));
-  }
-
-  window.addEventListener('storage', (event) => {
-    if (event.key === AUTH_STORAGE_KEY) {
+  const client = getClient();
+  if (client && client.auth && typeof client.auth.onAuthStateChange === 'function') {
+    client.auth.onAuthStateChange((_event, session) => {
+      currentSession = session;
       renderDownloadButtonState(downloadBtn);
-    }
-  });
-
-  window.addEventListener('authstatechange', () => {
-    renderDownloadButtonState(downloadBtn);
-  });
+    });
+  }
 
   // Загружаем данные и отображаем материал
   fetch('data.json')
@@ -229,9 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const authed = isUserAuthenticated();
           if (!authed) {
             const currentUrl = window.location.href;
-            if (window.AuthState && typeof window.AuthState.setRedirectUrl === 'function') {
-              window.AuthState.setRedirectUrl(currentUrl);
-            }
             const loginUrl = `auth-login.html?redirect=${encodeURIComponent(currentUrl)}`;
             window.location.href = loginUrl;
             return;

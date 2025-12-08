@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="styles/pages/login.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#f8fafc" />
-  <script src="auth-state.js"></script>
 </head>
 <body>
   <div class="auth-page">
@@ -30,10 +29,7 @@
       const params = new URLSearchParams(window.location.search);
       const email = params.get('email');
       const redirectParam = params.get('redirect');
-      const storedRedirect = window.AuthState && typeof window.AuthState.getRedirectUrl === 'function'
-        ? window.AuthState.getRedirectUrl()
-        : null;
-      const redirect = redirectParam || storedRedirect || 'index.html';
+      const redirect = redirectParam || 'index.html';
       const loginUrl = `auth-login.html?redirect=${encodeURIComponent(redirect)}${email ? `&email=${encodeURIComponent(email)}` : ''}`;
       target.textContent = email && email.trim() ? email : 'указанный email';
       magicLink.href = loginUrl;

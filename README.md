@@ -6,10 +6,11 @@
 
 - `index.html` — главная. Баннер с внешней ссылкой, две горизонтальные карусели материалов (`data.json`), нижняя навигация.
 - `catalog.html` — лента карточек + чипы категорий. Поиск пока заглушка (disabled), фильтрация по категориям работает на клиенте.
-- `material.html` — детальная страница по `?id=`: обложка, описание, теги, кнопка загрузки. Текст/статус кнопки завязаны на состояние авторизации; при отсутствии авторизации отправляет на `auth-login.html` с редиректом обратно. Кнопка «Назад» пытается вернуть на предыдущую страницу, избегая auth-страниц.
-- Авторизация (новая): `auth-login.html` — форма входа/регистрации по email+паролю на Supabase. Поддерживает редирект через `?redirect=` или сохранённый в `AuthState`. Показывает блок «Вы уже вошли» и даёт выйти из сессии. `auth-check-email.html` и `auth-callback.html` перенаправляют пользователей старых «магических ссылок» на новую форму.
-- Кнопка профиля в навигации (`nav-auth.js`): подстановка иконок вход/выход, редирект на форму входа с сохранением целевого URL, выход из Supabase и очистка `auth_logged_in`, отправка события `authstatechange`, небольшой toast.
-- Легаси: `login.html` и `app.js#checkAuth` используют ключ `isLoggedIn` — оставлено для совместимости, основная логика авторизации опирается на `auth_logged_in` + сессию Supabase.
+- `material.html` — детальная страница по `?id=`: обложка, описание, теги, кнопка загрузки. Кнопка меняет текст в зависимости от авторизации; если пользователь не залогинен, отправляем на `auth-login.html` с редиректом обратно. Кнопка «Назад» старается избегать auth-страниц.
+- Авторизация (упрощённая): `auth-login.html` — форма входа/регистрации по email+паролю. Signup при любой ошибке отдаёт одно сообщение; при успехе показывает текст про письмо подтверждения и не редиректит. Login при успехе сразу редиректит на `?redirect=` или `index.html`.
+- Редиректы со старых схем входа: `auth-check-email.html` и `auth-callback.html` просто перенаправляют на `auth-login.html`, используя `?redirect=` если он передан.
+- Кнопка профиля в навигации (`nav-auth.js`): проверяет сессию Supabase (`auth.getSession`/`onAuthStateChange`), подставляет иконки вход/выход, нажатие уводит на `auth-login.html?redirect=<текущий URL>`, выход вызывает `supabaseClient.auth.signOut()` и показывает toast.
+- Легаси: `login.html` и `auth-state.js` лежат в репозитории, но не участвуют в текущем флоу.
 
 ## Данные
 
@@ -17,16 +18,16 @@
 
 - `categories[]`: `id`, `name`, `slug`.
 - `materials[]`: `id`, `title`, `description`, `cover`, `pdfUrl`, `categoryId`, `tags[]`.
+
 Карточки на всех страницах читают данные напрямую из этого файла; изображения и PDF — внешние URL.
 
 ## Авторизация и состояние
 
-- `supabase-config.js` - объявляет `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY` (publishable/public key). Скрипт подключается до Supabase SDK и `supabase-client.js`; для другого проекта обновите значения здесь или проставьте их инлайном до загрузки клиента.
-- `supabase-client.js` - создаёт shared-клиент Supabase из CDN, читает `window.SUPABASE_URL`/`window.SUPABASE_PUBLISHABLE_KEY`. При отсутствии SDK/конфигурации выводит warn и даёт `supabaseClient = null`.
-- `auth-state.js` - модуль `window.AuthState`: синхронизирует сессию Supabase, кладёт флаг `auth_logged_in` в `localStorage`, хранит `authRedirectUrl`, отдаёт `isAuthenticated()`, `refreshSession()`, `getUser()` и шлёт `CustomEvent('authstatechange', { detail: { isAuthenticated, user } })`.
-- `nav-auth.js` - управление кнопкой профиля: проверяет `AuthState`, подставляет иконку, сохраняет redirect, выполняет выход (включая `supabaseClient.auth.signOut()`), очищает `auth_logged_in` и транслирует `authstatechange`.
-- `app.js` - вспомогательные проверки `isUserAuthenticated`, обработчик logout, рендер главных блоков, категорий и каталога. Использует `AuthState` при наличии.
-- Inline-скрипты на страницах используют эти функции для рендера и навигации; кнопка скачивания на `material.html` переключает текст/стили в зависимости от авторизации.
+- `supabase-config.js` — объявляет `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY` (publishable/public key). Скрипт подключается до Supabase SDK и `supabase-client.js`; для другого проекта обновите значения здесь или задайте их в раннем инлайне.
+- `supabase-client.js` — создаёт shared-клиент Supabase из CDN, читает `window.SUPABASE_URL`/`window.SUPABASE_PUBLISHABLE_KEY`. При отсутствии SDK/конфигурации выводит warn и оставляет `supabaseClient = null`.
+- `nav-auth.js` — отвечает за кнопку профиля: проверяет сессию Supabase, переключает иконку, делает `signOut()` и редиректит незалогиненных на `auth-login.html?redirect=<текущий>`.
+- `material.html` — напрямую обращается к Supabase: проверяет сессию, обновляет текст кнопки скачивания, при отсутствии сессии отправляет на `auth-login.html?redirect=<current>`.
+- `app.js` — утилиты для рендера каруселей/каталога, без логики авторизации.
 
 ## Стили
 
@@ -35,7 +36,7 @@
 ## PWA
 
 - `manifest.json` с иконками (`icon-192.png`, `icon-512.png`) и скриншотом.
-- `sw.js` кэширует список `urlsToCache` и работает под версией `catalog-mvp-v3`. Включены auth-страницы, основные скрипты и стили. При добавлении/переименовании файлов обновляйте список и версию кэша.
+- `sw.js` кэширует список `urlsToCache` и работает под версией `catalog-mvp-v4`. Включены auth-страницы, основные скрипты и стили. При добавлении/переименовании файлов обновляйте список и версию кэша.
 
 ## Локальный запуск
 
@@ -55,4 +56,4 @@ npx serve .
 - Конфигурация Supabase задаётся в `supabase-config.js` как `window.SUPABASE_URL/PUBLISHABLE_KEY`. Храните здесь только publishable key (secret не нужен и не должен попадать в браузер). Проверки email/пароля полностью на стороне Supabase, без собственного backend.
 - В `data.json` стоят плейсхолдеры `pdfUrl`; для реальных материалов нужны валидные ссылки.
 - Список кэша в `sw.js` поддерживается вручную; новый ассет/страницу нужно добавить в `urlsToCache` и поднять версию.
-- Дублирование ключей авторизации (`auth_logged_in` vs `isLoggedIn`) сохранено для обратной совместимости - используйте `auth_logged_in`/`AuthState`.
+- Авторизация опирается исключительно на Supabase. Signup без сессии — нормальный кейс при подтверждении email, UI сообщает о письме; нет кастомных хранилищ/событий авторизации.

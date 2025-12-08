@@ -1,18 +1,15 @@
 (function() {
-  const AUTH_STORAGE_KEY = 'auth_logged_in';
   const LOGIN_ICON = '<svg class="bottom-nav__icon" width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4" fill="none" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke-width="2"/></svg>';
   const LOGOUT_ICON = '<svg class="bottom-nav__icon" width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 16l4-4-4-4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h10" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-  function getAuthModule() {
-    return typeof window !== 'undefined' ? window.AuthState : null;
+  let currentSession = null;
+
+  function getClient() {
+    return typeof window !== 'undefined' ? window.supabaseClient : null;
   }
 
   function isAuthenticated() {
-    const authModule = getAuthModule();
-    if (authModule && typeof authModule.isAuthenticated === 'function') {
-      return authModule.isAuthenticated();
-    }
-    return false;
+    return Boolean(currentSession && currentSession.user);
   }
 
   function showToast(message) {
@@ -31,35 +28,42 @@
     }, 2000);
   }
 
-  function handleAccountClick(event, button) {
+  async function refreshSession() {
+    const client = getClient();
+    if (!client || !client.auth || typeof client.auth.getSession !== 'function') {
+      currentSession = null;
+      return currentSession;
+    }
+    try {
+      const { data } = await client.auth.getSession();
+      currentSession = data ? data.session : null;
+    } catch (err) {
+      console.warn('Не удалось получить сессию Supabase', err);
+      currentSession = null;
+    }
+    return currentSession;
+  }
+
+  async function handleAccountClick(event, button) {
     if (!isAuthenticated()) {
       event.preventDefault();
       const currentUrl = window.location.href;
-      const authModule = getAuthModule();
-      if (authModule && typeof authModule.setRedirectUrl === 'function') {
-        authModule.setRedirectUrl(currentUrl);
-      }
       const loginUrl = `auth-login.html?redirect=${encodeURIComponent(currentUrl)}`;
       window.location.href = loginUrl;
       return;
     }
 
     event.preventDefault();
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    } catch (err) {
-      console.warn('Не удалось удалить состояние авторизации', err);
+    const client = getClient();
+    if (client && client.auth && typeof client.auth.signOut === 'function') {
+      try {
+        await client.auth.signOut();
+      } catch (err) {
+        console.warn('Ошибка при выходе из Supabase', err);
+      }
     }
-    const supabaseClient = window.supabaseClient;
-    if (supabaseClient && supabaseClient.auth && typeof supabaseClient.auth.signOut === 'function') {
-      supabaseClient.auth.signOut().catch((error) => {
-        console.warn('Ошибка при выходе из Supabase', error);
-      });
-    }
+    currentSession = null;
     updateAccountState(button);
-    window.dispatchEvent(new CustomEvent('authstatechange', {
-      detail: { isAuthenticated: false }
-    }));
     showToast('Вы вышли из аккаунта.');
   }
 
@@ -79,22 +83,16 @@
       return;
     }
 
-    const authModule = getAuthModule();
-    if (authModule && typeof authModule.refreshSession === 'function') {
-      Promise.resolve(authModule.refreshSession()).finally(() => {
+    refreshSession().finally(() => updateAccountState(accountButton));
+
+    const client = getClient();
+    if (client && client.auth && typeof client.auth.onAuthStateChange === 'function') {
+      client.auth.onAuthStateChange((_event, session) => {
+        currentSession = session;
         updateAccountState(accountButton);
       });
-    } else {
-      updateAccountState(accountButton);
     }
 
-    window.addEventListener('authstatechange', () => {
-      updateAccountState(accountButton);
-    });
-
-    window.dispatchEvent(new CustomEvent('authstatechange', {
-      detail: { isAuthenticated: isAuthenticated() }
-    }));
     accountButton.addEventListener('click', (event) => handleAccountClick(event, accountButton));
   });
 })();

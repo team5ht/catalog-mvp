@@ -3,7 +3,7 @@
 // Обеспечивает работу оффлайн и установку на устройство
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v3';
+const CACHE_NAME = 'catalog-mvp-v4';
 
 // Список файлов для кэширования (оффлайн доступ)
 // Используем относительные пути для совместимости с подпапками
@@ -17,7 +17,6 @@ const urlsToCache = [
   './auth-callback.html',
   './login.html',
   './app.js',
-  './auth-state.js',
   './nav-auth.js',
   './supabase-client.js',
   './data.json',
