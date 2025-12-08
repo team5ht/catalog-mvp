@@ -50,80 +50,21 @@
 <script src="app.js"></script>
 <script src="nav-auth.js"></script>
 <script>
-function renderCategories(categories) {
-  const container = document.getElementById('categories');
-  container.innerHTML = '';
-  categories.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'catalog-categories__button';
-
-    const chip = document.createElement('span');
-    chip.className = 'chip chip--interactive';
-    chip.textContent = cat.name;
-    btn.appendChild(chip);
-
-    btn.onclick = () => {
-      document.querySelectorAll('.catalog-categories__button .chip').forEach(chipEl => chipEl.classList.remove('chip--active'));
-      chip.classList.add('chip--active');
-      filterCatalog(cat.id);
-    };
-    container.appendChild(btn);
-  });
-
-  const firstChip = container.querySelector('.catalog-categories__button .chip');
-  if (firstChip) {
-    firstChip.classList.add('chip--active');
-  }
-}
-
-function renderCatalog(materials) {
-  const container = document.getElementById('catalog-list');
-  container.innerHTML = '';
-  materials.forEach(m => {
-    const item = document.createElement('article');
-    item.className = 'catalog-card';
-
-    const coverLink = document.createElement('a');
-    coverLink.className = 'catalog-card__cover';
-    coverLink.style.backgroundImage = `url(${m.cover})`;
-    coverLink.href = `material.html?id=${m.id}`;
-    coverLink.setAttribute('aria-label', m.title);
-
-    const info = document.createElement('div');
-    info.className = 'catalog-card__info';
-
-    const title = document.createElement('h3');
-    title.className = 'catalog-card__title';
-    const titleLink = document.createElement('a');
-    titleLink.className = 'catalog-card__title-link';
-    titleLink.href = `material.html?id=${m.id}`;
-    titleLink.textContent = m.title;
-    title.appendChild(titleLink);
-
-    info.appendChild(title);
-    item.appendChild(coverLink);
-    item.appendChild(info);
-    container.appendChild(item);
-  });
-}
-
-
-function filterCatalog(categoryId) {
-  if (!categoryId) {
-    renderCatalog(appData.materials);
-  } else {
-    const filtered = appData.materials.filter(m => m.categoryId === categoryId);
-    renderCatalog(filtered);
-  }
-}
-
 document.getElementById('nav-home').onclick = () => location.href = 'index.html';
 
-fetch('data.json').then(r => r.json()).then(data => {
-  appData = data;
-  renderCategories(data.categories);
-  renderCatalog(data.materials);
-});
+function showCatalogError() {
+  renderInlineError('categories', 'Не удалось загрузить категории.');
+  renderInlineError('catalog-list', 'Не удалось загрузить материалы.');
+}
+
+loadAppData()
+  .then((data) => {
+    renderCategories(data.categories);
+    renderCatalog(data.materials);
+  })
+  .catch(() => {
+    showCatalogError();
+  });
 </script>
 <script>
 if ('serviceWorker' in navigator) {

@@ -59,37 +59,15 @@
 <script>
 document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
 
-function renderMaterialsCarousel(containerId, materials, limit = 5) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  container.innerHTML = '';
-
-  materials.slice(0, limit).forEach((m) => {
-    const card = document.createElement('div');
-    card.className = 'material-card material-card--narrow';
-    card.title = m.title;
-    card.onclick = () => location.href = `material.html?id=${m.id}`;
-
-    const cover = document.createElement('div');
-    cover.className = 'material-card__cover';
-    cover.style.backgroundImage = `url(${m.cover})`;
-
-    const title = document.createElement('p');
-    title.className = 'material-card__title';
-    title.textContent = m.title;
-
-    card.appendChild(cover);
-    card.appendChild(title);
-    container.appendChild(card);
+loadAppData()
+  .then((data) => {
+    renderMaterialsCarousel('main-materials', data.materials);
+    renderMaterialsCarousel('materials-5ht', data.materials);
+  })
+  .catch(() => {
+    renderInlineError('main-materials', 'Не удалось загрузить материалы.');
+    renderInlineError('materials-5ht', 'Не удалось загрузить материалы.');
   });
-}
-
-
-fetch('data.json').then(r=>r.json()).then(data => {
-  renderMaterialsCarousel('main-materials', data.materials);
-  renderMaterialsCarousel('materials-5ht', data.materials);
-});
 </script>
 <script>
 if ('serviceWorker' in navigator) {

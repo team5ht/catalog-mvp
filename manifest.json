@@ -22,12 +22,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "books"],
-  "screenshots": [
-    {
-      "src": "screenshot.png",
-      "sizes": "540x720",
-      "type": "image/png"
-    }
-  ]
+  "categories": ["education", "books"]
 }

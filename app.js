@@ -1,15 +1,45 @@
 let appData = null;
+const DATA_URL = 'data.json';
 
-// Главная страница: рендер горизонтального скролла
-function renderMainMaterials(materials) {
-  const container = document.getElementById('main-materials');
+// Единая загрузка данных каталога с кешированием в appData.
+async function loadAppData() {
+  if (appData) {
+    return appData;
+  }
+  try {
+    const response = await fetch(DATA_URL, { cache: 'no-cache' });
+    if (!response.ok) {
+      throw new Error(`Response not ok: ${response.status}`);
+    }
+    const data = await response.json();
+    appData = data;
+    return data;
+  } catch (error) {
+    console.warn('Не удалось загрузить data.json', error);
+    appData = null;
+    throw error;
+  }
+}
+
+function renderInlineError(containerId, message) {
+  const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
-  materials.slice(0, 5).forEach(m => {
+  const errorEl = document.createElement('p');
+  errorEl.className = 'load-error';
+  errorEl.textContent = message;
+  container.appendChild(errorEl);
+}
+
+function renderMaterialsCarousel(containerId, materials, limit = 5) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  (materials || []).slice(0, limit).forEach((m) => {
     const card = document.createElement('div');
     card.className = 'material-card material-card--narrow';
     card.title = m.title;
-    card.onclick = () => location.href = `material.html?id=${m.id}`;
+    card.onclick = () => (location.href = `material.html?id=${m.id}`);
 
     const cover = document.createElement('div');
     cover.className = 'material-card__cover';
@@ -25,12 +55,11 @@ function renderMainMaterials(materials) {
   });
 }
 
-// Каталог: рендер категорий
 function renderCategories(categories) {
   const container = document.getElementById('categories');
   if (!container) return;
   container.innerHTML = '';
-  categories.forEach(cat => {
+  (categories || []).forEach((cat) => {
     const button = document.createElement('button');
     button.className = 'catalog-categories__button';
     button.dataset.id = cat.id;
@@ -43,7 +72,7 @@ function renderCategories(categories) {
     button.onclick = () => {
       document
         .querySelectorAll('.catalog-categories__button .chip')
-        .forEach(chipEl => chipEl.classList.remove('chip--active'));
+        .forEach((chipEl) => chipEl.classList.remove('chip--active'));
       chip.classList.add('chip--active');
       filterCatalog(cat.id);
     };
@@ -57,12 +86,11 @@ function renderCategories(categories) {
   }
 }
 
-// Каталог: рендер материалов списка
 function renderCatalog(materials) {
   const container = document.getElementById('catalog-list');
   if (!container) return;
   container.innerHTML = '';
-  materials.forEach(m => {
+  (materials || []).forEach((m) => {
     const card = document.createElement('article');
     card.className = 'catalog-card';
 
@@ -94,11 +122,9 @@ function renderCatalog(materials) {
 }
 
 function filterCatalog(categoryId) {
-  if (!appData) return;
-  if (!categoryId) {
-    renderCatalog(appData.materials);
-  } else {
-    const filtered = appData.materials.filter(m => m.categoryId === categoryId);
-    renderCatalog(filtered);
+  if (!appData || !appData.materials) {
+    return;
   }
+  const filtered = categoryId ? appData.materials.filter((m) => m.categoryId === categoryId) : appData.materials;
+  renderCatalog(filtered);
 }

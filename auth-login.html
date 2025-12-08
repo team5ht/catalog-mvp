@@ -62,7 +62,19 @@
 
       function getRedirectTarget() {
         const redirectParam = params.get('redirect');
-        return redirectParam || 'index.html';
+        if (!redirectParam) {
+          return 'index.html';
+        }
+        try {
+          const targetUrl = new URL(redirectParam, window.location.origin);
+          if (targetUrl.origin !== window.location.origin) {
+            return 'index.html';
+          }
+          const path = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
+          return path || 'index.html';
+        } catch (_err) {
+          return redirectParam.startsWith('/') ? redirectParam : 'index.html';
+        }
       }
 
       function setError(message) {

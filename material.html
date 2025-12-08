@@ -172,6 +172,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return Boolean(currentSession && currentSession.user);
   }
 
+  function showMaterialError(message) {
+    const titleEl = document.getElementById('materialTitle');
+    const descEl = document.getElementById('materialDescription');
+    if (titleEl) titleEl.textContent = message;
+    if (descEl) descEl.textContent = 'Попробуйте обновить страницу позже.';
+    if (downloadBtn) {
+      downloadBtn.textContent = 'Недоступно';
+      downloadBtn.disabled = true;
+      downloadBtn.classList.remove('btn-primary', 'btn-primary-soft');
+    }
+  }
+
   function renderDownloadButtonState(button) {
     if (!button) {
       return;
@@ -197,9 +209,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Загружаем данные и отображаем материал
-  fetch('data.json')
-    .then(r => r.json())
-    .then(data => {
+  loadAppData()
+    .then((data) => {
+      if (!data || !Array.isArray(data.materials)) {
+        throw new Error('Invalid data.json format');
+      }
       const material = data.materials.find(m => m.id === materialId);
       if (!material) {
         location.href = 'index.html';
@@ -246,6 +260,9 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
       }
+    })
+    .catch(() => {
+      showMaterialError('Не удалось загрузить материал.');
     });
 });
 </script>
