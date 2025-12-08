@@ -111,10 +111,18 @@
         try {
           if (action === 'signup') {
             const { error } = await supabaseClient.auth.signUp({ email, password });
+
             if (error) {
-              setError('Не удалось зарегистрироваться. Возможно, email уже используется или письмо не может быть отправлено. Попробуйте войти или воспользуйтесь восстановлением пароля.');
+              const code = error.code || '';
+              const message = (error.message || '').toLowerCase();
+              if (code === 'user_already_exists' || message.includes('user already registered') || message.includes('user already exists')) {
+                setError('Этот email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
+              } else {
+                setError('Не удалось зарегистрироваться. Попробуйте ещё раз или чуть позже.');
+              }
               return;
             }
+
             setError('Мы отправили письмо для подтверждения. После подтверждения вернитесь и войдите с паролем.');
             return;
           }
