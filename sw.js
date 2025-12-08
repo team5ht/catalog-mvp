@@ -3,7 +3,7 @@
 // Обеспечивает работу оффлайн и установку на устройство
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v5';
+const CACHE_NAME = 'catalog-mvp-v6';
 
 // Список файлов для кэширования (оффлайн доступ)
 // Используем относительные пути для совместимости с подпапками
@@ -12,6 +12,7 @@ const urlsToCache = [
   './index.html',
   './catalog.html',
   './material.html',
+  './account.html',
   './auth-login.html',
   './app.js',
   './nav-auth.js',
@@ -27,6 +28,7 @@ const urlsToCache = [
   './styles/pages/catalog.css',
   './styles/pages/material.css',
   './styles/pages/login.css',
+  './styles/pages/account.css',
   './home-hero.png',
   './icon-192.png',
   './icon-512.png'

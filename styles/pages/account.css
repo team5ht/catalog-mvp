@@ -1,0 +1,88 @@
+/* === Страница личного кабинета === */
+.account-page {
+  padding-top: var(--space-5);
+  padding-bottom: calc(var(--bottom-nav-offset) + var(--space-2));
+}
+
+.account-header {
+  margin-bottom: var(--space-4);
+}
+
+.account-kicker {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.account-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-elevated);
+}
+
+.account-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.account-label {
+  margin: 0 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.account-email {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-normal);
+  word-break: break-all;
+}
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.account-actions .btn {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.account-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: var(--font-size-sm);
+  display: none;
+}
+
+.account-error--visible {
+  display: block;
+}
+
+.account-version {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .account-email {
+    font-size: var(--font-size-xl);
+  }
+}

@@ -84,24 +84,3 @@
   display: inline-flex;
 }
 
-.auth-toast {
-  position: fixed;
-  left: 50%;
-  bottom: calc(var(--bottom-nav-offset) + 12px);
-  transform: translate(-50%, 16px);
-  padding: 0.5rem 0.85rem;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.9);
-  color: #fff;
-  font-size: 0.9rem;
-  line-height: 1.2;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 1000;
-}
-
-.auth-toast--visible {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}

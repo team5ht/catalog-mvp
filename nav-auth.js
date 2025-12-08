@@ -12,22 +12,6 @@
     return Boolean(currentSession && currentSession.user);
   }
 
-  function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'auth-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    requestAnimationFrame(() => {
-      toast.classList.add('auth-toast--visible');
-    });
-
-    setTimeout(() => {
-      toast.classList.remove('auth-toast--visible');
-      setTimeout(() => toast.remove(), 250);
-    }, 2000);
-  }
-
   async function refreshSession() {
     const client = getClient();
     if (!client || !client.auth || typeof client.auth.getSession !== 'function') {
@@ -54,17 +38,7 @@
     }
 
     event.preventDefault();
-    const client = getClient();
-    if (client && client.auth && typeof client.auth.signOut === 'function') {
-      try {
-        await client.auth.signOut();
-      } catch (err) {
-        console.warn('Ошибка при выходе из Supabase', err);
-      }
-    }
-    currentSession = null;
-    updateAccountState(button);
-    showToast('Вы вышли из аккаунта.');
+    window.location.href = 'account.html';
   }
 
   function updateAccountState(button) {
@@ -73,7 +47,7 @@
     }
     const authed = isAuthenticated();
     button.innerHTML = authed ? LOGOUT_ICON : LOGIN_ICON;
-    button.setAttribute('aria-label', authed ? 'Выйти из аккаунта' : 'Войти');
+    button.setAttribute('aria-label', authed ? 'Открыть профиль' : 'Войти');
     button.classList.remove('is-loading');
   }
 
