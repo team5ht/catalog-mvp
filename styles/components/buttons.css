@@ -11,7 +11,7 @@
   font-family: inherit;
   font-size: 0.95rem;
   cursor: pointer;
-  box-shadow: var(--shadow-elevated);
+  box-shadow: var(--shadow-card);
   transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
 }
 
@@ -21,17 +21,17 @@
 
 .btn:active {
   transform: translateY(1px);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-press);
 }
 
 .btn-primary {
-  background: var(--accent-strong);
-  color: var(--text-on-accent);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
 }
 
 .btn-primary-soft {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .btn-download {
@@ -65,7 +65,7 @@
 
 .button--primary {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-text-on-primary);
 }
 
 .button--primary:hover {
@@ -74,8 +74,8 @@
 
 .button--download {
   width: 100%;
-  margin: var(--space-4) 0;
-  padding: var(--space-4);
+  margin: var(--space-lg) 0;
+  padding: var(--space-lg);
   font-size: var(--font-size-lg);
 }
 
@@ -114,7 +114,7 @@
 .chip--interactive.chip--active {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-text-on-primary);
 }
 
 .chip--tag {

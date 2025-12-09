@@ -2,7 +2,7 @@
 .auth-page {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-hero-gradient-end) 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -33,7 +33,7 @@
 
 .auth-form__subtitle {
   margin: 0 0 1.5rem;
-  color: var(--color-text-secondary, rgba(15, 23, 42, 0.8));
+  color: var(--color-secondary-text-strong);
   font-size: 1rem;
   line-height: 1.5;
 }
@@ -54,7 +54,7 @@
   margin-top: 1.5rem;
   font-size: 0.875rem;
   line-height: 1.4;
-  color: var(--color-text-secondary, rgba(15, 23, 42, 0.7));
+  color: var(--color-secondary-text);
 }
 
 .auth-form__paragraph {
