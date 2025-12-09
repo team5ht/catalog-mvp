@@ -2,41 +2,30 @@
 .catalog-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-2);
+  gap: 16px;
+  padding: 1rem 0.75rem;
   overflow-y: auto;
 }
 
 .catalog-list--compact {
-  padding: var(--space-3) var(--space-2);
+  padding: 1rem 0.5rem;
 }
 
 .catalog-card {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   align-items: center;
-  padding: var(--space-3);
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.catalog-card:hover {
-  border-color: var(--ring);
-  box-shadow: var(--shadow-soft);
-  transform: translateY(-1px);
 }
 
 .catalog-card__cover {
   flex: 0 0 96px;
   width: 96px;
   aspect-ratio: 2 / 3;
-  border-radius: calc(var(--radius) * 1.2);
+  border-radius: 12px;
   background-position: center;
   background-size: cover;
-  background-color: var(--muted);
-  border: 1px solid var(--border);
+  background-color: #dddddd;
+  box-shadow: var(--shadow-elevated);
   text-decoration: none;
 }
 
@@ -49,9 +38,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--foreground);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
 .catalog-card__title-link {
@@ -64,30 +51,24 @@
 }
 
 .catalog-search {
-  padding: 0 var(--space-2);
-  margin-bottom: var(--space-3);
+  padding: 0 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .catalog-search__field {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: 0.65rem 0.9rem;
-  border: 1px solid var(--input);
-  border-radius: var(--radius);
-  background-color: var(--background);
-  box-shadow: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-}
-
-.catalog-search__field:focus-within {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 15%, transparent);
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background-color: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .catalog-search__icon {
   flex: 0 0 auto;
-  color: var(--muted-foreground);
+  color: rgba(100, 116, 139, 0.55);
 }
 
 .catalog-search__input {
@@ -96,18 +77,17 @@
   border: none;
   background: transparent;
   font: inherit;
-  color: var(--foreground);
-  padding: 0;
+  color: var(--color-text);
 }
 
 .catalog-search__input:disabled {
-  color: color-mix(in srgb, var(--muted-foreground) 75%, var(--foreground));
+  color: rgba(100, 116, 139, 0.7);
   cursor: not-allowed;
   opacity: 1;
 }
 
 .catalog-search__input::placeholder {
-  color: var(--muted-foreground);
+  color: rgba(100, 116, 139, 0.55);
 }
 
 .catalog-search__input:focus {
@@ -116,12 +96,12 @@
 
 @media (max-width: 480px) {
   .catalog-search {
-    padding: 0 var(--space-2);
-    margin-bottom: var(--space-2);
+    padding: 0 0.5rem;
+    margin-bottom: 0.5rem;
   }
 
   .catalog-list {
-    padding: var(--space-3) var(--space-2);
+    padding: 1rem 0.5rem;
   }
 
   .catalog-card__cover {

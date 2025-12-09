@@ -24,7 +24,7 @@
       <input
         type="email"
         id="authEmail"
-        class="input auth-form__input"
+        class="auth-form__input"
         placeholder="name@example.com"
         required
         autocomplete="email"
@@ -34,15 +34,15 @@
       <input
         type="password"
         id="authPassword"
-        class="input auth-form__input"
+        class="auth-form__input"
         placeholder="Пароль (мин. 6 символов)"
         required
         autocomplete="current-password"
         aria-label="Пароль"
       />
-      <p id="authError" class="auth-form__error" role="alert" aria-live="polite"></p>
+      <p id="authError" class="auth-form__note" role="alert" aria-live="polite" style="color:#b91c1c;display:none;"></p>
       <button type="submit" class="button button--primary" data-action="login">Войти</button>
-      <button type="submit" class="button button--secondary" data-action="signup">Зарегистрироваться</button>
+      <button type="submit" class="button button--secondary" data-action="signup" style="margin-top:0.75rem;">Зарегистрироваться</button>
       <p class="auth-form__note">
         Пароль должен содержать минимум 6 символов.
         После регистрации мы отправим письмо для подтверждения.
@@ -81,10 +81,10 @@
         if (!errorEl) return;
         if (message) {
           errorEl.textContent = message;
-          errorEl.classList.add('is-visible');
+          errorEl.style.display = 'block';
         } else {
           errorEl.textContent = '';
-          errorEl.classList.remove('is-visible');
+          errorEl.style.display = 'none';
         }
       }
 

@@ -2,87 +2,69 @@
 .auth-page {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 75%, var(--background)) 0%, var(--background) 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--space-5);
+  padding: 2rem;
   box-sizing: border-box;
 }
 
 .auth-form {
-  background: var(--card);
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-elevated);
+  background: var(--color-surface);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow-strong);
   max-width: 420px;
   width: 100%;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  text-align: center;
 }
 
 .auth-form .button {
   width: 100%;
   box-sizing: border-box;
-  display: inline-flex;
-}
-
-.auth-form .button + .button {
-  margin-top: var(--space-2);
+  display: flex;
 }
 
 .auth-form__title {
-  margin: 0;
-  color: var(--foreground);
-  font-size: var(--font-size-2xl);
-  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
 }
 
 .auth-form__subtitle {
-  margin: 0;
-  color: var(--muted-foreground);
+  margin: 0 0 1.5rem;
+  color: var(--color-text-secondary, rgba(15, 23, 42, 0.8));
   font-size: 1rem;
   line-height: 1.5;
 }
 
 .auth-form__input {
-  margin: 0;
-}
-
-.auth-form__input + .auth-form__input {
-  margin-top: var(--space-2);
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1.25rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
 }
 
 .auth-form__note {
-  margin: var(--space-1) 0 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--muted-foreground);
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary, rgba(15, 23, 42, 0.7));
 }
 
 .auth-form__paragraph {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 1.5rem;
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--foreground);
+  color: var(--color-text);
 }
 
-.auth-form__error {
-  margin: 0;
-  font-size: 0.95rem;
-  color: var(--destructive);
-  display: none;
-}
-
-.auth-form__error.is-visible {
-  display: block;
-}
-
-@media (max-width: 480px) {
-  .auth-form {
-    padding: var(--space-4);
-  }
+.auth-form__input:focus {
+  border-color: var(--color-primary);
+  outline: none;
 }

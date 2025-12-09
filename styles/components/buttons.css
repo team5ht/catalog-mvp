@@ -1,106 +1,80 @@
 /* === Базовые кнопки === */
-.btn,
-.button {
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--secondary);
-  color: var(--foreground);
-  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
   font-family: inherit;
   font-size: 0.95rem;
-  line-height: 1.4;
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-elevated);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
 }
 
-.btn:hover,
-.button:hover {
-  background-color: color-mix(in srgb, var(--secondary) 86%, var(--background));
+.btn:hover {
+  transform: translateY(-1px);
 }
 
-.btn:focus-visible,
-.button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
 }
 
-.btn:disabled,
-.button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.btn-primary {
+  background: var(--accent-strong);
+  color: var(--text-on-accent);
 }
 
-.btn-primary,
-.button--primary {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
-  box-shadow: var(--shadow-button);
+.btn-primary-soft {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
-.btn-primary:hover,
-.button--primary:hover {
-  background-color: color-mix(in srgb, var(--primary) 92%, var(--primary-foreground));
-  border-color: color-mix(in srgb, var(--primary) 92%, var(--primary-foreground));
-}
-
-.btn-primary:disabled,
-.button--primary:disabled {
-  box-shadow: none;
-}
-
-.btn-primary-soft,
-.button--secondary {
-  background-color: var(--secondary);
-  color: var(--secondary-foreground);
-  border-color: var(--border);
-  box-shadow: none;
-}
-
-.btn-primary-soft:hover,
-.button--secondary:hover {
-  background-color: color-mix(in srgb, var(--secondary) 82%, var(--background));
-  border-color: color-mix(in srgb, var(--border) 85%, var(--ring));
-}
-
-.button--ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--muted-foreground);
-}
-
-.button--ghost:hover {
-  background-color: var(--muted);
-  color: var(--foreground);
-}
-
-.button--destructive {
-  background-color: var(--destructive);
-  border-color: var(--destructive);
-  color: var(--destructive-foreground);
-}
-
-.button--destructive:hover {
-  background-color: color-mix(in srgb, var(--destructive) 90%, var(--destructive-foreground));
-  border-color: color-mix(in srgb, var(--destructive) 90%, var(--destructive-foreground));
-}
-
-.button--block {
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 320px;
   width: 100%;
+  border-radius: 999px;
 }
 
-.button--pill {
-  border-radius: 999px;
+.btn:focus {
+  outline: none;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.button:focus {
+  outline: none;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.button--primary:hover {
+  background: var(--color-primary-hover);
 }
 
 .button--download {
   width: 100%;
-  margin: var(--space-3) 0;
+  margin: var(--space-4) 0;
   padding: var(--space-4);
   font-size: var(--font-size-lg);
 }
@@ -114,17 +88,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.4rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 500;
   font-family: inherit;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   white-space: nowrap;
-  color: var(--muted-foreground);
-  background-color: var(--muted);
+  color: var(--color-text-muted);
+  background-color: var(--color-surface);
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
@@ -133,15 +107,14 @@
 }
 
 .chip--interactive:hover {
-  border-color: var(--ring);
-  background-color: color-mix(in srgb, var(--muted) 70%, var(--background));
-  color: var(--foreground);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .chip--interactive.chip--active {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
 }
 
 .chip--tag {

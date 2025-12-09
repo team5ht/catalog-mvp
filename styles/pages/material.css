@@ -1,6 +1,6 @@
 /* === Страница материала === */
 body.material-page-body {
-  --material-page-background: var(--background);
+  --material-page-background: var(--bg-app);
   background-color: var(--material-page-background);
 }
 
@@ -19,30 +19,24 @@ body.material-page-body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--background) 92%, transparent);
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--foreground);
   z-index: 10;
   transition: all 0.2s ease;
 }
 
 .material-page__back-button:hover {
-  background: var(--card);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .material-page__back-button:active {
   transform: scale(0.95);
-}
-
-.material-page__back-button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 
 .material-page__cover-wrapper {
@@ -59,8 +53,7 @@ body.material-page-body {
   border-radius: var(--radius-lg);
   background-size: cover;
   background-position: center;
-  box-shadow: var(--shadow-elevated);
-  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .material-page__content {
@@ -70,7 +63,7 @@ body.material-page-body {
 .material-download {
   display: flex;
   justify-content: center;
-  margin: var(--space-3) 0 var(--space-4);
+  margin: 16px 0 24px;
 }
 
 .material-page__title {
@@ -78,7 +71,7 @@ body.material-page-body {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: var(--space-4);
-  color: var(--foreground);
+  color: var(--text-normal);
 }
 
 .material-page__section {
@@ -89,13 +82,13 @@ body.material-page-body {
   font-size: var(--font-size-2xl);
   font-weight: 600;
   margin-bottom: var(--space-3);
-  color: var(--foreground);
+  color: var(--text-normal);
 }
 
 .material-page__description {
   font-size: var(--font-size-lg);
   line-height: 1.6;
-  color: var(--muted-foreground);
+  color: var(--text-muted);
 }
 
 .material-page__tags {
