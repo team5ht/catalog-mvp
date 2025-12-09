@@ -77,12 +77,12 @@
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-text);
-  border-color: rgba(148, 163, 184, 0.7);
+  border-color: var(--color-neutral-weak-strong);
 }
 
 .catalog-categories__button .chip.chip--active,
 .catalog-categories__button:focus .chip.chip--active {
-  color: #ffffff;
+  color: var(--color-text-on-primary);
   background: var(--color-primary);
   border-color: var(--color-primary);
 }
