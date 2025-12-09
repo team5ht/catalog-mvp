@@ -1,11 +1,11 @@
 /* === Страница личного кабинета === */
 .account-page {
-  padding-top: var(--space-5);
-  padding-bottom: calc(var(--bottom-nav-offset) + var(--space-2));
+  padding-top: var(--space-6);
+  padding-bottom: calc(var(--bottom-nav-offset) + var(--space-3));
 }
 
 .account-header {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .account-kicker {
@@ -13,21 +13,21 @@
   font-size: var(--font-size-sm);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
 }
 
 .account-subtitle {
   margin: 0;
-  color: var(--text-muted);
-  line-height: 1.5;
+  color: var(--muted-foreground);
+  line-height: 1.6;
 }
 
 .account-card {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-elevated);
+  background-color: var(--card);
+  border-radius: var(--radius);
 }
 
 .account-identity {
@@ -39,7 +39,7 @@
 
 .account-label {
   margin: 0 0 var(--space-1);
-  color: var(--text-muted);
+  color: var(--muted-foreground);
   font-size: var(--font-size-sm);
   letter-spacing: 0.01em;
   text-transform: uppercase;
@@ -49,8 +49,9 @@
   margin: 0;
   font-size: var(--font-size-2xl);
   font-weight: 700;
-  color: var(--text-normal);
+  color: var(--foreground);
   word-break: break-all;
+  letter-spacing: -0.01em;
 }
 
 .account-actions {
@@ -59,14 +60,14 @@
   gap: var(--space-3);
 }
 
-.account-actions .btn {
+.account-actions .button {
   width: 100%;
   box-sizing: border-box;
 }
 
 .account-error {
   margin: 0;
-  color: #b91c1c;
+  color: var(--destructive);
   font-size: var(--font-size-sm);
   display: none;
 }
@@ -78,7 +79,7 @@
 .account-version {
   margin: 0;
   font-size: var(--font-size-sm);
-  color: var(--text-muted);
+  color: var(--muted-foreground);
 }
 
 @media (max-width: 480px) {

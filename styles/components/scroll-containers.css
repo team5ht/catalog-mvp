@@ -1,6 +1,6 @@
 /* === Горизонтальные скроллы === */
 .materials-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-5);
 }
 
 .materials-section__header {
@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 
 .materials-section__title {
@@ -20,7 +20,7 @@
 
 .materials-carousel {
   display: flex;
-  gap: 16px;
+  gap: var(--space-3);
   overflow-x: auto;
   padding: 0;
   scroll-snap-type: x mandatory;
@@ -36,21 +36,21 @@
 
 @media (max-width: 480px) {
   .materials-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-4);
   }
 
   .materials-carousel {
-    gap: 12px;
+    gap: var(--space-2);
   }
 }
 
 /* === Категории каталога === */
 .catalog-categories {
   display: flex;
-  gap: 14px;
+  gap: var(--space-3);
   overflow-x: auto;
-  padding: 0.75rem 0.75rem;
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border);
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -72,17 +72,18 @@
 }
 
 .catalog-categories__button .chip {
-  padding: 0.5rem 1.2rem;
+  padding: 0.5rem 1.1rem;
   border-radius: 999px;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-text);
-  border-color: rgba(148, 163, 184, 0.7);
+  color: var(--muted-foreground);
+  background-color: var(--background);
+  border-color: var(--border);
 }
 
 .catalog-categories__button .chip.chip--active,
 .catalog-categories__button:focus .chip.chip--active {
-  color: #ffffff;
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
 }

@@ -1,26 +1,43 @@
-/* === Цвета и размеры === */
 :root {
-  --bg-app: #f5f6f8;
+  --background: #ffffff;
+  --foreground: #09090b;
 
-  --accent: #3b82f6;
-  --accent-strong: #2563eb;
-  --accent-soft: #dbeafe;
+  --card: #ffffff;
+  --card-foreground: #09090b;
 
-  --text-on-accent: #ffffff;
-  --text-normal: #111827;
-  --text-muted: #6b7280;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
 
-  --radius-lg: 16px;
-  --radius-md: 12px;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
 
-  --shadow-elevated: 0 8px 20px rgba(15, 23, 42, 0.12);
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
 
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #18181b;
+
+  --radius: 0.5rem;
+
+  --shadow-elevated: 0 10px 50px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 8px 30px rgba(15, 23, 42, 0.05);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
 
   --font-size-base: 1rem;
   --font-size-sm: 0.875rem;
@@ -28,20 +45,31 @@
   --font-size-xl: 1.35rem;
   --font-size-2xl: 1.6rem;
   --font-size-3xl: 2rem;
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-text: #111827;
-  --color-text-muted: #6b7280;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f8fafc;
-  --color-border: #e2e8f0;
-  --shadow-card: 0 8px 20px rgba(15, 23, 42, 0.18);
-  --shadow-strong: 0 10px 40px rgba(0, 0, 0, 0.2);
-  --shadow-floating: 0 -1px 6px rgba(0, 0, 0, 0.05);
-  --shadow-button: 0 4px 12px rgba(147, 51, 234, 0.3);
-  --bottom-nav-height: 49px;
-  --bottom-nav-icon-size: 25px;
+
+  --bottom-nav-height: 56px;
+  --bottom-nav-icon-size: 26px;
   --bottom-nav-spacing: 12px;
   --bottom-nav-offset: calc(var(--bottom-nav-height) + var(--bottom-nav-spacing));
-  --page-horizontal-padding: clamp(0.75rem, 3vw, 1.5rem);
+  --page-horizontal-padding: clamp(0.75rem, 3vw, 1.25rem);
+
+  /* Aliases for legacy tokens */
+  --bg-app: var(--background);
+  --text-normal: var(--foreground);
+  --text-muted: var(--muted-foreground);
+  --text-on-accent: var(--primary-foreground);
+  --accent-strong: var(--primary);
+  --accent-soft: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: color-mix(in srgb, var(--primary) 88%, var(--primary-foreground));
+  --color-text: var(--foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-surface: var(--card);
+  --color-surface-muted: var(--muted);
+  --color-border: var(--border);
+  --radius-lg: calc(var(--radius) * 1.75);
+  --radius-md: calc(var(--radius) * 1.25);
+  --shadow-card: 0 16px 60px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 24px 80px rgba(15, 23, 42, 0.12);
+  --shadow-floating: 0 -1px 6px rgba(15, 23, 42, 0.08);
+  --shadow-button: 0 10px 30px rgba(24, 24, 27, 0.12);
 }
