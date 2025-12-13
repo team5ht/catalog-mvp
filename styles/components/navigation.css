@@ -67,7 +67,7 @@
   background: none;
   color: var(--color-text);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   padding: 0 0.75rem;
   height: var(--bottom-nav-height);
@@ -83,4 +83,3 @@
 .bottom-nav__text-button--visible {
   display: inline-flex;
 }
-

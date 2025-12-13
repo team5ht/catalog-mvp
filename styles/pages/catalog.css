@@ -37,7 +37,7 @@
 .catalog-card__title {
   margin: 0;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--color-text);
 }
 

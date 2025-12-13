@@ -68,7 +68,7 @@ body.material-page-body {
 
 .material-page__title {
   font-size: var(--font-size-3xl);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.2;
   margin-bottom: var(--space-lg);
   color: var(--color-text);
@@ -80,7 +80,7 @@ body.material-page-body {
 
 .material-page__section-title {
   font-size: var(--font-size-2xl);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin-bottom: var(--space-md);
   color: var(--color-text);
 }

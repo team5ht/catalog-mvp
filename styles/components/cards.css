@@ -37,7 +37,7 @@
 .material-card__title {
   margin: 0;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.2;
   color: var(--color-text);
 }
