@@ -111,6 +111,6 @@ main {
   }
 
   .home-banner__link {
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
   }
 }
