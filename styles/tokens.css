@@ -8,6 +8,7 @@
   --color-bg: #ffffff;
   --color-surface: #f3f3f3;
   --color-surface-muted: #e6e6e6;
+  --color-surface-translucent: rgba(255, 255, 255, 0.9);
 
   /* Colors: primary */
   --color-primary: #265bff;

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="styles/components/buttons.css" />
   <link rel="stylesheet" href="styles/pages/login.css" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#f8fafc" />
+  <meta name="theme-color" content="#ffffff" />
   <script src="supabase-config.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
@@ -40,7 +40,7 @@
         autocomplete="current-password"
         aria-label="Пароль"
       />
-      <p id="authError" class="auth-form__note" role="alert" aria-live="polite" style="color:#b91c1c;display:none;"></p>
+      <p id="authError" class="auth-form__note" role="alert" aria-live="polite" style="color:var(--color-danger);display:none;"></p>
       <button type="submit" class="button button--primary" data-action="login">Войти</button>
       <button type="submit" class="button button--secondary" data-action="signup" style="margin-top:0.75rem;">Зарегистрироваться</button>
       <p class="auth-form__note">
