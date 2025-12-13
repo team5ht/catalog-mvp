@@ -13,7 +13,7 @@
 .auth-form {
   background: var(--color-surface);
   padding: 2.5rem;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-strong);
   max-width: 420px;
   width: 100%;
