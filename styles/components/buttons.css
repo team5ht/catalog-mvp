@@ -40,7 +40,7 @@
   justify-content: center;
   max-width: 320px;
   width: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .btn:focus {
@@ -53,7 +53,7 @@
   justify-content: center;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
@@ -90,7 +90,7 @@
   justify-content: center;
   padding: 0.4rem 0.9rem;
   border: 1px solid var(--color-border);
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   font-size: 0.9rem;
   font-weight: var(--font-weight-medium);
   font-family: inherit;

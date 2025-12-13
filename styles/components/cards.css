@@ -18,7 +18,7 @@
 .material-card__cover {
   width: 100%;
   aspect-ratio: 2 / 3;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background-color: var(--color-surface);
   background-position: center;

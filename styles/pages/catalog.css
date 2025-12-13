@@ -21,7 +21,7 @@
   flex: 0 0 96px;
   width: 96px;
   aspect-ratio: 2 / 3;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background-position: center;
   background-size: cover;
   background-color: var(--color-cover-placeholder);
@@ -61,7 +61,7 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
   box-shadow: var(--shadow-soft);
 }
