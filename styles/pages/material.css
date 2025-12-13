@@ -31,7 +31,7 @@ body.material-page-body {
 }
 
 .material-page__back-button:hover {
-  background: #ffffff;
+  background: var(--color-bg);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
