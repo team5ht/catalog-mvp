@@ -2,7 +2,7 @@
 .catalog-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-lg);
   padding: 1rem 0.75rem;
   overflow-y: auto;
 }
