@@ -20,7 +20,7 @@
 
 .materials-carousel {
   display: flex;
-  gap: var(--space-lg);
+  gap: 16px;
   overflow-x: auto;
   padding: 0;
   scroll-snap-type: x mandatory;
@@ -40,7 +40,7 @@
   }
 
   .materials-carousel {
-    gap: var(--space-md);
+    gap: 12px;
   }
 }
 
