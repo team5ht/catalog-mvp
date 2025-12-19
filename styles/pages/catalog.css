@@ -13,7 +13,7 @@
 
 .catalog-card {
   display: flex;
-  gap: 12px;
+  gap: var(--space-md);
   align-items: center;
 }
 
