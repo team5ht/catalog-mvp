@@ -63,7 +63,7 @@ body.material-page-body {
 .material-download {
   display: flex;
   justify-content: center;
-  margin: 16px 0 24px;
+  margin: var(--space-lg) 0 var(--space-xl);
 }
 
 .material-page__title {
