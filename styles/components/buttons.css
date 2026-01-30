@@ -104,8 +104,3 @@
 .chip--tag {
   cursor: default;
 }
-
-.account-actions .button {
-  width: 100%;
-  box-sizing: border-box;
-}
