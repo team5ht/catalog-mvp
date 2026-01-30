@@ -238,15 +238,10 @@ styles/
 
 ### 6.1 `styles/components/buttons.css`
 
-**Кнопки старой системы (`.btn*`)**
-- `.btn`, `.btn:hover`, `.btn:active`, `.btn:focus`
-- `.btn-primary`, `.btn-primary:hover`, `.btn-primary:active`, `.btn-primary:focus-visible`
-- `.btn-primary-soft`
-- `.btn-download` (пилюльная кнопка, ограничение ширины)
-
-**Кнопки новой системы (`.button*`)**
+**Кнопки (`.button*`)**
 - `.button`, `.button:hover`, `.button:active`, `.button:focus`
 - `.button--primary`, `.button--primary:hover`, `.button--primary:active`, `.button--primary:focus-visible`
+- `.button--secondary`
 - `.button--download`
 - `.button--download.is-loading` (скрывает кнопку при загрузке)
 
@@ -306,7 +301,7 @@ styles/
 - `.account-identity`
 - `.account-label`
 - `.account-email` (крупная почта)
-- `.account-actions`, `.account-actions .btn`
+- `.account-actions`, `.account-actions .button`
 - `.account-error`
 - `.account-error--visible` (делает сообщение видимым)
 - `.account-version`

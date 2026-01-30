@@ -108,7 +108,7 @@
 
 ### Тени
 
-- `--shadow-card` - карточки/панели, кнопки CTA (`.btn`).
+- `--shadow-card` - карточки/панели, кнопки CTA (`.button`).
 - `--shadow-press` - нажатое состояние кнопок и плавающих элементов.
 - `--shadow-strong` - плотные карточки (форма авторизации).
 - `--shadow-float` - тень у нижней навигации.
@@ -195,8 +195,8 @@
 - **Primary-кнопка**
   - фон: `--color-primary`
   - текст: `--color-text-on-primary`
-  - скругление: `--radius-lg` для `.btn*`, `--radius-md` для `.button*`, `--radius-pill` для download-вариантов
-  - паддинги задаются rem-значениями (~`0.75rem 1.25rem` для `.btn`, `0.75rem 1.5rem` или `var(--space-lg)` для `.button--download`)
+  - скругление: `--radius-md` для `.button*`, `--radius-pill` для download-вариантов
+  - паддинги задаются rem-значениями (`~0.75rem 1.5rem` или `var(--space-lg)` для `.button--download`)
   - hover: `--color-primary-hover`, нажатие: `--shadow-press`
 
 - **Нижняя навигация (bottom-nav)**
@@ -217,5 +217,5 @@
 - Уточнены правила по rem-паддингам для кнопок/чипов вместо raw px.
 - Обновлён мэппинг layout: реальные паддинги контейнера и отступы секций (`--space-lg` / `--space-xl`).
 - Обновлён мэппинг карточек: радиус `--radius-lg`, `--shadow-card`, заголовки ~1rem semibold.
-- Обновлён мэппинг кнопок: разные радиусы для `.btn` и `.button`, hover/press-токены.
+- Обновлён мэппинг кнопок: радиусы для `.button` и hover/press-токены.
 - Дополнена нижняя навигация тенью `--shadow-float`.
