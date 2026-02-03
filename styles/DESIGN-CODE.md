@@ -1,4 +1,4 @@
-# Дизайн-код 5HT (psyence.ru)
+# Дизайн-код 5HT (psyence.ru) LEGACY
 
 ## 1. Основные принципы
 
