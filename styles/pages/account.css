@@ -59,7 +59,7 @@
   gap: var(--space-md);
 }
 
-.account-actions .btn {
+.account-actions .button {
   width: 100%;
   box-sizing: border-box;
 }

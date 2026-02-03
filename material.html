@@ -29,7 +29,7 @@
 
   <!-- Кнопка действия -->
   <div class="material-download">
-    <button id="downloadBtn" class="btn btn-primary-soft btn-download button--download is-loading" type="button">Скачать</button>
+    <button id="downloadBtn" class="button button--secondary button--download is-loading" type="button">Скачать</button>
   </div>
 
   <!-- Контент -->
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (downloadBtn) {
       downloadBtn.textContent = 'Недоступно';
       downloadBtn.disabled = true;
-      downloadBtn.classList.remove('btn-primary', 'btn-primary-soft');
+      downloadBtn.classList.remove('button--primary', 'button--secondary');
     }
   }
 
@@ -193,8 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const authed = isUserAuthenticated();
     button.textContent = authed ? 'Скачать' : 'Войти и скачать';
     button.setAttribute('aria-label', authed ? 'Скачать материал' : 'Войти и скачать материал');
-    button.classList.toggle('btn-primary', authed);
-    button.classList.toggle('btn-primary-soft', !authed);
+    button.classList.toggle('button--primary', authed);
+    button.classList.toggle('button--secondary', !authed);
     button.classList.remove('is-loading');
   }
 
