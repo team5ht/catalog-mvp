@@ -225,6 +225,9 @@ body.material-page-body {
 
 .material-page {
   background: var(--material-page-background);
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .material-page__back-button {
