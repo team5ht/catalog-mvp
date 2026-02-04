@@ -1,6 +1,11 @@
 {
   "categories": [
     {
+      "id": 0,
+      "name": "Все",
+      "slug": "all"
+    },
+    {
       "id": 1,
       "name": "Маркетинг",
       "slug": "marketing"

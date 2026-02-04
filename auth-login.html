@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Вход в 5HT</title>
   <link rel="stylesheet" href="styles/tokens.css" />
-  <link rel="stylesheet" href="styles/tokens.theme-linear.css" />
-  <link rel="stylesheet" href="styles/base.css" />
-  <link rel="stylesheet" href="styles/components/buttons.css" />
-  <link rel="stylesheet" href="styles/pages/login.css" />
+  <link rel="stylesheet" href="styles/ui.css" />
+  <link rel="stylesheet" href="styles/pages.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#ffffff" />
   <script src="supabase-config.js"></script>
@@ -19,7 +17,7 @@
   <div class="auth-page">
     <form class="auth-form" id="authLoginForm" novalidate>
       <h1 class="auth-form__title">Вход или регистрация</h1>
-      <p class="auth-form__subtitle">
+      <p class="auth-form__subtitle text-body">
         Используйте email и пароль, чтобы войти или создать аккаунт.
       </p>
       <input
@@ -45,9 +43,8 @@
       <button type="submit" class="button button--primary" data-action="login">Войти</button>
       <button type="submit" class="button button--secondary" data-action="signup" style="margin-top:0.75rem;">Зарегистрироваться</button>
       <p class="auth-form__note">
-        Пароль должен содержать минимум 6 символов.
-        После регистрации мы отправим письмо для подтверждения.
-        После подтверждения зайдите с паролем через форму входа.
+        Пароль должен содержать не менее 6 символов.
+        Мы отправим письмо для подтверждения на ваш email.
       </p>
     </form>
   </div>
