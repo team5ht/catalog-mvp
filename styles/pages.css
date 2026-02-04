@@ -89,8 +89,6 @@
 
 .account-subtitle {
   margin: 0;
-  color: var(--color-text-muted);
-  line-height: 1.5;
 }
 
 .account-card {
@@ -187,9 +185,6 @@
 
 .auth-form__subtitle {
   margin: 0 0 1.5rem;
-  color: var(--color-secondary-text-strong);
-  font-size: 1rem;
-  line-height: 1.5;
 }
 
 .auth-form__input {
@@ -218,13 +213,7 @@
 }
 
 /* Material page */
-body.material-page-body {
-  --material-page-background: #f8f8f8;
-  background-color: var(--material-page-background);
-}
-
 .material-page {
-  background: var(--material-page-background);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -314,60 +303,12 @@ body.material-page-body {
   margin: var(--space-lg) 0 0;
 }
 
-.material-page .button--download {
-  width: 100%;
-  max-width: none;
-  height: 48px;
-  border-radius: var(--radius-md);
-  padding: 0 1.25rem;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: var(--font-weight-medium);
-  background: var(--color-text);
-  border-color: var(--color-text);
-  color: #ffffff;
-  box-shadow: var(--shadow-subtle);
-}
-
-.material-page .button--download:hover,
-.material-page .button--download:active,
-.material-page .button--download.button--secondary,
-.material-page .button--download.button--primary {
-  background: var(--color-text);
-  border-color: var(--color-text);
-  color: #ffffff;
-  box-shadow: var(--shadow-subtle);
-}
-
 .material-page__title {
-  font-size: 1.95rem;
-  font-weight: var(--font-weight-semibold);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
   margin: var(--space-xl) 0 0;
-  color: var(--color-text);
-}
-
-.material-page__section {
-  margin: var(--space-xl) 0 0;
-  padding-top: var(--space-xl);
-  border-top: 1px solid var(--color-border);
-}
-
-.material-page__section-title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  margin: 0 0 var(--space-md);
-  color: var(--color-text);
 }
 
 .material-page__description {
-  font-size: 15px;
-  line-height: 1.75;
   margin: var(--space-md) 0 0;
-  color: var(--color-text-muted);
 }
 
 .material-page__tags {
@@ -377,18 +318,6 @@ body.material-page-body {
   margin-top: var(--space-md);
 }
 
-.material-page__tag {
-  display: inline-flex;
-}
-
-.material-page__tag.chip {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text);
-  background-color: var(--color-surface-muted);
-  border-color: var(--color-border);
-}
 
 /* Responsive tweaks */
 @media (max-width: 480px) {

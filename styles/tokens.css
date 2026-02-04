@@ -5,20 +5,20 @@
   --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Colors: backgrounds & surfaces */
-  --color-bg: #f6f5f2;
+  --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-surface-muted: #f0efec;
   --color-surface-translucent: rgba(255, 255, 255, 0.9);
 
   /* Colors: primary */
-  --color-primary: #2f6edc;
-  --color-primary-hover: #295fbe;
-  --color-primary-soft: #e7eefc;
+  --color-primary: #1b1b18;
+  --color-primary-hover: #11110f;
+  --color-primary-soft: #f2f2f0;
 
   /* Colors: text */
   --color-text: #1b1b18;
   --color-text-muted: #5c5b55;
-  --color-text-on-primary: #f8fafc;
+  --color-text-on-primary: #ffffff;
   --color-secondary-text: rgba(27, 27, 24, 0.65);
   --color-secondary-text-strong: rgba(27, 27, 24, 0.82);
 
