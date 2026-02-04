@@ -24,10 +24,11 @@ body {
   max-width: 640px;
   margin: 0 auto;
   padding: var(--space-lg) var(--page-horizontal-padding) var(--space-2xl);
-  padding-bottom: var(--bottom-nav-offset);
-  padding-bottom: calc(var(--bottom-nav-offset) + constant(safe-area-inset-bottom));
-  padding-bottom: calc(var(--bottom-nav-offset) + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
+}
+
+.app-shell .app-container {
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--bottom-nav-clearance));
 }
 
 main {
