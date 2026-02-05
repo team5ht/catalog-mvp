@@ -12,6 +12,15 @@ body {
   font-size: var(--font-size-base);
 }
 
+.fullscreen-static {
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 .app-shell {
   min-height: 100vh;
   background-color: var(--color-bg);
