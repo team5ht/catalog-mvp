@@ -160,17 +160,18 @@
 /* Auth (login) */
 .auth-page {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100%;
   background: var(--color-bg);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: clamp(1rem, 4vw, 2rem);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .auth-form {
-  padding: 2.5rem;
+  padding: clamp(1.25rem, 5vw, 2.5rem);
   max-width: 420px;
   width: 100%;
   text-align: center;
