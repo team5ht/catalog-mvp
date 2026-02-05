@@ -30,7 +30,12 @@
     return currentSession;
   }
 
-  async function handleAccountClick(event) {
+  async function handleAccountClick(event, button) {
+    if (button && button.classList.contains('is-loading')) {
+      await refreshSession();
+      updateAccountState(button);
+    }
+
     if (!isAuthenticated()) {
       event.preventDefault();
       const currentUrl = window.location.href;
@@ -95,6 +100,6 @@
       });
     }
 
-    accountButton.addEventListener('click', (event) => handleAccountClick(event));
+    accountButton.addEventListener('click', (event) => handleAccountClick(event, accountButton));
   });
 })();

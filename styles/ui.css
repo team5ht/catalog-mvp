@@ -464,11 +464,6 @@ main {
   cursor: pointer;
 }
 
-#nav-account.is-loading,
-.nav-account.is-loading {
-  visibility: hidden;
-}
-
 .bottom-nav__icon {
   display: block;
   width: var(--bottom-nav-icon-size);
