@@ -178,7 +178,11 @@
 
 ## Навигация
 
-- Нижняя навигация (`.bottom-nav`) фиксирована и учитывает safe‑area через токены и CSS `env()`.
+- Нижняя навигация (`.bottom-nav`) фиксирована и учитывает safe‑area через токены и CSS `env()`:
+  - «Тело» меню задаётся `--bottom-nav-height`.
+  - Safe‑area добавляется через `padding-bottom: var(--bottom-nav-safe-area)`.
+  - Для расчёта нижнего отступа контента используется `--bottom-nav-total-height = height + safe-area`.
+- Во всех HTML подключён `viewport-fit=cover` для корректной safe‑area в iOS PWA.
 - Кнопка профиля скрыта классом `is-loading` до момента, когда `nav-auth.js` определит состояние сессии.
 - Назад на странице материала реализован через `document.referrer` + `sessionStorage`:
   - auth‑страницы исключаются (`auth-login.html`).

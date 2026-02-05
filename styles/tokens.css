@@ -75,8 +75,8 @@
   --shadow-fab: 0 6px 16px rgba(17, 17, 14, 0.1);
 
   /* Layout / navigation */
-  --bottom-nav-height: 56px;
-  --bottom-nav-icon-size: 26px;
+  --bottom-nav-height: 49px;
+  --bottom-nav-icon-size: 25px;
   --bottom-nav-spacing: 12px;
   --bottom-nav-safe-area: env(safe-area-inset-bottom, 0px);
   --bottom-nav-total-height: calc(var(--bottom-nav-height) + var(--bottom-nav-safe-area));
