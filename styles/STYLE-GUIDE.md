@@ -36,3 +36,4 @@ styles/
 - Базовые utility‑классы (`.load-error`, `.text-body`) живут в `styles/ui.css`.
 - Канон типографики заголовков: `.page-title` и `.section-title` определены в `styles/ui.css`.
 - Канон для секций: `.section` задаёт верхний отступ + разделительную линию, первый `.section` не имеет линии.
+- Иконки нижней навигации хранятся в `assets/icons/sprite.svg` и подключаются на страницах через `<svg class="bottom-nav__icon"><use href="...#icon-id"></use></svg>`.

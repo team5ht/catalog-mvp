@@ -1,6 +1,8 @@
 (function() {
-  const LOGIN_ICON = '<svg class="bottom-nav__icon" width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4" fill="none" stroke-width="2"/><path d="M4 20c0-4 16-4 16 0" fill="none" stroke-width="2"/></svg>';
-  const LOGOUT_ICON = '<svg class="bottom-nav__icon" width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 16l4-4-4-4" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h10" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const UNAUTHORIZED_ICON_REF = 'assets/icons/sprite.svg#icon-unauthorised';
+  const AUTHORIZED_ICON_REF = 'assets/icons/sprite.svg#icon-authorised';
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
   let currentSession = null;
 
@@ -28,7 +30,7 @@
     return currentSession;
   }
 
-  async function handleAccountClick(event, button) {
+  async function handleAccountClick(event) {
     if (!isAuthenticated()) {
       event.preventDefault();
       const currentUrl = window.location.href;
@@ -41,12 +43,38 @@
     window.location.href = 'account.html';
   }
 
+  function setUseHref(useNode, href) {
+    useNode.setAttribute('href', href);
+    useNode.setAttributeNS(XLINK_NS, 'xlink:href', href);
+  }
+
+  function ensureAccountIcon(button) {
+    let icon = button.querySelector('svg.bottom-nav__icon');
+    if (!icon) {
+      icon = document.createElementNS(SVG_NS, 'svg');
+      icon.setAttribute('class', 'bottom-nav__icon');
+      icon.setAttribute('viewBox', '0 0 24 24');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.setAttribute('focusable', 'false');
+      button.appendChild(icon);
+    }
+
+    let useNode = icon.querySelector('use');
+    if (!useNode) {
+      useNode = document.createElementNS(SVG_NS, 'use');
+      icon.appendChild(useNode);
+    }
+
+    return useNode;
+  }
+
   function updateAccountState(button) {
     if (!button) {
       return;
     }
     const authed = isAuthenticated();
-    button.innerHTML = authed ? LOGOUT_ICON : LOGIN_ICON;
+    const useNode = ensureAccountIcon(button);
+    setUseHref(useNode, authed ? AUTHORIZED_ICON_REF : UNAUTHORIZED_ICON_REF);
     button.setAttribute('aria-label', authed ? 'Открыть профиль' : 'Войти');
     button.classList.remove('is-loading');
   }
@@ -67,6 +95,6 @@
       });
     }
 
-    accountButton.addEventListener('click', (event) => handleAccountClick(event, accountButton));
+    accountButton.addEventListener('click', (event) => handleAccountClick(event));
   });
 })();

@@ -473,27 +473,24 @@ main {
   display: block;
   width: var(--bottom-nav-icon-size);
   height: var(--bottom-nav-icon-size);
+  color: var(--color-text-muted);
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-.bottom-nav__icon * {
-  fill: transparent;
-  stroke: var(--color-text-muted);
-  transition: stroke 0.2s ease, fill 0.2s ease;
+.bottom-nav__icon use {
+  pointer-events: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .bottom-nav__button:hover .bottom-nav__icon * {
-    stroke: var(--color-primary-hover);
-    fill: var(--color-primary-hover);
+  .bottom-nav__button:hover .bottom-nav__icon {
+    color: var(--color-primary-hover);
   }
 }
 
-.bottom-nav__button:focus-visible .bottom-nav__icon * {
-  stroke: var(--color-primary);
-  fill: var(--color-primary);
+.bottom-nav__button:focus-visible .bottom-nav__icon {
+  color: var(--color-primary);
 }
 
-.bottom-nav__button.bottom-nav__button--active .bottom-nav__icon * {
-  stroke: var(--color-primary);
-  fill: var(--color-primary);
+.bottom-nav__button.bottom-nav__button--active .bottom-nav__icon {
+  color: var(--color-primary);
 }

@@ -13,6 +13,7 @@
 - `account.html` — личный кабинет: показ email, кнопки «Изменить пароль» (заглушка) и «Выйти».
 - `app.js` — общий загрузчик `data.json`, рендер каруселей/каталога/категорий и inline-ошибок.
 - `nav-auth.js` — управление кнопкой профиля в нижней навигации (иконка + переход).
+- `assets/icons/sprite.svg` — SVG-спрайт иконок нижней навигации (`main`, `catalog`, `authorised`, `unauthorised`).
 - `supabase-config.js` — конфиг Supabase (URL и publishable key) в `window.*`.
 - `supabase-client.js` — инициализация клиента Supabase из CDN.
 - `sw.js` — service worker для PWA и оффлайна.
@@ -134,9 +135,9 @@
 ### `nav-auth.js`
 
 - Управляет кнопкой профиля в нижней навигации (`#nav-account`).
-- После `refreshSession()` подставляет иконку:
-  - Неавторизован → иконка «войти», aria‑label «Войти».
-  - Авторизован → иконка «выйти», aria‑label «Открыть профиль».
+- После `refreshSession()` обновляет ссылку `<use href="...">` в SVG-иконке:
+  - Неавторизован → `#icon-unauthorised`, aria‑label «Войти».
+  - Авторизован → `#icon-authorised`, aria‑label «Открыть профиль».
 - При клике:
   - Неавторизован → редирект на `auth-login.html?redirect=<текущий URL>`.
   - Авторизован → переход в `account.html`.
@@ -183,6 +184,7 @@
   - Safe‑area добавляется через `padding-bottom: var(--bottom-nav-safe-area)`.
   - Для расчёта нижнего отступа контента используется `--bottom-nav-total-height = height + safe-area`.
 - Во всех HTML подключён `viewport-fit=cover` для корректной safe‑area в iOS PWA.
+- Иконки нижней навигации подключаются через единый SVG-спрайт `assets/icons/sprite.svg` (`<svg><use href="...#icon-id"></use></svg>`), а активные состояния управляются через `currentColor` в CSS.
 - Кнопка профиля скрыта классом `is-loading` до момента, когда `nav-auth.js` определит состояние сессии.
 - Назад на странице материала реализован через `document.referrer` + `sessionStorage`:
   - auth‑страницы исключаются (`auth-login.html`).
@@ -199,8 +201,9 @@
 
 ### `sw.js`
 
-- Версия кэша: `catalog-mvp-v7`.
+- Версия кэша: `catalog-mvp-v8`.
 - Список `urlsToCache` включает основные страницы, скрипты, базовые стили и изображения.
+- В pre-cache добавлен `assets/icons/sprite.svg` для оффлайн-отображения нижней навигации.
   - **Не кэшируются:** `supabase-config.js`, CDN Supabase SDK.
 - Установка (`install`): кэширует ресурсы по списку, пропуская ошибки (try/catch), затем `skipWaiting()`.
 - Активация (`activate`): удаляет старые кэши, `clients.claim()`.
@@ -239,4 +242,4 @@ npx serve .
 - В UI нет восстановления пароля; «Изменить пароль» — заглушка.
 - `data.json` содержит плейсхолдеры `pdfUrl` (Google Drive IDs) и внешние `cover`.
 - Первичный список каталога не фильтруется по активному чипу автоматически; фильтр включается только при клике.
-- Кнопка профиля показывает иконку «выйти», но ведёт в профиль; фактический выход — только на странице `account.html`.
+- Кнопка профиля показывает состояние авторизации, но ведёт в профиль; фактический выход — только на странице `account.html`.
