@@ -447,45 +447,85 @@ main {
   border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: stretch;
   box-shadow: var(--shadow-float);
   padding-bottom: var(--bottom-nav-safe-area);
 }
 
 .bottom-nav__button {
   display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: max(56px, var(--bottom-nav-height));
+  gap: 2px;
+  min-width: 0;
+  width: auto;
   height: var(--bottom-nav-height);
-  padding: 0;
+  padding: 6px 4px 4px;
   border: none;
   background: none;
   cursor: pointer;
+  color: var(--color-text-muted);
+  transition: color 0.16s ease;
 }
 
 .bottom-nav__icon {
   display: block;
   width: var(--bottom-nav-icon-size);
   height: var(--bottom-nav-icon-size);
-  color: var(--color-text-muted);
-  transition: color 0.2s ease, opacity 0.2s ease;
+  flex: 0 0 auto;
+  color: currentColor;
+  transition: color 0.16s ease, opacity 0.16s ease;
 }
 
 .bottom-nav__icon use {
   pointer-events: none;
 }
 
+.bottom-nav__label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.1;
+  font-weight: var(--font-weight-medium);
+  color: currentColor;
+  transition: color 0.16s ease, opacity 0.16s ease;
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .bottom-nav__button:hover .bottom-nav__icon {
+  .bottom-nav__button:hover {
     color: var(--color-primary-hover);
   }
 }
 
-.bottom-nav__button:focus-visible .bottom-nav__icon {
+.bottom-nav__button:focus-visible {
   color: var(--color-primary);
 }
 
-.bottom-nav__button.bottom-nav__button--active .bottom-nav__icon {
+.bottom-nav__button.bottom-nav__button--active {
   color: var(--color-primary);
+}
+
+.nav-account.is-state-changing .bottom-nav__icon,
+.nav-account.is-state-changing .bottom-nav__label {
+  opacity: 0.35;
+}
+
+@media (max-width: 360px) {
+  .bottom-nav__label {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav__button,
+  .bottom-nav__icon,
+  .bottom-nav__label {
+    transition-duration: 0.01ms;
+  }
 }
