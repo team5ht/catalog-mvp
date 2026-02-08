@@ -3,53 +3,30 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Главная</title>
+<title>Каталог материалов</title>
 <link rel="stylesheet" href="styles/tokens.css" />
 <link rel="stylesheet" href="styles/ui.css" />
 <link rel="stylesheet" href="styles/pages.css" />
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#ffffff" />
 </head>
 <body class="app-shell">
-<main class="app-container">
-  <section class="home-banner">
-    <a class="home-banner__link" href="https://forms.yandex.ru/u/68f26331f47e7388d5a2a27a/" target="_blank" rel="noopener noreferrer">
-      <img class="home-banner__image" src="home-hero.png" alt="Баннер приглашения к участию" loading="lazy" />
-    </a>
-  </section>
-  <section class="materials-section">
-    <div class="materials-section__header">
-      <h2 class="materials-section__title">Переводы</h2>
-    </div>
-    <div id="main-materials" class="materials-carousel">
-      <!-- Карточки материалов будут вставлены скриптом -->
-    </div>
-  </section>
-
-  <section class="materials-section">
-    <div class="materials-section__header">
-      <h2 class="materials-section__title">Материалы 5HT</h2>
-    </div>
-    <div id="materials-5ht" class="materials-carousel">
-      <!-- Карточки материалов будут вставлены скриптом -->
-    </div>
-  </section>
-</main>
+<main id="spa-root" class="app-container" aria-live="polite"></main>
 
 <nav class="bottom-nav">
-  <button id="nav-home" class="bottom-nav__button bottom-nav__button--active" aria-label="Главное">
+  <button id="nav-home" type="button" class="bottom-nav__button" aria-label="Главное">
     <svg class="bottom-nav__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <use href="assets/icons/sprite.svg#icon-main"></use>
     </svg>
     <span class="bottom-nav__label">Главное</span>
   </button>
-  <button id="nav-catalog" class="bottom-nav__button" aria-label="Каталог">
+  <button id="nav-catalog" type="button" class="bottom-nav__button" aria-label="Каталог">
     <svg class="bottom-nav__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <use href="assets/icons/sprite.svg#icon-catalog"></use>
     </svg>
     <span class="bottom-nav__label">Каталог</span>
   </button>
-  <button id="nav-account" class="bottom-nav__button nav-account is-loading" aria-label="Войти">
+  <button id="nav-account" type="button" class="bottom-nav__button nav-account is-loading" aria-label="Войти">
     <svg class="bottom-nav__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <use href="assets/icons/sprite.svg#icon-unauthorised"></use>
     </svg>
@@ -62,25 +39,5 @@
 <script src="supabase-client.js"></script>
 <script src="app.js"></script>
 <script src="nav-auth.js"></script>
-<script>
-document.getElementById('nav-catalog').onclick = () => location.href = 'catalog.html';
-
-loadAppData()
-  .then((data) => {
-    renderMaterialsCarousel('main-materials', data.materials);
-    renderMaterialsCarousel('materials-5ht', data.materials);
-  })
-  .catch(() => {
-    renderInlineError('main-materials', 'Не удалось загрузить материалы.');
-    renderInlineError('materials-5ht', 'Не удалось загрузить материалы.');
-  });
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js');
-  });
-}
-</script>
 </body>
 </html>

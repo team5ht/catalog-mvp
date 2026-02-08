@@ -1,231 +1,115 @@
-# Каталог материалов 5HT (MVP)
+# Каталог материалов 5HT (hash-SPA)
 
-Статичный PWA-прототип каталога PDF-материалов. Без сборки и backend — только HTML/CSS/JS, Supabase-авторизация через CDN и данные из `data.json`.
+Статичный PWA-каталог PDF-материалов на чистых HTML/CSS/JS без сборки и backend.
 
-## Состав проекта (все файлы и их назначение)
+Приложение работает как **hash-SPA**: весь runtime идет через `index.html` и маршруты `#/...`.
 
-Корень проекта:
+## Технологии
 
-- `index.html` — главная страница с баннером и двумя каруселями материалов.
-- `catalog.html` — страница каталога: поиск-заглушка, список категорий, лента карточек.
-- `material.html` — детальная страница материала по `?id=` + логика кнопки «Скачать».
-- `auth-login.html` — форма входа/регистрации (email + пароль), логика Supabase.
-- `account.html` — личный кабинет: показ email, кнопки «Изменить пароль» (заглушка) и «Выйти».
-- `app.js` — общий загрузчик `data.json`, рендер каруселей/каталога/категорий и inline-ошибок.
-- `nav-auth.js` — управление кнопкой профиля в нижней навигации (иконка + переход).
-- `assets/icons/sprite.svg` — SVG-спрайт иконок нижней навигации (`main`, `catalog`, `authorised`, `unauthorised`).
-- `supabase-config.js` — конфиг Supabase (URL и publishable key) в `window.*`.
-- `supabase-client.js` — инициализация клиента Supabase из CDN.
-- `sw.js` — service worker для PWA и оффлайна.
-- `manifest.json` — манифест PWA.
-- `data.json` — данные каталога (категории + материалы).
-- `compiled_css.css` — reference‑only слепок сгенерированных утилит (не подключается страницами).
-- `snippet.html` — reference‑only HTML‑фрагмент для визуального ориентирования (не подключается страницами).
-- `home-hero.png` — баннер главной страницы.
-- `icon-192.png`, `icon-512.png` — иконки PWA.
-- `CNAME` — кастомный домен (GitHub Pages).
-- `README.md` — этот файл.
+- HTML/CSS/JS без сборщика
+- Supabase Auth через CDN `@supabase/supabase-js@2`
+- `data.json` как источник каталога
+- Service Worker + `manifest.json` для PWA
 
-Стили:
+## Структура проекта
 
-- `styles/tokens.css` — единственный канонический источник дизайн‑токенов (CSS variables), включая нейтральную чёрную primary‑палитру и белый фон страницы.
-- `styles/ui.css` — UI‑kit: базовая типографика/контейнеры, компоненты, навигация, карточки, карусели, типографические утилиты.
-- `styles/pages.css` — минимальные page‑specific раскладки и исключения (без дублирования канонических стилей).
-- `styles/components/` — зарезервировано под компонентные стили (сейчас пусто).
-- `styles/pages/` — зарезервировано под page‑level стили (сейчас пусто).
-- `styles/STYLE-GUIDE.md` — актуальная структура стилей и порядок подключения.
+- `index.html` — единственная точка входа SPA shell
+- `app.js` — hash-router + рендер экранов (`home/catalog/material/auth/account`)
+- `nav-auth.js` — состояние иконки профиля и переход в `#/auth`/`#/account`
+- `supabase-config.js` — `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY`
+- `supabase-client.js` — инициализация `window.supabaseClient`
+- `data.json` — категории и материалы
+- `sw.js` — кэширование shell/ассетов и fallback на `index.html`
+- `manifest.json` — настройки standalone PWA
+- `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` — стили
+- `assets/icons/sprite.svg` — спрайт иконок нижней навигации
 
-## Страницы и сценарии
+## Route contract (hash-SPA)
 
-### `index.html` — главная
+Канонические маршруты:
 
-- Баннер с внешней ссылкой на форму (открывается в новой вкладке).
-- Две секции каруселей: «Переводы» и «Материалы 5HT».
-- Данные берутся из `data.json` через `loadAppData()`. Оба блока получают один и тот же список материалов; фильтрации по типам нет.
-- Визуально выводится только первые 5 материалов (лимит `renderMaterialsCarousel`, по умолчанию `5`).
-- Нижняя навигация: «Главная», «Каталог», «Профиль». Кнопка «Каталог» ведёт на `catalog.html`.
-- Подключает `supabase-config.js`, CDN `@supabase/supabase-js@2`, `supabase-client.js`, `app.js`, `nav-auth.js`.
-- Регистрирует service worker на `window.load`.
+- `#/` — главная
+- `#/catalog` — каталог
+- `#/material/:id` — детальная страница материала
+- `#/auth` — вход/регистрация
+- `#/account` — личный кабинет
 
-### `catalog.html` — каталог
+Auth redirect:
 
-- Поле поиска — заглушка: input disabled, placeholder «Поиск скоро заработает».
-- Лента категорий формируется из `data.json` (см. `renderCategories`). Первый чип помечается как активный, но фильтрация по нему **не** запускается автоматически — список сначала отображается целиком.
-- Лента карточек каталога формируется из `data.json` (см. `renderCatalog`), показывает только обложку и название.
-- Фильтрация по категории работает на клиенте: при клике на чип вызывается `filterCatalog(cat.id)`.
-- При ошибке загрузки данных выводятся inline-сообщения через `renderInlineError()`.
-- Нижняя навигация: активна вкладка «Каталог», «Главная» ведёт на `index.html`.
-- Регистрирует service worker на `window.load`.
+- `#/auth?redirect=<encoded_hash_route>`
+- Пример: `#/auth?redirect=%23%2Fmaterial%2F3`
 
-### `material.html` — карточка материала
+Правила:
 
-- Берёт `id` из query (`?id=`), парсит через `parseInt`. Если `id` отсутствует или невалиден — редирект на `index.html`.
-- Навигация «Назад»:
-  - Берёт `document.referrer` только если он same‑origin и не ведёт на `auth-login.html`.
-  - Сохраняет/читает адрес в `sessionStorage` по ключу `materialBackUrl:<id>`.
-  - Фоллбек‑список: сначала `catalog.html`, затем `index.html`.
-- Загрузка данных:
-  - Через `loadAppData()` ищет материал по `id`.
-  - Если материал не найден — редирект на `index.html`.
-  - Заполняет обложку, заголовок, описание и теги. Если тегов нет — выводит чип «Без тегов».
-- Кнопка «Скачать»:
-  - Сначала скрыта классом `is-loading` (через `.button--download.is-loading`).
-  - После загрузки сессии Supabase меняет текст: «Скачать» (авторизован) или «Войти и скачать» (не авторизован).
-  - Неавторизованных перенаправляет на `auth-login.html?redirect=<текущий URL>`.
-  - Авторизованных — открывает `material.pdfUrl` в новой вкладке (`window.open`). При пустом `pdfUrl` показывает `alert`.
-- Ошибки данных: выводит заголовок «Не удалось загрузить материал», описание «Попробуйте обновить страницу позже», отключает кнопку.
-- Нижняя навигация: кнопки ведут на `index.html` и `catalog.html`.
-- Регистрирует service worker на `window.load`.
+- неизвестный hash -> редирект на `#/`
+- невалидный `material/:id` -> редирект на `#/`
+- `redirect` принимает только внутренний hash-route (`#/...`), иначе fallback `#/`
 
-### `auth-login.html` — вход/регистрация
+## Важно: legacy URL больше не поддерживаются
 
-- Одна форма с двумя submit‑кнопками: «Войти» и «Зарегистрироваться».
-- Действие определяется кликом по кнопке (`data-action`). Если пользователь жмёт Enter в поле, используется действие по умолчанию `login`.
-- Валидация:
-  - Email по простому regex.
-  - Пароль минимум 6 символов.
-- Логика Supabase:
-  - `signUp({ email, password })` для регистрации.
-  - `signInWithPassword({ email, password })` для входа.
-- После успешной регистрации остаётся на странице и показывает сообщение о подтверждении почты.
-- Обработка ошибок:
-  - Для регистрации — отдельное сообщение при «user already exists/registered».
-  - Общие ошибки отображаются в `#authError`.
-- Редирект после входа:
-  - Используется параметр `?redirect=`.
-  - Разрешены только URL в пределах текущего origin; для абсолютных ссылок извлекается path+query+hash.
-  - Если `redirect` некорректен, fallback — `index.html`.
-- Регистрирует service worker на `window.load`.
+Старые мультистраничные URL удалены и не являются рабочими маршрутами:
 
-### `account.html` — личный кабинет
+- `catalog.html`
+- `material.html`
+- `auth-login.html`
+- `account.html`
 
-- Показывает email текущего пользователя.
-- При отсутствии сессии — редирект на `auth-login.html?redirect=<текущий URL>`.
-- Подписка на `onAuthStateChange`: если сессия пропала — снова редирект на логин.
-- Кнопка «Изменить пароль» — заглушка (`alert('Функция в разработке')`).
-- Кнопка «Выйти»:
-  - Выполняет `supabaseClient.auth.signOut()`.
-  - На успехе редиректит на `auth-login.html?redirect=index.html`.
-  - На ошибке показывает сообщение в блоке `.account-error`.
-- Внизу отображается статичный текст «Версия приложения v1».
-- Регистрирует service worker на `window.load`.
+Используйте только `index.html#/...`.
 
-## Скрипты и общая логика
+## Поведение экранов
 
-### `app.js`
+### Главная (`#/`)
 
-- `loadAppData()`:
-  - Делает `fetch('data.json', { cache: 'no-cache' })`.
-  - Результат кеширует в переменной `appData` в памяти.
-  - При ошибке логирует warning, сбрасывает `appData` в `null` и пробрасывает исключение.
-- `renderInlineError(containerId, message)`:
-  - Вставляет `<p class="load-error">` в указанный контейнер.
-  - `.load-error` имеет минимальный стиль для ошибок загрузки.
-- `renderMaterialsCarousel(containerId, materials, limit = 5)`:
-  - Создаёт карточки (`.material-card`) и вешает `onclick` → `material.html?id=<id>`.
-  - Показывает только первые `limit` элементов.
-- `renderCategories(categories)`:
-  - Генерирует чипы и навешивает фильтрацию по клику.
-  - Помечает первый чип как активный.
-- `renderCatalog(materials)`:
-  - Генерирует список карточек с обложкой и названием.
-- `filterCatalog(categoryId)`:
-  - Фильтрует `appData.materials` по `categoryId` и вызывает `renderCatalog()`.
+- Баннер + две карусели материалов
+- Данные подгружаются из `data.json`
 
-### `nav-auth.js`
+### Каталог (`#/catalog`)
 
-- Управляет кнопкой профиля в нижней навигации (`#nav-account`).
-- После `refreshSession()` обновляет ссылку `<use href="...">` в SVG-иконке:
-  - Неавторизован → `#icon-unauthorised`, aria‑label «Войти».
-  - Авторизован → `#icon-authorised`, aria‑label «Открыть профиль».
-- При клике:
-  - Неавторизован → редирект на `auth-login.html?redirect=<текущий URL>`.
-  - Авторизован → переход в `account.html`.
-- Подписывается на `supabase.auth.onAuthStateChange` и обновляет иконку.
-- Класс `is-loading` снимается после первой попытки получить сессию.
+- Поиск пока заглушка (disabled)
+- Категории и карточки из `data.json`
+- Фильтр по категории на клиенте
 
-### `supabase-config.js`
+### Материал (`#/material/:id`)
 
-- Хранит конфигурацию Supabase в глобальных переменных:
-  - `window.SUPABASE_URL = "https://dgdnmenvpkyzdvhtmhmz.supabase.co"`
-  - `window.SUPABASE_PUBLISHABLE_KEY = "sb_publishable_rAfP9D8nQv9DbfqMAqepsw_lt29h2CB"`
-- Скрипт должен быть подключён **до** CDN SDK и `supabase-client.js`.
+- Обложка, описание, теги
+- Кнопка "Скачать" доступна авторизованным
+- Для гостя переход в auth с redirect на текущий материал
+- Кнопка "Назад": `history.back()` при in-app history, иначе `#/catalog`
 
-### `supabase-client.js`
+### Auth (`#/auth`)
 
-- Создаёт `window.supabaseClient` через `supabase.createClient`.
-- Если SDK не загружен или нет конфигурации — пишет warning и выставляет `supabaseClient = null`.
-- Предотвращает повторную инициализацию клиента.
+- Одна форма: вход/регистрация
+- Валидация email и пароля (мин. 6 символов)
+- После успешного входа переход на route из `redirect`
 
-## Данные (`data.json`)
+### Account (`#/account`)
 
-Структура:
+- Доступ только при активной сессии
+- Отображает email
+- Logout через Supabase `signOut()`
 
-- `categories[]`: `id` (number), `name`, `slug`.
-- `materials[]`: `id`, `title`, `description`, `cover`, `pdfUrl`, `categoryId`, `tags[]`.
+## Supabase
 
-Замечания:
+CDN подключается в `index.html`:
 
-- `slug` сейчас нигде не используется в логике фильтрации.
-- `cover`/`pdfUrl` — внешние ссылки (сейчас стоят плейсхолдеры Google Drive/Unsplash).
-- Все страницы читают данные напрямую из `data.json` без дополнительной обработки.
+```html
+<script src="supabase-config.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+```
 
-## Авторизация и состояние
+`supabase-config.js` должен быть загружен до SDK и клиента.
 
-- Используется Supabase JS SDK v2 через CDN `https://unpkg.com/@supabase/supabase-js@2`.
-- Авторизация и сессии полностью клиентские, без собственного backend.
-- Проверка сессии выполняется на страницах `material.html`, `account.html` и в `nav-auth.js`.
-- Выход из аккаунта реализован **только** на странице `account.html` (кнопка «Выйти»).
+## PWA / Service Worker
 
-## Навигация
-
-- Нижняя навигация (`.bottom-nav`) фиксирована и учитывает safe‑area через токены и CSS `env()`:
-  - «Тело» меню задаётся `--bottom-nav-height`.
-  - Safe‑area добавляется через `padding-bottom: var(--bottom-nav-safe-area)`.
-  - Для расчёта нижнего отступа контента используется `--bottom-nav-total-height = height + safe-area`.
-- Во всех HTML подключён `viewport-fit=cover` для корректной safe‑area в iOS PWA.
-- Иконки нижней навигации подключаются через единый SVG-спрайт `assets/icons/sprite.svg` (`<svg><use href="...#icon-id"></use></svg>`), а активные состояния управляются через `currentColor` в CSS.
-- Кнопка профиля скрыта классом `is-loading` до момента, когда `nav-auth.js` определит состояние сессии.
-- Назад на странице материала реализован через `document.referrer` + `sessionStorage`:
-  - auth‑страницы исключаются (`auth-login.html`).
-  - fallback — `catalog.html`.
-
-## PWA и оффлайн
-
-### `manifest.json`
-
-- `start_url`/`scope` = `./` (работает в подпапках).
-- `display: standalone`, ориентация `portrait-primary`.
-- Иконки с `purpose: "any maskable"`.
-- Категории: `education`, `books`.
-
-### `sw.js`
-
-- Версия кэша: `catalog-mvp-v8`.
-- Список `urlsToCache` включает основные страницы, скрипты, базовые стили и изображения.
-- В pre-cache добавлен `assets/icons/sprite.svg` для оффлайн-отображения нижней навигации.
-  - **Не кэшируются:** `supabase-config.js`, CDN Supabase SDK.
-- Установка (`install`): кэширует ресурсы по списку, пропуская ошибки (try/catch), затем `skipWaiting()`.
-- Активация (`activate`): удаляет старые кэши, `clients.claim()`.
-- Стратегия `fetch`:
-  - Только для `GET` и только same-origin.
-  - Network‑first: сначала сеть, затем запись в кэш.
-  - При ошибке: отдаёт кэш; для навигации (`mode: 'navigate'`) — `index.html`.
-
-## Стили и дизайн‑система
-
-- `styles/tokens.css` — единственный источник токенов (палитра, типографика, тени, отступы, layout‑переменные). Базовый фон страницы — белый, primary‑палитра нейтральная чёрная.
-- `styles/ui.css` — UI‑kit: базовая типографика/контейнеры, компоненты, навигация, карточки, карусели. Канонические заголовки (`.page-title`, `.section-title`), секции (`.section`) и утилиты текста (`.text-body`) живут здесь.
-- `styles/pages.css` — минимальные page‑specific раскладки (главная, каталог, авторизация, материал, аккаунт) без переопределения общих канонов.
-- Структура стилей и порядок подключения — в `styles/STYLE-GUIDE.md`.
-
-## Развёртывание
-
-- `CNAME` указывает на домен `psyence.ru` (для GitHub Pages/статического хостинга).
+- Кэш: `catalog-mvp-v9`
+- Pre-cache: SPA shell, скрипты, стили, ассеты, `data.json`
+- `navigate` fallback: `index.html`
+- `start_url`/`scope`: `./` (корректно для подпапок GitHub Pages)
 
 ## Локальный запуск
 
-Проект статический. Для корректной работы `fetch` и service worker нужен HTTP‑сервер:
+Нужен HTTP-сервер (иначе `fetch` и SW не будут работать корректно):
 
 ```bash
 python -m http.server 8000
@@ -235,11 +119,7 @@ npx serve .
 
 Откройте `http://localhost:8000/`.
 
-## Ограничения и нюансы текущей реализации
+## Деплой на GitHub Pages
 
-- Поиск в каталоге отключён (input `disabled`).
-- Авторизация и данные полностью на клиенте; собственного backend нет.
-- В UI нет восстановления пароля; «Изменить пароль» — заглушка.
-- `data.json` содержит плейсхолдеры `pdfUrl` (Google Drive IDs) и внешние `cover`.
-- Первичный список каталога не фильтруется по активному чипу автоматически; фильтр включается только при клике.
-- Кнопка профиля показывает состояние авторизации, но ведёт в профиль; фактический выход — только на странице `account.html`.
+Приложение рассчитано на работу из подпапки/корня Pages за счет hash-routing.
+Deep links открываются как `.../index.html#/...` без серверного rewrite.

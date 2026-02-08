@@ -19,19 +19,44 @@
     return Boolean(currentSession && currentSession.user);
   }
 
+  function normalizeHashRoute(hash) {
+    if (!hash || hash === '#') {
+      return '#/';
+    }
+
+    if (hash.startsWith('#/')) {
+      return hash;
+    }
+
+    return '#/';
+  }
+
+  function getCurrentHashRoute() {
+    return normalizeHashRoute(window.location.hash);
+  }
+
+  function buildAuthHash(redirectHash) {
+    const params = new URLSearchParams();
+    const safeRedirect = normalizeHashRoute(redirectHash);
+    params.set('redirect', safeRedirect);
+    return `#/auth?${params.toString()}`;
+  }
+
   async function refreshSession() {
     const client = getClient();
     if (!client || !client.auth || typeof client.auth.getSession !== 'function') {
       currentSession = null;
       return currentSession;
     }
+
     try {
       const { data } = await client.auth.getSession();
       currentSession = data ? data.session : null;
-    } catch (err) {
-      console.warn('Не удалось получить сессию Supabase', err);
+    } catch (error) {
+      console.warn('Не удалось получить сессию Supabase', error);
       currentSession = null;
     }
+
     return currentSession;
   }
 
@@ -43,14 +68,12 @@
 
     if (!isAuthenticated()) {
       event.preventDefault();
-      const currentUrl = window.location.href;
-      const loginUrl = `auth-login.html?redirect=${encodeURIComponent(currentUrl)}`;
-      window.location.href = loginUrl;
+      window.location.hash = buildAuthHash(getCurrentHashRoute());
       return;
     }
 
     event.preventDefault();
-    window.location.href = 'account.html';
+    window.location.hash = '#/account';
   }
 
   function setUseHref(useNode, href) {
@@ -148,13 +171,24 @@
     button.classList.remove('is-loading');
   }
 
+  function refreshButtonState() {
+    const button = document.getElementById('nav-account');
+    if (!button) {
+      return;
+    }
+
+    refreshSession().finally(() => updateAccountState(button));
+  }
+
+  window.refreshNavAuthState = refreshButtonState;
+
   document.addEventListener('DOMContentLoaded', () => {
     const accountButton = document.getElementById('nav-account');
     if (!accountButton) {
       return;
     }
 
-    refreshSession().finally(() => updateAccountState(accountButton));
+    refreshButtonState();
 
     const client = getClient();
     if (client && client.auth && typeof client.auth.onAuthStateChange === 'function') {
