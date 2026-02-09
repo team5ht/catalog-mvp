@@ -29,30 +29,16 @@
     return Boolean(authSession && authSession.user);
   }
 
-  async function refreshAuthSession(options = {}) {
-    const { timeoutMs = 2500 } = options;
+  async function refreshAuthSession() {
     const client = getSupabaseClient();
     if (!client || typeof client.auth.getSession !== 'function') {
       authSession = null;
       return null;
     }
 
-    const timeoutToken = Symbol('session-timeout');
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => resolve(timeoutToken), timeoutMs);
-    });
-
     try {
-      const sessionResult = await Promise.race([
-        client.auth.getSession(),
-        timeoutPromise
-      ]);
-
-      if (sessionResult === timeoutToken) {
-        return authSession;
-      }
-
-      authSession = sessionResult?.data ? sessionResult.data.session : null;
+      const { data } = await client.auth.getSession();
+      authSession = data ? data.session : null;
     } catch (error) {
       console.warn('Не удалось получить сессию Supabase', error);
       authSession = null;
@@ -594,7 +580,7 @@
     const downloadButton = document.getElementById('downloadBtn');
     renderDownloadButtonState(downloadButton);
 
-    void refreshAuthSession({ timeoutMs: 1800 }).then(() => {
+    void refreshAuthSession().then(() => {
       if (!isCurrentRender(renderToken)) {
         return;
       }
@@ -718,7 +704,7 @@
       </div>
     `;
 
-    void refreshAuthSession({ timeoutMs: 1800 }).then(() => {
+    void refreshAuthSession().then(() => {
       if (!isCurrentRender(renderToken)) {
         return;
       }
@@ -1074,12 +1060,4 @@
     init();
   }
 })();
-
-
-
-
-
-
-
-
 
