@@ -3,7 +3,7 @@
 // SPA shell + оффлайн поддержка
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v10';
+const CACHE_NAME = 'catalog-mvp-v13';
 
 const urlsToCache = [
   './',
