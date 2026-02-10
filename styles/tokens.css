@@ -76,10 +76,11 @@
   --shadow-fab: 0 8px 20px rgba(20, 20, 18, 0.12);
 
   /* Layout / navigation */
-  --bottom-nav-height: 70px;
+  --bottom-nav-height: 56px;
   --bottom-nav-icon-size: 24px;
   --bottom-nav-spacing: 12px;
-  --bottom-nav-safe-area: env(safe-area-inset-bottom, 0px);
+  --bottom-nav-safe-area-fallback: 0px;
+  --bottom-nav-safe-area: max(env(safe-area-inset-bottom, 0px), var(--bottom-nav-safe-area-fallback));
   --top-safe-area: env(safe-area-inset-top, 0px);
   --top-safe-area-offset: max(var(--top-safe-area), 10px);
   --bottom-nav-total-height: calc(var(--bottom-nav-height) + var(--bottom-nav-safe-area));
@@ -104,4 +105,10 @@
   --shadow-elevated: var(--shadow-card);
   --shadow-floating: var(--shadow-float);
   --shadow-button: var(--shadow-press);
+}
+
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --bottom-nav-safe-area-fallback: 12px;
+  }
 }

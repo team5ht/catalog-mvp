@@ -10,6 +10,20 @@
   display: none !important;
 }
 
+a,
+button,
+[role="button"],
+.button,
+.bottom-nav__button,
+.catalog-categories__button,
+.chip--interactive,
+.material-page__back-button,
+.material-card,
+.catalog-card__title-link {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+
 html,
 body {
   min-height: 100%;
@@ -211,6 +225,38 @@ a:focus-visible,
 .auth-form__input:focus-visible {
   outline: 2px solid rgba(20, 20, 18, 0.38);
   outline-offset: 2px;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  a:focus,
+  a:focus-visible,
+  button:focus,
+  button:focus-visible,
+  [role="button"]:focus,
+  [role="button"]:focus-visible,
+  .button:focus,
+  .button:focus-visible,
+  .bottom-nav__button:focus,
+  .bottom-nav__button:focus-visible,
+  .catalog-categories__button:focus,
+  .catalog-categories__button:focus-visible,
+  .chip--interactive:focus,
+  .chip--interactive:focus-visible,
+  .material-page__back-button:focus,
+  .material-page__back-button:focus-visible,
+  .material-card:focus,
+  .material-card:focus-visible,
+  .catalog-card__title-link:focus,
+  .catalog-card__title-link:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .catalog-categories__button:focus .chip,
+  .catalog-categories__button:focus-visible .chip {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 .button--primary {
@@ -609,7 +655,7 @@ a:focus-visible,
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--bottom-nav-height);
+  height: var(--bottom-nav-total-height);
   background: var(--color-surface-translucent);
   border-top: 1px solid rgba(20, 20, 18, 0.1);
   backdrop-filter: blur(10px);
@@ -632,7 +678,7 @@ a:focus-visible,
   min-width: 0;
   width: auto;
   height: var(--bottom-nav-height);
-  padding: 9px 4px 6px;
+  padding: 6px 4px 4px;
   border: none;
   background: none;
   cursor: pointer;
