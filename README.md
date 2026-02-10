@@ -14,10 +14,10 @@
 ## Структура проекта
 
 - `index.html` — единственная точка входа SPA shell
-- `app.js` — hash-router + рендер экранов (`home/catalog/material/auth/account`)
-- `nav-auth.js` — состояние иконки профиля и переход в `#/auth`/`#/account`
+- `scripts/app.js` — hash-router + рендер экранов (`home/catalog/material/auth/account`)
+- `scripts/nav-auth.js` — состояние иконки профиля и переход в `#/auth`/`#/account`
 - `supabase-config.js` — `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY`
-- `supabase-client.js` — инициализация `window.supabaseClient`
+- `scripts/supabase-client.js` — инициализация `window.supabaseClient`
 - `data.json` — категории и материалы
 - `sw.js` — кэширование shell/ассетов и fallback на `index.html`
 - `manifest.json` — настройки standalone PWA
@@ -95,14 +95,14 @@ CDN подключается в `index.html`:
 ```html
 <script src="supabase-config.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
+<script src="scripts/supabase-client.js"></script>
 ```
 
 `supabase-config.js` должен быть загружен до SDK и клиента.
 
 ## PWA / Service Worker
 
-- Кэш: `catalog-mvp-v9`
+- Кэш: `catalog-mvp-v10`
 - Pre-cache: SPA shell, скрипты, стили, ассеты, `data.json`
 - `navigate` fallback: `index.html`
 - `start_url`/`scope`: `./` (корректно для подпапок GitHub Pages)

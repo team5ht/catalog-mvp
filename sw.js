@@ -3,14 +3,14 @@
 // SPA shell + оффлайн поддержка
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v9';
+const CACHE_NAME = 'catalog-mvp-v10';
 
 const urlsToCache = [
   './',
   './index.html',
-  './app.js',
-  './nav-auth.js',
-  './supabase-client.js',
+  './scripts/app.js',
+  './scripts/nav-auth.js',
+  './scripts/supabase-client.js',
   './data.json',
   './manifest.json',
   './styles/tokens.css',
@@ -99,3 +99,4 @@ self.addEventListener('fetch', (event) => {
     })()
   );
 });
+
