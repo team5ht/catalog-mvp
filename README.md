@@ -102,7 +102,7 @@ CDN подключается в `index.html`:
 
 ## PWA / Service Worker
 
-- Кэш: `catalog-mvp-v10`
+- Кэш: `catalog-mvp-v13`
 - Pre-cache: SPA shell, скрипты, стили, ассеты, `data.json`
 - `navigate` fallback: `index.html`
 - `start_url`/`scope`: `./` (корректно для подпапок GitHub Pages)
