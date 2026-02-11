@@ -9,14 +9,24 @@
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
-  let currentSession = null;
+  function getAuthStore() {
+    return typeof window !== 'undefined' ? window.authStore || null : null;
+  }
 
-  function getClient() {
-    return typeof window !== 'undefined' ? window.supabaseClient : null;
+  function initAuthStore() {
+    const store = getAuthStore();
+    if (store && typeof store.init === 'function') {
+      store.init();
+    }
+    return store;
   }
 
   function isAuthenticated() {
-    return Boolean(currentSession && currentSession.user);
+    const store = getAuthStore();
+    if (!store || typeof store.isAuthenticated !== 'function') {
+      return false;
+    }
+    return store.isAuthenticated();
   }
 
   function normalizeHashRoute(hash) {
@@ -42,27 +52,22 @@
     return `#/auth?${params.toString()}`;
   }
 
-  async function refreshSession() {
-    const client = getClient();
-    if (!client || !client.auth || typeof client.auth.getSession !== 'function') {
-      currentSession = null;
-      return currentSession;
+  async function waitForAuthReady() {
+    const store = initAuthStore();
+    if (!store || typeof store.whenReady !== 'function') {
+      return null;
     }
 
     try {
-      const { data } = await client.auth.getSession();
-      currentSession = data ? data.session : null;
-    } catch (error) {
-      console.warn('Не удалось получить сессию Supabase', error);
-      currentSession = null;
+      return await store.whenReady();
+    } catch (_error) {
+      return null;
     }
-
-    return currentSession;
   }
 
   async function handleAccountClick(event, button) {
     if (button && button.classList.contains('is-loading')) {
-      await refreshSession();
+      await waitForAuthReady();
       updateAccountState(button);
     }
 
@@ -171,16 +176,16 @@
     button.classList.remove('is-loading');
   }
 
-  function refreshButtonState() {
-    const button = document.getElementById('nav-account');
-    if (!button) {
-      return;
+  function subscribeToAuthState(accountButton) {
+    const store = getAuthStore();
+    if (!store || typeof store.subscribe !== 'function') {
+      return () => {};
     }
 
-    refreshSession().finally(() => updateAccountState(button));
+    return store.subscribe(() => {
+      updateAccountState(accountButton);
+    });
   }
-
-  window.refreshNavAuthState = refreshButtonState;
 
   document.addEventListener('DOMContentLoaded', () => {
     const accountButton = document.getElementById('nav-account');
@@ -188,16 +193,17 @@
       return;
     }
 
-    refreshButtonState();
+    initAuthStore();
+    const unsubscribe = subscribeToAuthState(accountButton);
 
-    const client = getClient();
-    if (client && client.auth && typeof client.auth.onAuthStateChange === 'function') {
-      client.auth.onAuthStateChange((_event, session) => {
-        currentSession = session;
-        updateAccountState(accountButton);
-      });
-    }
+    void waitForAuthReady().finally(() => {
+      updateAccountState(accountButton);
+    });
 
     accountButton.addEventListener('click', (event) => handleAccountClick(event, accountButton));
+
+    window.addEventListener('beforeunload', () => {
+      unsubscribe();
+    }, { once: true });
   });
 })();

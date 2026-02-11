@@ -1,115 +1,143 @@
 # Каталог материалов 5HT (hash-SPA)
 
-Статичный PWA-каталог PDF-материалов на чистых HTML/CSS/JS без сборки и backend.
+Статичное PWA-приложение на чистых HTML/CSS/JS с hash-routing и Supabase Auth.
 
-Приложение работает как **hash-SPA**: весь runtime идет через `index.html` и маршруты `#/...`.
+## Актуальный статус
 
-## Технологии
+- SPA-shell: один входной файл `index.html` + маршруты `#/...`.
+- Сборщика и серверного рендера нет.
+- Каталог и карточки материалов берутся из `data.json`.
+- Авторизация: Supabase email/password (вход, регистрация, выход).
+- Auth-синхронизация централизована через `window.authStore`.
+- Установка как PWA: `manifest.json` + `sw.js`.
 
-- HTML/CSS/JS без сборщика
-- Supabase Auth через CDN `@supabase/supabase-js@2`
-- `data.json` как источник каталога
-- Service Worker + `manifest.json` для PWA
+## Технологический стек
+
+- HTML/CSS/JS (vanilla)
+- Supabase JS SDK через CDN (`@supabase/supabase-js@2`)
+- Service Worker API + Web App Manifest
 
 ## Структура проекта
 
-- `index.html` — единственная точка входа SPA shell
-- `scripts/app.js` — hash-router + рендер экранов (`home/catalog/material/auth/account`)
-- `scripts/nav-auth.js` — состояние иконки профиля и переход в `#/auth`/`#/account`
-- `supabase-config.js` — `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY`
-- `scripts/supabase-client.js` — инициализация `window.supabaseClient`
-- `data.json` — категории и материалы
-- `sw.js` — кэширование shell/ассетов и fallback на `index.html`
-- `manifest.json` — настройки standalone PWA
-- `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` — стили
-- `assets/icons/sprite.svg` — спрайт иконок нижней навигации
+- `index.html` - HTML shell и подключение всех стилей/скриптов
+- `scripts/app.js` - hash-router, рендер экранов, загрузка `data.json`, auth-gating
+- `scripts/nav-auth.js` - состояние кнопки аккаунта в нижней навигации
+- `scripts/supabase-client.js` - инициализация `window.supabaseClient`
+- `scripts/auth-store.js` - единый источник auth-состояния (`window.authStore`)
+- `supabase-config.js` - `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY`
+- `data.json` - категории и материалы
+- `sw.js` - кэширование и оффлайн-fallback
+- `manifest.json` - PWA-манифест
+- `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - стили
+- `styles/STYLE-GUIDE.md` - актуальный гид по CSS-слоям
+- `assets/icons/sprite.svg` - спрайт иконок нижней навигации
 
-## Route contract (hash-SPA)
+## Контракт маршрутов
 
-Канонические маршруты:
+Канонические hash-маршруты:
 
-- `#/` — главная
-- `#/catalog` — каталог
-- `#/material/:id` — детальная страница материала
-- `#/auth` — вход/регистрация
-- `#/account` — личный кабинет
-
-Auth redirect:
-
-- `#/auth?redirect=<encoded_hash_route>`
-- Пример: `#/auth?redirect=%23%2Fmaterial%2F3`
+- `#/` - главная
+- `#/catalog` - каталог
+- `#/material/:id` - детальная страница материала
+- `#/auth` - вход/регистрация
+- `#/account` - личный кабинет
 
 Правила:
 
-- неизвестный hash -> редирект на `#/`
-- невалидный `material/:id` -> редирект на `#/`
-- `redirect` принимает только внутренний hash-route (`#/...`), иначе fallback `#/`
-
-## Важно: legacy URL больше не поддерживаются
-
-Старые мультистраничные URL удалены и не являются рабочими маршрутами:
-
-- `catalog.html`
-- `material.html`
-- `auth-login.html`
-- `account.html`
-
-Используйте только `index.html#/...`.
+- Неизвестный маршрут -> редирект на `#/`.
+- Невалидный `#/material/:id` -> редирект на `#/`.
+- Auth redirect работает через `#/auth?redirect=<hash-route>`.
+- `redirect` принимается только для внутренних и известных hash-route (`#/...`), иначе fallback в `#/`.
 
 ## Поведение экранов
 
 ### Главная (`#/`)
 
-- Баннер + две карусели материалов
-- Данные подгружаются из `data.json`
+- Хедер, промо-баннер и 2 карусели материалов.
+- Обе карусели сейчас заполняются одним и тем же списком `data.materials`.
 
 ### Каталог (`#/catalog`)
 
-- Поиск пока заглушка (disabled)
-- Категории и карточки из `data.json`
-- Фильтр по категории на клиенте
+- Рабочий текстовый поиск (по `title`, `description`, `tags`).
+- Фильтрация по категориям из `data.json`.
+- Пустая выдача показывает сообщение "Ничего не найдено...".
 
 ### Материал (`#/material/:id`)
 
-- Обложка, описание, теги
-- Кнопка "Скачать" доступна авторизованным
-- Для гостя переход в auth с redirect на текущий материал
-- Кнопка "Назад": `history.back()` при in-app history, иначе `#/catalog`
+- Обложка, категория, описание, теги.
+- Для авторизованного кнопка скачивания открывает `pdfUrl`.
+- Для гостя кнопка скачивания ведет в auth с возвратом на текущий материал.
+- Кнопка "Назад": `history.back()` при наличии in-app истории, иначе переход в `#/catalog`.
 
 ### Auth (`#/auth`)
 
-- Одна форма: вход/регистрация
-- Валидация email и пароля (мин. 6 символов)
-- После успешного входа переход на route из `redirect`
+- Единая форма входа/регистрации.
+- Валидация email и пароля (минимум 6 символов).
+- После успешного входа - переход на `redirect` или `#/`.
 
 ### Account (`#/account`)
 
-- Доступ только при активной сессии
-- Отображает email
-- Logout через Supabase `signOut()`
+- Доступ только при активной сессии.
+- Показывает email пользователя.
+- `Logout` через `supabase.auth.signOut()`.
+- Кнопка "Изменить пароль" пока заглушка (alert).
+
+## Данные (`data.json`)
+
+`categories`:
+
+- `id` (number)
+- `name` (string)
+- `slug` (string)
+
+`materials`:
+
+- `id` (number)
+- `title` (string)
+- `description` (string)
+- `cover` (string URL)
+- `pdfUrl` (string URL)
+- `categoryId` (number)
+- `tags` (string[])
 
 ## Supabase
 
-CDN подключается в `index.html`:
+Подключение в `index.html`:
 
 ```html
 <script src="supabase-config.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="scripts/supabase-client.js"></script>
+<script src="scripts/auth-store.js"></script>
 ```
 
-`supabase-config.js` должен быть загружен до SDK и клиента.
+Важно:
+
+- `supabase-config.js` должен быть загружен до `scripts/supabase-client.js`.
+- `scripts/auth-store.js` должен быть загружен после `scripts/supabase-client.js` и до `scripts/app.js` / `scripts/nav-auth.js`.
+- В браузерном коде допустим только publishable key.
+- Secret/service-role ключи нельзя хранить в репозитории и фронтенде.
+
+Контракт `window.authStore`:
+
+- `init()` - идемпотентная инициализация
+- `subscribe(callback)` - подписка на auth-изменения
+- `getSession()` - snapshot текущей сессии
+- `isAuthenticated()` - признак авторизации
+- `whenReady()` - промис первичной синхронизации
+- `refresh()` - ручная пересинхронизация
 
 ## PWA / Service Worker
 
-- Кэш: `catalog-mvp-v13`
-- Pre-cache: SPA shell, скрипты, стили, ассеты, `data.json`
-- `navigate` fallback: `index.html`
-- `start_url`/`scope`: `./` (корректно для подпапок GitHub Pages)
+- Кэш-версия: `catalog-mvp-v13`.
+- Pre-cache: shell, скрипты, стили, `data.json`, иконки и ключевые изображения.
+- Стратегия на `fetch`: network-first с fallback в кэш.
+- Для `navigate` запросов fallback на `./index.html`.
+- `manifest.json`: `start_url` и `scope` выставлены в `./`.
 
 ## Локальный запуск
 
-Нужен HTTP-сервер (иначе `fetch` и SW не будут работать корректно):
+Нужен HTTP-сервер (из файловой системы `fetch`/SW работают некорректно):
 
 ```bash
 python -m http.server 8000
@@ -117,9 +145,17 @@ python -m http.server 8000
 npx serve .
 ```
 
-Откройте `http://localhost:8000/`.
+Открыть: `http://localhost:8000/`.
 
-## Деплой на GitHub Pages
+## Деплой
 
-Приложение рассчитано на работу из подпапки/корня Pages за счет hash-routing.
-Deep links открываются как `.../index.html#/...` без серверного rewrite.
+Проект рассчитан на GitHub Pages (корень/подпапка) за счет hash-routing.
+
+- Канонический вход: `.../index.html#/...`
+- Серверные rewrite-правила для deep links не требуются.
+
+## Известные ограничения
+
+- В `data.json` используются demo-ссылки `YOUR_FILE_ID_*` для PDF.
+- Смена пароля/восстановление пароля не реализованы.
+- Автотесты и линтеры в репозитории отсутствуют.

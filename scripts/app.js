@@ -3,7 +3,6 @@
   const HOME_HASH = '#/';
 
   let appData = null;
-  let authSession = null;
   let currentRoute = null;
   let currentRenderToken = 0;
   let catalogUiState = {
@@ -21,6 +20,18 @@
     return document.querySelector('.bottom-nav');
   }
 
+  function getAuthStore() {
+    return window.authStore || null;
+  }
+
+  function initializeAuthStore() {
+    const store = getAuthStore();
+    if (store && typeof store.init === 'function') {
+      store.init();
+    }
+    return store;
+  }
+
   function getSupabaseClient() {
     const client = window.supabaseClient;
     if (!client || !client.auth) {
@@ -30,25 +41,33 @@
   }
 
   function isAuthenticated() {
-    return Boolean(authSession && authSession.user);
+    const store = getAuthStore();
+    if (!store || typeof store.isAuthenticated !== 'function') {
+      return false;
+    }
+    return store.isAuthenticated();
   }
 
-  async function refreshAuthSession() {
-    const client = getSupabaseClient();
-    if (!client || typeof client.auth.getSession !== 'function') {
-      authSession = null;
+  async function refreshAuthSession(options = {}) {
+    const { force = false } = options;
+    const store = initializeAuthStore();
+    if (!store) {
       return null;
     }
 
     try {
-      const { data } = await client.auth.getSession();
-      authSession = data ? data.session : null;
+      if (force && typeof store.refresh === 'function') {
+        return await store.refresh();
+      }
+
+      if (typeof store.whenReady === 'function') {
+        return await store.whenReady();
+      }
     } catch (error) {
-      console.warn('Не удалось получить сессию Supabase', error);
-      authSession = null;
+      console.warn('Не удалось синхронизировать auth-store', error);
     }
 
-    return authSession;
+    return null;
   }
 
   async function loadAppData() {
@@ -1073,7 +1092,7 @@
       return;
     }
 
-    await refreshAuthSession();
+    const authState = await refreshAuthSession();
 
     if (!isCurrentRender(renderToken)) {
       return;
@@ -1129,7 +1148,7 @@
     }
 
     if (emailEl) {
-      emailEl.textContent = authSession?.user?.email || 'Без email';
+      emailEl.textContent = authState?.user?.email || 'Без email';
     }
 
     if (changePasswordButton) {
@@ -1249,17 +1268,13 @@
   }
 
   function registerAuthListener() {
-    const client = getSupabaseClient();
-    if (!client || typeof client.auth.onAuthStateChange !== 'function') {
+    const store = initializeAuthStore();
+    if (!store || typeof store.subscribe !== 'function') {
       return;
     }
 
-    client.auth.onAuthStateChange((_event, session) => {
-      authSession = session || null;
-
-      if (typeof window.refreshNavAuthState === 'function') {
-        window.refreshNavAuthState();
-      }
+    store.subscribe((state) => {
+      const authed = Boolean(state && state.isAuthenticated);
 
       syncMaterialDownloadCta();
 
@@ -1267,13 +1282,13 @@
         return;
       }
 
-      if (currentRoute.name === 'auth' && isAuthenticated()) {
+      if (currentRoute.name === 'auth' && authed) {
         const redirectHash = sanitizeRedirectHash(currentRoute.query.redirect) || HOME_HASH;
         navigateTo(redirectHash, { replace: true });
         return;
       }
 
-      if (currentRoute.name === 'account' && !isAuthenticated()) {
+      if (currentRoute.name === 'account' && !authed) {
         navigateTo(buildAuthHash('#/account'), { replace: true });
       }
     });
