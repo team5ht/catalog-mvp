@@ -1,11 +1,19 @@
 (function() {
   const DATA_URL = 'data.json';
   const HOME_HASH = '#/';
+  const AUTH_MODE_LOGIN = 'login';
+  const AUTH_MODE_FORGOT = 'forgot';
+  const AUTH_MODE_RECOVERY = 'recovery';
+  const PASSWORD_MIN_LENGTH = 6;
+  const RECOVERY_RESEND_COOLDOWN_SECONDS = 50;
+  const FORGOT_COOLDOWN_STORAGE_KEY = 'catalog.auth.forgotCooldownUntil';
+  const RECOVERY_SEARCH_PARAM = 'auth_mode';
+  const RECOVERY_SEARCH_VALUE = 'recovery';
 
   let appData = null;
-  let authSession = null;
   let currentRoute = null;
   let currentRenderToken = 0;
+  let recoveryFlowActive = false;
   let catalogUiState = {
     categoryId: 0,
     query: ''
@@ -21,6 +29,18 @@
     return document.querySelector('.bottom-nav');
   }
 
+  function getAuthStore() {
+    return window.authStore || null;
+  }
+
+  function initializeAuthStore() {
+    const store = getAuthStore();
+    if (store && typeof store.init === 'function') {
+      store.init();
+    }
+    return store;
+  }
+
   function getSupabaseClient() {
     const client = window.supabaseClient;
     if (!client || !client.auth) {
@@ -30,25 +50,33 @@
   }
 
   function isAuthenticated() {
-    return Boolean(authSession && authSession.user);
+    const store = getAuthStore();
+    if (!store || typeof store.isAuthenticated !== 'function') {
+      return false;
+    }
+    return store.isAuthenticated();
   }
 
-  async function refreshAuthSession() {
-    const client = getSupabaseClient();
-    if (!client || typeof client.auth.getSession !== 'function') {
-      authSession = null;
+  async function refreshAuthSession(options = {}) {
+    const { force = false } = options;
+    const store = initializeAuthStore();
+    if (!store) {
       return null;
     }
 
     try {
-      const { data } = await client.auth.getSession();
-      authSession = data ? data.session : null;
+      if (force && typeof store.refresh === 'function') {
+        return await store.refresh();
+      }
+
+      if (typeof store.whenReady === 'function') {
+        return await store.whenReady();
+      }
     } catch (error) {
-      console.warn('Не удалось получить сессию Supabase', error);
-      authSession = null;
+      console.warn('Не удалось синхронизировать auth-store', error);
     }
 
-    return authSession;
+    return null;
   }
 
   async function loadAppData() {
@@ -378,6 +406,107 @@
     return query;
   }
 
+  function normalizeAuthMode(inputMode) {
+    if (typeof inputMode !== 'string') {
+      return AUTH_MODE_LOGIN;
+    }
+
+    const mode = inputMode.trim().toLowerCase();
+    if (mode === AUTH_MODE_FORGOT || mode === AUTH_MODE_RECOVERY) {
+      return mode;
+    }
+
+    return AUTH_MODE_LOGIN;
+  }
+
+  function getAuthModeFromRoute(route) {
+    if (!route || !route.query) {
+      return AUTH_MODE_LOGIN;
+    }
+
+    return normalizeAuthMode(route.query.mode);
+  }
+
+  function isValidEmail(value) {
+    if (typeof value !== 'string') {
+      return false;
+    }
+
+    const email = value.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  }
+
+  function validatePasswordPair(password, confirmPassword) {
+    const normalizedPassword = typeof password === 'string' ? password : '';
+    const normalizedConfirmPassword = typeof confirmPassword === 'string' ? confirmPassword : '';
+
+    if (normalizedPassword.length < PASSWORD_MIN_LENGTH) {
+      return `Минимум ${PASSWORD_MIN_LENGTH} символов в пароле.`;
+    }
+
+    if (normalizedPassword !== normalizedConfirmPassword) {
+      return 'Пароли не совпадают.';
+    }
+
+    return '';
+  }
+
+  function isAuthRateLimitError(error) {
+    const status = Number(error && error.status);
+    const code = String((error && error.code) || '').toLowerCase();
+    const message = String((error && error.message) || '').toLowerCase();
+
+    return (
+      status === 429 ||
+      code === 'over_email_send_rate_limit' ||
+      message.includes('only request this after') ||
+      message.includes('too many requests') ||
+      message.includes('rate limit')
+    );
+  }
+
+  function getRetryAfterSeconds(error, fallbackSeconds = RECOVERY_RESEND_COOLDOWN_SECONDS) {
+    const message = String((error && error.message) || '');
+    const match = message.match(/after\s+(\d+)\s+seconds?/i);
+    const parsed = match ? Number(match[1]) : NaN;
+
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
+
+    return fallbackSeconds;
+  }
+
+  async function updateUserPassword(client, password) {
+    if (!client || !client.auth || typeof client.auth.updateUser !== 'function') {
+      return {
+        ok: false,
+        error: new Error('SUPABASE_CLIENT_UNAVAILABLE')
+      };
+    }
+
+    try {
+      const { error } = await client.auth.updateUser({ password });
+      if (error) {
+        return { ok: false, error };
+      }
+
+      return { ok: true, error: null };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  function buildRecoveryRedirectUrl() {
+    const params = new URLSearchParams();
+    params.set(RECOVERY_SEARCH_PARAM, RECOVERY_SEARCH_VALUE);
+
+    const query = params.toString();
+    const pathname = window.location.pathname || '/';
+    return `${window.location.origin}${pathname}${query ? `?${query}` : ''}`;
+  }
+
   function normalizeHash(inputHash) {
     if (!inputHash || inputHash === '#') {
       return HOME_HASH;
@@ -481,7 +610,9 @@
     return parsed.fullHash;
   }
 
-  function buildAuthHash(redirectHash) {
+  function buildAuthHash(redirectHash, options = {}) {
+    const { mode = AUTH_MODE_LOGIN } = options;
+    const normalizedMode = normalizeAuthMode(mode);
     const params = new URLSearchParams();
     const safeRedirect = sanitizeRedirectHash(redirectHash);
 
@@ -489,8 +620,33 @@
       params.set('redirect', safeRedirect);
     }
 
+    if (normalizedMode !== AUTH_MODE_LOGIN) {
+      params.set('mode', normalizedMode);
+    }
+
     const query = params.toString();
     return query ? `#/auth?${query}` : '#/auth';
+  }
+
+  function consumeRecoverySearchMarker() {
+    const search = window.location.search || '';
+    if (!search) {
+      return false;
+    }
+
+    const params = new URLSearchParams(search);
+    if (params.get(RECOVERY_SEARCH_PARAM) !== RECOVERY_SEARCH_VALUE) {
+      return false;
+    }
+
+    recoveryFlowActive = true;
+    params.delete(RECOVERY_SEARCH_PARAM);
+    const nextSearch = params.toString();
+    const pathname = window.location.pathname || '/';
+    const currentHash = window.location.hash || '';
+    const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ''}${currentHash}`;
+    window.history.replaceState(null, '', nextUrl);
+    return true;
   }
 
   function updateBottomNavActive(routeName) {
@@ -907,10 +1063,108 @@
     }
 
     const redirectHash = sanitizeRedirectHash(route.query.redirect) || HOME_HASH;
+    const authMode = getAuthModeFromRoute(route);
+    const loginHash = buildAuthHash(redirectHash);
+    const forgotHash = buildAuthHash(redirectHash, { mode: AUTH_MODE_FORGOT });
 
-    if (isAuthenticated()) {
+    if (authMode === AUTH_MODE_LOGIN && isAuthenticated()) {
       navigateTo(redirectHash, { replace: true });
       return;
+    }
+
+    let authTitle = 'Вход или регистрация';
+    let authSubtitle = 'Используйте email и пароль, чтобы войти или создать аккаунт.';
+    let authNote = `
+      Пароль должен содержать не менее ${PASSWORD_MIN_LENGTH} символов.
+      Мы отправим письмо для подтверждения на ваш email.
+    `;
+    let formMarkup = `
+      <input
+        type="email"
+        id="authEmail"
+        class="auth-form__input"
+        placeholder="name@example.com"
+        required
+        autocomplete="email"
+        inputmode="email"
+        aria-label="Email"
+      />
+      <input
+        type="password"
+        id="authPassword"
+        class="auth-form__input"
+        placeholder="Пароль (мин. ${PASSWORD_MIN_LENGTH} символов)"
+        required
+        autocomplete="current-password"
+        aria-label="Пароль"
+      />
+      <p id="authStatus" class="auth-form__status" role="alert" aria-live="polite"></p>
+      <div class="auth-form__actions">
+        <button type="submit" class="button button--primary" data-action="login">Войти</button>
+        <button type="submit" class="button button--secondary" data-action="signup">Зарегистрироваться</button>
+      </div>
+      <div class="auth-form__meta">
+        <a class="auth-form__link" href="${forgotHash}">Забыли пароль?</a>
+      </div>
+    `;
+
+    if (authMode === AUTH_MODE_FORGOT) {
+      authTitle = 'Восстановление пароля';
+      authSubtitle = 'Введите email, и мы отправим ссылку для сброса пароля.';
+      authNote = 'Если аккаунт с таким email существует, письмо придет в течение пары минут.';
+      formMarkup = `
+        <input
+          type="email"
+          id="authRecoveryEmail"
+          class="auth-form__input"
+          placeholder="name@example.com"
+          required
+          autocomplete="email"
+          inputmode="email"
+          aria-label="Email для восстановления"
+        />
+        <p id="authStatus" class="auth-form__status" role="alert" aria-live="polite"></p>
+        <div class="auth-form__actions">
+          <button type="submit" class="button button--primary" data-action="forgot">Отправить ссылку</button>
+        </div>
+        <div class="auth-form__meta">
+          <a class="auth-form__link" href="${loginHash}">Назад ко входу</a>
+        </div>
+      `;
+    }
+
+    if (authMode === AUTH_MODE_RECOVERY) {
+      authTitle = 'Новый пароль';
+      authSubtitle = 'Введите новый пароль для аккаунта.';
+      authNote = `Пароль должен содержать не менее ${PASSWORD_MIN_LENGTH} символов.`;
+      formMarkup = `
+        <input
+          type="password"
+          id="authNewPassword"
+          class="auth-form__input"
+          placeholder="Новый пароль"
+          required
+          autocomplete="new-password"
+          aria-label="Новый пароль"
+        />
+        <input
+          type="password"
+          id="authConfirmPassword"
+          class="auth-form__input"
+          placeholder="Подтвердите пароль"
+          required
+          autocomplete="new-password"
+          aria-label="Подтверждение пароля"
+        />
+        <p id="authStatus" class="auth-form__status" role="alert" aria-live="polite"></p>
+        <div class="auth-form__actions">
+          <button type="submit" class="button button--primary" data-action="recovery">Сохранить пароль</button>
+        </div>
+        <div class="auth-form__meta">
+          <a class="auth-form__link" href="${forgotHash}">Отправить новую ссылку</a>
+          <a class="auth-form__link" href="${loginHash}">Назад ко входу</a>
+        </div>
+      `;
     }
 
     root.innerHTML = `
@@ -918,47 +1172,21 @@
         <section class="auth-panel" aria-labelledby="authTitle">
           <header class="auth-panel__header">
             <p class="screen-header__kicker">Доступ</p>
-            <h1 id="authTitle" class="page-title auth-form__title">Вход или регистрация</h1>
-            <p class="screen-header__subtitle auth-form__subtitle text-body">Используйте email и пароль, чтобы войти или создать аккаунт.</p>
+            <h1 id="authTitle" class="page-title auth-form__title">${authTitle}</h1>
+            <p class="screen-header__subtitle auth-form__subtitle text-body">${authSubtitle}</p>
           </header>
 
-          <form class="auth-form" id="authLoginForm" novalidate>
-            <input
-              type="email"
-              id="authEmail"
-              class="auth-form__input"
-              placeholder="name@example.com"
-              required
-              autocomplete="email"
-              inputmode="email"
-              aria-label="Email"
-            />
-            <input
-              type="password"
-              id="authPassword"
-              class="auth-form__input"
-              placeholder="Пароль (мин. 6 символов)"
-              required
-              autocomplete="current-password"
-              aria-label="Пароль"
-            />
-            <p id="authError" class="auth-form__error" role="alert" aria-live="polite"></p>
-            <div class="auth-form__actions">
-              <button type="submit" class="button button--primary" data-action="login">Войти</button>
-              <button type="submit" class="button button--secondary" data-action="signup">Зарегистрироваться</button>
-            </div>
+          <form class="auth-form" id="authForm" novalidate>
+            ${formMarkup}
           </form>
 
-          <p class="auth-form__note">
-            Пароль должен содержать не менее 6 символов.
-            Мы отправим письмо для подтверждения на ваш email.
-          </p>
+          <p class="auth-form__note">${authNote}</p>
         </section>
       </div>
     `;
 
     void refreshAuthSession().then(() => {
-      if (!isCurrentRender(renderToken)) {
+      if (!isCurrentRender(renderToken) || authMode !== AUTH_MODE_LOGIN) {
         return;
       }
       if (isAuthenticated()) {
@@ -966,104 +1194,382 @@
       }
     });
 
-    const form = document.getElementById('authLoginForm');
-    const emailInput = document.getElementById('authEmail');
-    const passwordInput = document.getElementById('authPassword');
-    const errorEl = document.getElementById('authError');
+    const form = document.getElementById('authForm');
+    const statusEl = document.getElementById('authStatus');
     const client = getSupabaseClient();
+    let forgotCooldownSeconds = 0;
+    let forgotCooldownInterval = null;
 
-    if (!form || !emailInput || !passwordInput || !errorEl) {
+    if (!form || !statusEl) {
       return;
     }
 
-    let submitAction = 'login';
+    function setStatus(message, tone = 'error') {
+      statusEl.classList.remove(
+        'auth-form__status--visible',
+        'auth-form__status--error',
+        'auth-form__status--success',
+        'auth-form__status--info'
+      );
 
-    function setError(message) {
       if (message) {
-        errorEl.textContent = message;
-        errorEl.classList.add('auth-form__error--visible');
+        statusEl.textContent = message;
+        statusEl.classList.add('auth-form__status--visible', `auth-form__status--${tone}`);
       } else {
-        errorEl.textContent = '';
-        errorEl.classList.remove('auth-form__error--visible');
+        statusEl.textContent = '';
+      }
+    }
+
+    function getForgotCooldownRemainingSecondsFromStorage() {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return 0;
+      }
+
+      try {
+        const rawValue = window.localStorage.getItem(FORGOT_COOLDOWN_STORAGE_KEY);
+        if (!rawValue) {
+          return 0;
+        }
+
+        const cooldownUntil = Number(rawValue);
+        if (!Number.isFinite(cooldownUntil) || cooldownUntil <= 0) {
+          window.localStorage.removeItem(FORGOT_COOLDOWN_STORAGE_KEY);
+          return 0;
+        }
+
+        const remainingSeconds = Math.ceil((cooldownUntil - Date.now()) / 1000);
+        if (remainingSeconds <= 0) {
+          window.localStorage.removeItem(FORGOT_COOLDOWN_STORAGE_KEY);
+          return 0;
+        }
+
+        return remainingSeconds;
+      } catch (_error) {
+        return 0;
+      }
+    }
+
+    function persistForgotCooldownSeconds(seconds) {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+      }
+
+      const normalizedSeconds = Math.max(1, Math.floor(Number(seconds) || 0));
+      if (!normalizedSeconds) {
+        return;
+      }
+
+      const cooldownUntil = Date.now() + normalizedSeconds * 1000;
+      try {
+        window.localStorage.setItem(FORGOT_COOLDOWN_STORAGE_KEY, String(cooldownUntil));
+      } catch (_error) {
+        // ignore write errors (e.g., private mode restrictions)
+      }
+    }
+
+    function clearForgotCooldownStorage() {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+      }
+
+      try {
+        window.localStorage.removeItem(FORGOT_COOLDOWN_STORAGE_KEY);
+      } catch (_error) {
+        // ignore remove errors
       }
     }
 
     function setLoading(isLoading) {
+      const controls = form.querySelectorAll('input, button');
+      form.setAttribute('aria-busy', isLoading ? 'true' : 'false');
       const buttons = form.querySelectorAll('button[data-action]');
       buttons.forEach((button) => {
-        button.disabled = isLoading;
+        if (button.dataset.defaultText == null) {
+          button.dataset.defaultText = button.textContent;
+        }
+        button.textContent = isLoading ? 'Подождите...' : button.dataset.defaultText;
       });
-      emailInput.disabled = isLoading;
-      passwordInput.disabled = isLoading;
+      controls.forEach((control) => {
+        control.disabled = isLoading;
+      });
+
+      if (!isLoading) {
+        applyForgotCooldownUi();
+      }
     }
 
-    async function handleAuth(action) {
-      setError('');
+    function getForgotButton() {
+      return form.querySelector('button[data-action="forgot"]');
+    }
 
-      if (!client || typeof client.auth.signInWithPassword !== 'function') {
-        setError('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
+    function applyForgotCooldownUi() {
+      if (authMode !== AUTH_MODE_FORGOT) {
         return;
       }
 
-      const email = (emailInput.value || '').trim();
-      const password = passwordInput.value || '';
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!email || !emailPattern.test(email)) {
-        setError('Введите корректный email.');
+      const forgotButton = getForgotButton();
+      if (!forgotButton) {
         return;
       }
 
-      if (!password || password.length < 6) {
-        setError('Минимум 6 символов в пароле.');
+      if (forgotButton.dataset.defaultText == null) {
+        forgotButton.dataset.defaultText = forgotButton.textContent || 'Отправить ссылку';
+      }
+
+      if (form.getAttribute('aria-busy') === 'true') {
+        return;
+      }
+
+      if (forgotCooldownSeconds > 0) {
+        forgotButton.disabled = true;
+        forgotButton.textContent = `Повтор через ${forgotCooldownSeconds} c`;
+      } else {
+        forgotButton.disabled = false;
+        forgotButton.textContent = forgotButton.dataset.defaultText;
+      }
+    }
+
+    function stopForgotCooldown() {
+      if (forgotCooldownInterval) {
+        window.clearInterval(forgotCooldownInterval);
+        forgotCooldownInterval = null;
+      }
+
+      forgotCooldownSeconds = 0;
+      clearForgotCooldownStorage();
+      applyForgotCooldownUi();
+    }
+
+    function startForgotCooldown(seconds) {
+      const normalizedSeconds = Math.max(1, Math.floor(Number(seconds) || RECOVERY_RESEND_COOLDOWN_SECONDS));
+
+      if (forgotCooldownInterval) {
+        window.clearInterval(forgotCooldownInterval);
+        forgotCooldownInterval = null;
+      }
+
+      forgotCooldownSeconds = normalizedSeconds;
+      persistForgotCooldownSeconds(normalizedSeconds);
+      applyForgotCooldownUi();
+
+      forgotCooldownInterval = window.setInterval(() => {
+        if (!isCurrentRender(renderToken)) {
+          window.clearInterval(forgotCooldownInterval);
+          forgotCooldownInterval = null;
+          return;
+        }
+
+        forgotCooldownSeconds -= 1;
+        if (forgotCooldownSeconds <= 0) {
+          stopForgotCooldown();
+          return;
+        }
+
+        applyForgotCooldownUi();
+      }, 1000);
+    }
+
+    if (authMode === AUTH_MODE_LOGIN) {
+      const emailInput = document.getElementById('authEmail');
+      const passwordInput = document.getElementById('authPassword');
+      if (!emailInput || !passwordInput) {
+        return;
+      }
+
+      let submitAction = 'login';
+
+      async function handleAuth(action) {
+        setStatus('');
+
+        if (!client || typeof client.auth.signInWithPassword !== 'function') {
+          setStatus('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
+          return;
+        }
+
+        const email = (emailInput.value || '').trim();
+        const password = passwordInput.value || '';
+
+        if (!isValidEmail(email)) {
+          setStatus('Введите корректный email.');
+          return;
+        }
+
+        if (password.length < PASSWORD_MIN_LENGTH) {
+          setStatus(`Минимум ${PASSWORD_MIN_LENGTH} символов в пароле.`);
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          if (action === 'signup') {
+            const { error } = await client.auth.signUp({ email, password });
+            if (error) {
+              const code = error.code || '';
+              const message = (error.message || '').toLowerCase();
+              if (
+                code === 'user_already_exists' ||
+                message.includes('user already registered') ||
+                message.includes('user already exists')
+              ) {
+                setStatus('Этот email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
+              } else {
+                setStatus('Не удалось зарегистрироваться. Попробуйте ещё раз или чуть позже.');
+              }
+              return;
+            }
+
+            setStatus(
+              'Мы отправили письмо для подтверждения. После подтверждения вернитесь и войдите с паролем.',
+              'success'
+            );
+            return;
+          }
+
+          const { error } = await client.auth.signInWithPassword({ email, password });
+          if (error) {
+            setStatus('Не удалось войти. Проверьте email и пароль и попробуйте ещё раз.');
+            return;
+          }
+
+          navigateTo(redirectHash, { replace: true });
+        } catch (error) {
+          console.warn('Ошибка авторизации', error);
+          setStatus('Что-то пошло не так. Попробуйте ещё раз.');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      form.addEventListener('click', (event) => {
+        const actionButton = event.target.closest('button[data-action]');
+        if (actionButton && actionButton.dataset.action) {
+          submitAction = actionButton.dataset.action;
+        }
+      });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        handleAuth(submitAction);
+      });
+      return;
+    }
+
+    if (authMode === AUTH_MODE_FORGOT) {
+      const emailInput = document.getElementById('authRecoveryEmail');
+      if (!emailInput) {
+        return;
+      }
+
+      const persistedCooldown = getForgotCooldownRemainingSecondsFromStorage();
+      if (persistedCooldown > 0) {
+        startForgotCooldown(persistedCooldown);
+      } else {
+        applyForgotCooldownUi();
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setStatus('');
+
+        if (!client || !client.auth || typeof client.auth.resetPasswordForEmail !== 'function') {
+          setStatus('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
+          return;
+        }
+
+        const email = (emailInput.value || '').trim();
+        if (!isValidEmail(email)) {
+          setStatus('Введите корректный email.');
+          return;
+        }
+
+        if (forgotCooldownSeconds > 0) {
+          setStatus(`Повторная отправка будет доступна через ${forgotCooldownSeconds} сек.`, 'info');
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const { error } = await client.auth.resetPasswordForEmail(email, {
+            redirectTo: buildRecoveryRedirectUrl()
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          setStatus(
+            `Если аккаунт с этим email существует, мы отправили письмо с инструкцией по восстановлению пароля. Повторить отправку можно через ${RECOVERY_RESEND_COOLDOWN_SECONDS} сек.`,
+            'success'
+          );
+          startForgotCooldown(RECOVERY_RESEND_COOLDOWN_SECONDS);
+        } catch (error) {
+          console.warn('Ошибка отправки recovery email', error);
+
+          if (isAuthRateLimitError(error)) {
+            const retryAfterSeconds = getRetryAfterSeconds(error, RECOVERY_RESEND_COOLDOWN_SECONDS);
+            startForgotCooldown(retryAfterSeconds);
+            setStatus(`Слишком частая отправка. Повторить можно через ${retryAfterSeconds} сек.`, 'info');
+            return;
+          }
+
+          setStatus('Не удалось отправить письмо. Попробуйте ещё раз чуть позже.');
+        } finally {
+          setLoading(false);
+        }
+      });
+      return;
+    }
+
+    const newPasswordInput = document.getElementById('authNewPassword');
+    const confirmPasswordInput = document.getElementById('authConfirmPassword');
+    if (!newPasswordInput || !confirmPasswordInput) {
+      return;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setStatus('');
+
+      const validationMessage = validatePasswordPair(newPasswordInput.value || '', confirmPasswordInput.value || '');
+      if (validationMessage) {
+        setStatus(validationMessage);
         return;
       }
 
       setLoading(true);
 
       try {
-        if (action === 'signup') {
-          const { error } = await client.auth.signUp({ email, password });
-          if (error) {
-            const code = error.code || '';
-            const message = (error.message || '').toLowerCase();
-            if (code === 'user_already_exists' || message.includes('user already registered') || message.includes('user already exists')) {
-              setError('Этот email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
-            } else {
-              setError('Не удалось зарегистрироваться. Попробуйте ещё раз или чуть позже.');
-            }
-            return;
-          }
+        let syncedState = await refreshAuthSession({ force: true });
+        if (!(syncedState && syncedState.user)) {
+          await new Promise((resolve) => {
+            window.setTimeout(resolve, 240);
+          });
+          syncedState = await refreshAuthSession({ force: true });
+        }
 
-          setError('Мы отправили письмо для подтверждения. После подтверждения вернитесь и войдите с паролем.');
+        if (!(syncedState && syncedState.user)) {
+          setStatus('Ссылка восстановления недействительна или устарела. Запросите новую ссылку.');
           return;
         }
 
-        const { error } = await client.auth.signInWithPassword({ email, password });
-        if (error) {
-          setError('Не удалось войти. Проверьте email и пароль и попробуйте ещё раз.');
+        const result = await updateUserPassword(client, newPasswordInput.value || '');
+        if (!result.ok) {
+          setStatus('Не удалось обновить пароль. Запросите новую ссылку и попробуйте ещё раз.');
           return;
         }
 
-        navigateTo(redirectHash, { replace: true });
+        setStatus('Пароль обновлен. Перенаправляем в личный кабинет...', 'success');
+        window.setTimeout(() => {
+          navigateTo('#/account', { replace: true });
+        }, 550);
       } catch (error) {
-        console.warn('Ошибка авторизации', error);
-        setError('Что-то пошло не так. Попробуйте ещё раз.');
+        console.warn('Ошибка обновления пароля по recovery-ссылке', error);
+        setStatus('Не удалось обновить пароль. Попробуйте ещё раз.');
       } finally {
         setLoading(false);
       }
-    }
-
-    form.addEventListener('click', (event) => {
-      const actionButton = event.target.closest('button[data-action]');
-      if (actionButton && actionButton.dataset.action) {
-        submitAction = actionButton.dataset.action;
-      }
-    });
-
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      handleAuth(submitAction);
     });
   }
 
@@ -1073,7 +1579,7 @@
       return;
     }
 
-    await refreshAuthSession();
+    const authState = await refreshAuthSession();
 
     if (!isCurrentRender(renderToken)) {
       return;
@@ -1101,46 +1607,146 @@
 
         <div class="account-actions">
           <button id="changePasswordButton" class="button button--secondary" type="button">Изменить пароль</button>
+          <form id="accountPasswordForm" class="account-password-form" hidden novalidate>
+            <input
+              type="password"
+              id="accountNewPassword"
+              class="auth-form__input"
+              placeholder="Новый пароль"
+              required
+              autocomplete="new-password"
+              aria-label="Новый пароль"
+            />
+            <input
+              type="password"
+              id="accountConfirmPassword"
+              class="auth-form__input"
+              placeholder="Подтвердите новый пароль"
+              required
+              autocomplete="new-password"
+              aria-label="Подтверждение нового пароля"
+            />
+            <div class="account-password-actions">
+              <button id="accountSavePasswordButton" class="button button--primary" type="submit">Сохранить пароль</button>
+              <button id="accountCancelPasswordButton" class="button button--secondary" type="button">Отмена</button>
+            </div>
+          </form>
           <button id="logoutButton" class="button button--primary" type="button">Выйти</button>
-          <p id="accountError" class="account-error" role="alert" aria-live="polite"></p>
+          <p id="accountStatus" class="account-status" role="alert" aria-live="polite"></p>
           <p class="account-version">Версия приложения v1</p>
         </div>
       </section>
     `;
 
     const emailEl = document.getElementById('accountEmail');
-    const errorEl = document.getElementById('accountError');
+    const statusEl = document.getElementById('accountStatus');
     const logoutButton = document.getElementById('logoutButton');
     const changePasswordButton = document.getElementById('changePasswordButton');
+    const passwordForm = document.getElementById('accountPasswordForm');
+    const newPasswordInput = document.getElementById('accountNewPassword');
+    const confirmPasswordInput = document.getElementById('accountConfirmPassword');
+    const savePasswordButton = document.getElementById('accountSavePasswordButton');
+    const cancelPasswordButton = document.getElementById('accountCancelPasswordButton');
     const client = getSupabaseClient();
 
-    function setError(message) {
-      if (!errorEl) {
+    function setStatus(message, tone = 'error') {
+      if (!statusEl) {
         return;
       }
 
+      statusEl.classList.remove(
+        'account-status--visible',
+        'account-status--error',
+        'account-status--success',
+        'account-status--info'
+      );
+
       if (message) {
-        errorEl.textContent = message;
-        errorEl.classList.add('account-error--visible');
+        statusEl.textContent = message;
+        statusEl.classList.add('account-status--visible', `account-status--${tone}`);
       } else {
-        errorEl.textContent = '';
-        errorEl.classList.remove('account-error--visible');
+        statusEl.textContent = '';
+      }
+    }
+
+    function togglePasswordForm(nextOpenState) {
+      if (!passwordForm || !changePasswordButton) {
+        return;
+      }
+
+      const shouldOpen = typeof nextOpenState === 'boolean' ? nextOpenState : passwordForm.hidden;
+      passwordForm.hidden = !shouldOpen;
+      changePasswordButton.textContent = shouldOpen ? 'Скрыть форму' : 'Изменить пароль';
+
+      if (!shouldOpen && typeof passwordForm.reset === 'function') {
+        passwordForm.reset();
       }
     }
 
     if (emailEl) {
-      emailEl.textContent = authSession?.user?.email || 'Без email';
+      emailEl.textContent = authState?.user?.email || 'Без email';
     }
 
     if (changePasswordButton) {
       changePasswordButton.addEventListener('click', () => {
-        alert('Функция в разработке');
+        togglePasswordForm();
+      });
+    }
+
+    if (cancelPasswordButton) {
+      cancelPasswordButton.addEventListener('click', () => {
+        togglePasswordForm(false);
+        setStatus('');
+      });
+    }
+
+    if (passwordForm && newPasswordInput && confirmPasswordInput && savePasswordButton && cancelPasswordButton) {
+      passwordForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setStatus('');
+
+        const validationMessage = validatePasswordPair(newPasswordInput.value || '', confirmPasswordInput.value || '');
+        if (validationMessage) {
+          setStatus(validationMessage);
+          return;
+        }
+
+        if (!client || !client.auth || typeof client.auth.updateUser !== 'function') {
+          setStatus('Не удалось подключиться к сервису авторизации. Попробуйте позже.');
+          return;
+        }
+
+        const controls = passwordForm.querySelectorAll('input, button');
+        controls.forEach((control) => {
+          control.disabled = true;
+        });
+        const saveDefaultText = savePasswordButton.textContent || 'Сохранить пароль';
+        savePasswordButton.textContent = 'Сохраняем...';
+
+        try {
+          const result = await updateUserPassword(client, newPasswordInput.value || '');
+          if (!result.ok) {
+            setStatus('Не удалось обновить пароль. Попробуйте ещё раз.');
+            return;
+          }
+
+          togglePasswordForm(false);
+          setStatus('Пароль успешно обновлен.', 'success');
+        } catch (error) {
+          console.warn('Ошибка обновления пароля в профиле', error);
+          setStatus('Не удалось обновить пароль. Попробуйте ещё раз.');
+        } finally {
+          controls.forEach((control) => {
+            control.disabled = false;
+          });
+          savePasswordButton.textContent = saveDefaultText;
+        }
       });
     }
 
     if (logoutButton) {
       logoutButton.addEventListener('click', async () => {
-        setError('');
+        setStatus('');
 
         if (!client || typeof client.auth.signOut !== 'function') {
           navigateTo(buildAuthHash(HOME_HASH), { replace: true });
@@ -1161,7 +1767,7 @@
           console.warn('Ошибка при выходе из Supabase', error);
           logoutButton.disabled = false;
           logoutButton.textContent = defaultText;
-          setError('Не удалось выйти. Попробуйте ещё раз.');
+          setStatus('Не удалось выйти. Попробуйте ещё раз.');
         }
       });
     }
@@ -1209,10 +1815,33 @@
   }
 
   async function processCurrentHash(options = {}) {
+    if (consumeRecoverySearchMarker()) {
+      const recoveryRoute = parseHash(buildAuthHash(null, { mode: AUTH_MODE_RECOVERY }));
+      await applyRoute(recoveryRoute, options);
+      return;
+    }
+
+    const rawHash = window.location.hash || '';
+    if ((!rawHash || rawHash === '#') && recoveryFlowActive) {
+      const recoveryRoute = parseHash(buildAuthHash(null, { mode: AUTH_MODE_RECOVERY }));
+      await applyRoute(recoveryRoute, options);
+      return;
+    }
+
     const route = parseHash(window.location.hash || HOME_HASH);
     if (route.name === 'unknown') {
+      if (recoveryFlowActive) {
+        const recoveryRoute = parseHash(buildAuthHash(null, { mode: AUTH_MODE_RECOVERY }));
+        await applyRoute(recoveryRoute, options);
+        return;
+      }
       navigateTo(HOME_HASH, { replace: true });
       return;
+    }
+
+    const isRecoveryRoute = route.name === 'auth' && getAuthModeFromRoute(route) === AUTH_MODE_RECOVERY;
+    if (!isRecoveryRoute) {
+      recoveryFlowActive = false;
     }
 
     await applyRoute(route, options);
@@ -1249,17 +1878,13 @@
   }
 
   function registerAuthListener() {
-    const client = getSupabaseClient();
-    if (!client || typeof client.auth.onAuthStateChange !== 'function') {
+    const store = initializeAuthStore();
+    if (!store || typeof store.subscribe !== 'function') {
       return;
     }
 
-    client.auth.onAuthStateChange((_event, session) => {
-      authSession = session || null;
-
-      if (typeof window.refreshNavAuthState === 'function') {
-        window.refreshNavAuthState();
-      }
+    store.subscribe((state) => {
+      const authed = Boolean(state && state.isAuthenticated);
 
       syncMaterialDownloadCta();
 
@@ -1267,13 +1892,17 @@
         return;
       }
 
-      if (currentRoute.name === 'auth' && isAuthenticated()) {
+      if (currentRoute.name === 'auth' && authed) {
+        const authMode = getAuthModeFromRoute(currentRoute);
+        if (authMode !== AUTH_MODE_LOGIN) {
+          return;
+        }
         const redirectHash = sanitizeRedirectHash(currentRoute.query.redirect) || HOME_HASH;
         navigateTo(redirectHash, { replace: true });
         return;
       }
 
-      if (currentRoute.name === 'account' && !isAuthenticated()) {
+      if (currentRoute.name === 'account' && !authed) {
         navigateTo(buildAuthHash('#/account'), { replace: true });
       }
     });

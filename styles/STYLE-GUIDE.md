@@ -1,39 +1,65 @@
 # Стили проекта: актуальное состояние
 
-Этот файл описывает текущую структуру CSS в `styles/` и порядок подключения в `index.html`.
+Файл фиксирует реальную структуру CSS и основные контракты между стилями и JS.
 
-## 1) Состав папки `styles/`
+## 1) Структура `styles/`
 
 ```text
 styles/
-  components/ (пока пусто, резерв под компонентные стили)
-  pages/ (пока пусто, резерв под page-level стили)
   tokens.css
   ui.css
   pages.css
-  STYLE-GUIDE.md (этот файл)
+  STYLE-GUIDE.md
 ```
+
+Папок `styles/components/` и `styles/pages/` в репозитории сейчас нет.
 
 ## 2) Порядок подключения CSS
 
-Приложение подключает стили вручную, без сборщика. Порядок критичен:
+Подключение вручную в `index.html`, порядок обязателен:
 
 1. `styles/tokens.css`
 2. `styles/ui.css`
 3. `styles/pages.css`
 
-## 3) Назначение файлов
+## 3) Ответственность слоев
 
-- `styles/tokens.css` — канонический источник токенов (CSS variables).
-- `styles/ui.css` — общий UI‑kit: базовая типографика и layout, кнопки/чипы, карточки, карусели, нижняя навигация, утилиты типографики.
-- `styles/pages.css` — screen-specific раскладки для home/catalog/auth/material/account экранов hash‑SPA.
-- `styles/components/` — резерв под компонентные модули (сейчас пусто).
-- `styles/pages/` — резерв под page-level модули (сейчас пусто).
+### `styles/tokens.css`
 
-## 4) Примечания
+- Канонический источник дизайн-токенов (`:root`).
+- Цвета, типографика, радиусы, отступы, тени.
+- Safe-area и размеры нижней навигации.
+- Motion-токены (`--motion-*`, `--motion-ease-standard`).
 
-- Сборщика нет, поэтому порядок подключения в `index.html` важен.
-- Базовые utility‑классы (`.load-error`, `.text-body`) живут в `styles/ui.css`.
-- Канон типографики заголовков: `.page-title` и `.section-title` определены в `styles/ui.css`.
-- Канон для секций: `.section` задаёт верхний отступ + разделительную линию, первый `.section` не имеет линии.
-- Иконки нижней навигации хранятся в `assets/icons/sprite.svg` и подключаются через `<svg class="bottom-nav__icon"><use href="...#icon-id"></use></svg>`.
+### `styles/ui.css`
+
+- Глобальный reset и базовые правила (`box-sizing`, `body`, `main`, `hidden`).
+- Общие UI-компоненты: кнопки (`.button*`), чипы (`.chip*`), карточки (`.material-card*`, `.catalog-card*`), карусели и общие контейнеры.
+- Нижняя навигация (`.bottom-nav*`) и визуальные состояния аккаунта.
+- Utility-классы (`.text-body`, `.load-error`, `.empty-state`, `.skeleton*`).
+- Анимации входа (`.ui-enter`, `.ui-stagger`) и reduce-motion fallback.
+- Экранный блокер ориентации (`.orientation-blocker`, `body.is-landscape-blocked`).
+
+### `styles/pages.css`
+
+- Page-specific layout для экранов: home (`.home-banner*`), catalog (`.catalog-shell`, `.catalog-search*`, `.catalog-list`), auth (`.auth-*`), material (`.material-page*`, `.material-download`), account (`.account-*`).
+- Точечные responsive-правила для узких экранов.
+
+## 4) DOM-контракты, на которые опирается JS
+
+Классы и id ниже используются в JS напрямую; переименование без правок JS сломает поведение:
+
+- `#spa-root`
+- `#nav-home`, `#nav-catalog`, `#nav-account`
+- `#main-materials`, `#materials-5ht`
+- `#categories`, `#catalog-list`, `#catalogSearchInput`
+- `#materialBackButton`, `#downloadBtn`, `#materialCover`, `#materialKicker`, `#materialTitle`, `#materialDescription`, `#materialTags`
+- `#authLoginForm`, `#authEmail`, `#authPassword`, `#authError`
+- `#accountEmail`, `#changePasswordButton`, `#logoutButton`, `#accountError`
+
+## 5) Практические правила поддержки
+
+- Новые токены добавлять в `tokens.css`, а не в page-файлы.
+- Общие компоненты/утилиты добавлять в `ui.css`.
+- Экранно-специфичные стили добавлять в `pages.css`.
+- Сохранять BEM-подобный нейминг (`block__element--modifier`) и существующие префиксы.
