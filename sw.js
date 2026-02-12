@@ -3,12 +3,30 @@
 // SPA shell + оффлайн поддержка
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v13';
+const CACHE_NAME = 'catalog-mvp-v15';
 
 const urlsToCache = [
   './',
   './index.html',
   './scripts/app.js',
+  './scripts/app/bootstrap.js',
+  './scripts/app/constants.js',
+  './scripts/app/dom.js',
+  './scripts/app/state.js',
+  './scripts/app/platform/orientation-guard.js',
+  './scripts/app/platform/service-worker-registration.js',
+  './scripts/app/routing/hash.js',
+  './scripts/app/routing/navigation.js',
+  './scripts/app/routing/router.js',
+  './scripts/app/services/auth-service.js',
+  './scripts/app/services/data-service.js',
+  './scripts/app/ui/placeholders.js',
+  './scripts/app/ui/shell.js',
+  './scripts/app/views/account-view.js',
+  './scripts/app/views/auth-view.js',
+  './scripts/app/views/catalog-view.js',
+  './scripts/app/views/home-view.js',
+  './scripts/app/views/material-view.js',
   './scripts/nav-auth.js',
   './scripts/supabase-client.js',
   './data.json',
