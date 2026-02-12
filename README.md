@@ -7,7 +7,7 @@
 - SPA-shell: один входной файл `index.html` + маршруты `#/...`.
 - Сборщика и серверного рендера нет.
 - Каталог и карточки материалов берутся из `data.json`.
-- Авторизация: Supabase email/password (вход, регистрация, выход, восстановление пароля).
+- Авторизация: Supabase email/password (вход, регистрация, выход, восстановление пароля по OTP-коду).
 - Auth-синхронизация централизована через `window.authStore`.
 - Скриптовая часть `app` декомпозирована на ESM-модули (`scripts/app/*`).
 - Установка как PWA: `manifest.json` + `sw.js`.
@@ -43,8 +43,10 @@
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - стили
 - `styles/STYLE-GUIDE.md` - актуальный гид по CSS-слоям
 - `tests/e2e/app-smoke.spec.js` - smoke-тесты маршрутов и auth-gating
+- `tests/e2e/auth-reset-otp.spec.js` - e2e сценарии OTP-восстановления с mock Supabase
 - `playwright.config.js` - конфигурация Playwright
 - `docs/adr/2026-02-11-app-js-modularization.md` - подробный отчет по рефакторингу
+- `docs/adr/2026-02-12-auth-recovery-otp.md` - переход на OTP recovery без ссылок
 
 ## Архитектура скриптов (ESM)
 
@@ -53,7 +55,7 @@
 - Навигация с `replace`-обработчиком вынесена в `scripts/app/routing/navigation.js`.
 - View-логика разделена по экранам, без изменения контрактов маршрутов и селекторов.
 - State хранится централизованно в `scripts/app/state.js`.
-- Поведение приложения сохранено (политика `no-behavior-change`).
+- После 2026-02-12 auth recovery работает через OTP-код в PWA (без recovery-ссылок).
 
 ## Контракт маршрутов
 
@@ -96,12 +98,11 @@
 
 - Единый экран с режимами через query-параметр `mode`:
   - `#/auth` - вход/регистрация
-  - `#/auth?mode=forgot` - отправка письма для восстановления
-  - `#/auth?mode=recovery` - установка нового пароля по recovery-ссылке
-- Валидация email и пароля (минимум 6 символов), для смены/сброса - проверка подтверждения пароля.
+  - `#/auth?mode=forgot` - OTP flow восстановления: email -> код -> новый пароль
+- Валидация email и пароля (минимум 6 символов), для смены/сброса - проверка подтверждения пароля и OTP-кода длиной 6-8 цифр.
 - Ссылка "Забыли пароль?" ведет в `mode=forgot`.
 - После успешного входа - переход на `redirect` или `#/`.
-- Для recovery callback используется маркер `?auth_mode=recovery` в search URL: на старте приложения маркер очищается, и экран auth открывается в режиме recovery.
+- Legacy `#/auth?mode=recovery` автоматически нормализуется к `#/auth?mode=forgot` с уведомлением пользователя.
 
 ### Account (`#/account`)
 
@@ -159,7 +160,7 @@
 
 ## PWA / Service Worker
 
-- Кэш-версия: `catalog-mvp-v14`.
+- Кэш-версия: `catalog-mvp-v15`.
 - Pre-cache: shell, ESM-модули app, стили, `data.json`, иконки и ключевые изображения.
 - Стратегия на `fetch`: network-first с fallback в кэш.
 - Для `navigate` запросов fallback на `./index.html`.
@@ -198,9 +199,18 @@ npm run test:e2e
 - `#/catalog` (поиск + фильтрация)
 - `#/material/1` (guest CTA и redirect в auth)
 - `#/account` (auth-gating)
-- `#/auth?mode=forgot` (экран восстановления)
+- `#/auth?mode=forgot` (OTP-восстановление, шаг 1/3)
+- `#/auth?mode=recovery` (legacy redirect в OTP flow)
 - `#/unknown` (редирект на home)
 - sanity по active state нижней навигации
+
+Дополнительные e2e сценарии (`tests/e2e/auth-reset-otp.spec.js`):
+
+- `resetPasswordForEmail` success -> переход на шаг ввода кода и cooldown
+- `verifyOtp` success -> переход на шаг нового пароля
+- `verifyOtp` invalid -> ошибка без смены шага
+- `updateUserPassword` success -> переход в `#/account`
+- `429` на recover/verify -> корректный retry-after текст
 
 ## Деплой
 

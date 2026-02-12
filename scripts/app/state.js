@@ -1,7 +1,6 @@
 const state = {
   currentRoute: null,
   currentRenderToken: 0,
-  recoveryFlowActive: false,
   catalogUiState: {
     categoryId: 0,
     query: ''
@@ -39,12 +38,4 @@ export function pushRouteHistory(hash) {
 
 export function canGoBackInApp() {
   return state.inAppRouteHistory.length > 1;
-}
-
-export function setRecoveryFlowActive(nextValue) {
-  state.recoveryFlowActive = Boolean(nextValue);
-}
-
-export function isRecoveryFlowActive() {
-  return state.recoveryFlowActive;
 }

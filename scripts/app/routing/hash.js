@@ -1,12 +1,8 @@
 import {
   AUTH_MODE_FORGOT,
   AUTH_MODE_LOGIN,
-  AUTH_MODE_RECOVERY,
-  HOME_HASH,
-  RECOVERY_SEARCH_PARAM,
-  RECOVERY_SEARCH_VALUE
+  HOME_HASH
 } from '../constants.js';
-import { setRecoveryFlowActive } from '../state.js';
 
 function parseQuery(queryString) {
   const params = new URLSearchParams(queryString || '');
@@ -25,8 +21,8 @@ export function normalizeAuthMode(inputMode) {
   }
 
   const mode = inputMode.trim().toLowerCase();
-  if (mode === AUTH_MODE_FORGOT || mode === AUTH_MODE_RECOVERY) {
-    return mode;
+  if (mode === AUTH_MODE_FORGOT || mode === 'recovery') {
+    return AUTH_MODE_FORGOT;
   }
 
   return AUTH_MODE_LOGIN;
@@ -159,25 +155,4 @@ export function buildAuthHash(redirectHash, options = {}) {
 
   const query = params.toString();
   return query ? `#/auth?${query}` : '#/auth';
-}
-
-export function consumeRecoverySearchMarker() {
-  const search = window.location.search || '';
-  if (!search) {
-    return false;
-  }
-
-  const params = new URLSearchParams(search);
-  if (params.get(RECOVERY_SEARCH_PARAM) !== RECOVERY_SEARCH_VALUE) {
-    return false;
-  }
-
-  setRecoveryFlowActive(true);
-  params.delete(RECOVERY_SEARCH_PARAM);
-  const nextSearch = params.toString();
-  const pathname = window.location.pathname || '/';
-  const currentHash = window.location.hash || '';
-  const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ''}${currentHash}`;
-  window.history.replaceState(null, '', nextUrl);
-  return true;
 }

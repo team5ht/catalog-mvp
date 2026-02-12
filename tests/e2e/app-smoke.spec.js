@@ -39,9 +39,17 @@ test('account route redirects guest to auth', async ({ page }) => {
   await expect(page).toHaveURL(/#\/auth\?redirect=%23%2Faccount/);
 });
 
-test('forgot auth mode renders recovery form', async ({ page }) => {
+test('forgot auth mode renders OTP recovery stepper', async ({ page }) => {
   await page.goto('/#/auth?mode=forgot');
   await expect(page.locator('#authTitle')).toHaveText('Восстановление пароля');
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 3');
+  await expect(page.locator('#authRecoveryEmail')).toBeVisible();
+});
+
+test('legacy recovery mode redirects to forgot OTP flow', async ({ page }) => {
+  await page.goto('/#/auth?mode=recovery');
+  await expect(page).toHaveURL(/#\/auth\?.*mode=forgot/);
+  await expect(page.locator('#authStatus')).toContainText('Ссылки восстановления отключены');
   await expect(page.locator('#authRecoveryEmail')).toBeVisible();
 });
 
