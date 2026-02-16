@@ -1,6 +1,7 @@
 import { getSpaRoot } from '../dom.js';
 import { loadAppData } from '../services/data-service.js';
 import { isCurrentRender } from '../state.js';
+import { createResponsivePicture } from '../ui/responsive-image.js';
 import {
   renderInlineError,
   renderMaterialsCarousel,
@@ -22,7 +23,7 @@ export function renderHomeView(renderToken) {
       </header>
       <section class="home-banner ui-enter">
         <a class="home-banner__link" href="https://forms.yandex.ru/u/68f26331f47e7388d5a2a27a/" target="_blank" rel="noopener noreferrer">
-          <img class="home-banner__image" src="home-hero.png" alt="Баннер приглашения к участию" loading="lazy" />
+          <div id="homeHeroImage" class="home-banner__image"></div>
           <div class="home-banner__content">
             <p class="home-banner__title">Предложите новый материал</p>
             <p class="home-banner__subtitle">Отправьте идею в каталог.</p>
@@ -44,6 +45,16 @@ export function renderHomeView(renderToken) {
         <div id="materials-5ht" class="materials-carousel"></div>
       </section>
     `;
+
+  const heroContainer = document.getElementById('homeHeroImage');
+  if (heroContainer) {
+    const heroPicture = createResponsivePicture({
+      asset: 'home/hero',
+      alt: 'Баннер приглашения к участию',
+      preset: 'homeHero'
+    });
+    heroContainer.appendChild(heroPicture);
+  }
 
   renderMaterialsSkeleton('main-materials', 5);
   renderMaterialsSkeleton('materials-5ht', 5);

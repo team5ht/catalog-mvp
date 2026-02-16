@@ -7,6 +7,7 @@ import {
   canGoBackInApp,
   isCurrentRender
 } from '../state.js';
+import { createResponsivePicture } from '../ui/responsive-image.js';
 import {
   isAuthenticated,
   refreshAuthSession
@@ -56,6 +57,98 @@ function renderMaterialError(message, downloadButton) {
   }
 }
 
+function parseDescriptionBlocks(rawDescription) {
+  const description = typeof rawDescription === 'string' ? rawDescription.replace(/\r\n?/g, '\n') : '';
+  const lines = description.split('\n');
+  const blocks = [];
+  let paragraphLines = [];
+  let listItems = [];
+
+  function flushParagraph() {
+    if (paragraphLines.length === 0) {
+      return;
+    }
+
+    const text = paragraphLines
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .join(' ')
+      .trim();
+
+    if (text.length > 0) {
+      blocks.push({ type: 'paragraph', text });
+    }
+
+    paragraphLines = [];
+  }
+
+  function flushList() {
+    if (listItems.length === 0) {
+      return;
+    }
+
+    blocks.push({ type: 'list', items: [...listItems] });
+    listItems = [];
+  }
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim();
+    if (trimmedLine.length === 0) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    const leftTrimmedLine = line.trimStart();
+    if (leftTrimmedLine.startsWith('- ')) {
+      flushParagraph();
+      const itemText = leftTrimmedLine.slice(2).trim();
+      if (itemText.length > 0) {
+        listItems.push(itemText);
+      }
+      return;
+    }
+
+    flushList();
+    paragraphLines.push(trimmedLine);
+  });
+
+  flushParagraph();
+  flushList();
+
+  if (blocks.length === 0 && description.trim().length > 0) {
+    blocks.push({ type: 'paragraph', text: description.trim() });
+  }
+
+  return blocks;
+}
+
+function renderMaterialDescription(container, description) {
+  if (!container) {
+    return;
+  }
+
+  container.textContent = '';
+
+  const blocks = parseDescriptionBlocks(description);
+  blocks.forEach((block) => {
+    if (block.type === 'list') {
+      const listEl = document.createElement('ul');
+      block.items.forEach((itemText) => {
+        const itemEl = document.createElement('li');
+        itemEl.textContent = itemText;
+        listEl.appendChild(itemEl);
+      });
+      container.appendChild(listEl);
+      return;
+    }
+
+    const paragraphEl = document.createElement('p');
+    paragraphEl.textContent = block.text;
+    container.appendChild(paragraphEl);
+  });
+}
+
 export async function renderMaterialView(route, renderToken) {
   const root = getSpaRoot();
   if (!root) {
@@ -92,11 +185,11 @@ export async function renderMaterialView(route, renderToken) {
       <div class="material-page__content">
         <section class="material-page__section section ui-enter">
           <h2 class="material-page__section-title section-title">О материале</h2>
-          <p id="materialDescription" class="material-page__description text-body">
+          <div id="materialDescription" class="material-page__description text-body">
             <span class="skeleton skeleton-line"></span>
             <span class="skeleton skeleton-line" style="margin-top:8px;width:94%;"></span>
             <span class="skeleton skeleton-line" style="margin-top:8px;width:80%;"></span>
-          </p>
+          </div>
         </section>
 
         <section class="material-page__section section ui-enter">
@@ -155,7 +248,17 @@ export async function renderMaterialView(route, renderToken) {
     const tagsContainer = document.getElementById('materialTags');
 
     if (coverEl) {
-      coverEl.style.backgroundImage = `url(${material.cover})`;
+      coverEl.innerHTML = '';
+      coverEl.appendChild(
+        createResponsivePicture({
+          asset: material.cover.asset,
+          alt: material.cover.alt,
+          focalPoint: material.cover.focalPoint,
+          preset: 'coverDetail',
+          loading: 'eager',
+          fetchPriority: 'high'
+        })
+      );
       coverEl.classList.remove('skeleton');
     }
 
@@ -168,7 +271,7 @@ export async function renderMaterialView(route, renderToken) {
     }
 
     if (descriptionEl) {
-      descriptionEl.textContent = material.description;
+      renderMaterialDescription(descriptionEl, material.description);
     }
 
     if (tagsContainer) {

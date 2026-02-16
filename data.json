@@ -7,31 +7,30 @@
     },
     {
       "id": 1,
-      "name": "Маркетинг",
-      "slug": "marketing"
+      "name": "Гайд",
+      "slug": "guide"
     },
     {
       "id": 2,
-      "name": "Дизайн",
-      "slug": "design"
+      "name": "Книга",
+      "slug": "book"
     },
     {
       "id": 3,
-      "name": "Программирование",
-      "slug": "programming"
-    },
-    {
-      "id": 4,
-      "name": "Бизнес",
-      "slug": "business"
+      "name": "Раздаточный материал",
+      "slug": "handsout"
     }
   ],
   "materials": [
     {
       "id": 1,
-      "title": "Основы SMM-маркетинга",
-      "description": "Полное руководство по продвижению в социальных сетях. Узнайте, как создавать эффективный контент и привлекать аудиторию.",
-      "cover": "https://images.unsplash.com/photo-1611926653458-09294b3142bf?w=400&h=300&fit=crop",
+      "title": "Поведенческая активация для преодоления депрессии",
+      "description": "Поведенческая активация - доказательный психотерапевтический протокол лечения депрессии. Изложен в доступной и наглядной форме для самостоятельной работы пациента.\n\nМатериал включает:\n- Психообразовательный блок\n- Дневник мониторинга активности\n- Дневник планирования активности\n- Гайд по работе с ценностями\n- Таблицу ценностей\n- Меню для 22 сфер активности\n- Инструкции и пояснения",
+      "cover": {
+        "asset": "materials/1/cover",
+        "alt": "Обложка материала «Поведенческая активация для преодоления депрессии»",
+        "focalPoint": "50% 50%"
+      },
       "pdfUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_1/view",
       "categoryId": 1,
       "tags": ["SMM", "Маркетинг", "Социальные сети"]
@@ -40,7 +39,11 @@
       "id": 2,
       "title": "UI/UX дизайн для начинающих",
       "description": "Изучите принципы создания удобных и красивых интерфейсов. Практические советы и примеры реальных проектов.",
-      "cover": "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=400&h=300&fit=crop",
+      "cover": {
+        "asset": "materials/2/cover",
+        "alt": "Обложка материала «UI/UX дизайн для начинающих»",
+        "focalPoint": "50% 50%"
+      },
       "pdfUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_2/view",
       "categoryId": 2,
       "tags": ["UI", "UX", "Дизайн", "Интерфейсы"]
@@ -49,7 +52,11 @@
       "id": 3,
       "title": "JavaScript: от основ к практике",
       "description": "Современный подход к изучению JavaScript. Теория, практика и реальные примеры кода.",
-      "cover": "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=300&fit=crop",
+      "cover": {
+        "asset": "materials/3/cover",
+        "alt": "Обложка материала «JavaScript: от основ к практике»",
+        "focalPoint": "50% 50%"
+      },
       "pdfUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_3/view",
       "categoryId": 3,
       "tags": ["JavaScript", "Программирование", "Веб-разработка"]
@@ -58,16 +65,24 @@
       "id": 4,
       "title": "Стратегическое планирование",
       "description": "Научитесь разрабатывать эффективные бизнес-стратегии и достигать поставленных целей.",
-      "cover": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=300&fit=crop",
+      "cover": {
+        "asset": "materials/4/cover",
+        "alt": "Обложка материала «Стратегическое планирование»",
+        "focalPoint": "50% 50%"
+      },
       "pdfUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_4/view",
-      "categoryId": 4,
+      "categoryId": 3,
       "tags": ["Стратегия", "Планирование", "Бизнес"]
     },
     {
       "id": 5,
       "title": "Email-маркетинг 2024",
       "description": "Актуальные техники email-маркетинга. Узнайте, как создавать письма, которые открывают и читают.",
-      "cover": "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400&h=300&fit=crop",
+      "cover": {
+        "asset": "materials/5/cover",
+        "alt": "Обложка материала «Email-маркетинг 2024»",
+        "focalPoint": "50% 50%"
+      },
       "pdfUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_5/view",
       "categoryId": 1,
       "tags": ["Email", "Маркетинг", "Рассылки"]
@@ -76,7 +91,11 @@
       "id": 6,
       "title": "Типографика в веб-дизайне",
       "description": "Руководство по работе со шрифтами. Как выбирать, сочетать и применять типографику в проектах.",
-      "cover": "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=400&h=300&fit=crop",
+      "cover": {
+        "asset": "materials/6/cover",
+        "alt": "Обложка материала «Типографика в веб-дизайне»",
+        "focalPoint": "50% 50%"
+      },
       "pdfUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_6/view",
       "categoryId": 2,
       "tags": ["Типографика", "Дизайн", "Шрифты"]

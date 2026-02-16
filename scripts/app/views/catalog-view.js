@@ -1,6 +1,7 @@
 import { getSpaRoot } from '../dom.js';
 import { loadAppData, getCategoryNameById } from '../services/data-service.js';
 import { getCatalogUiState, isCurrentRender } from '../state.js';
+import { createResponsivePicture } from '../ui/responsive-image.js';
 import {
   renderCatalogSkeleton,
   renderCategoriesSkeleton,
@@ -55,9 +56,16 @@ function renderCatalog(materials) {
 
     const coverLink = document.createElement('a');
     coverLink.className = 'catalog-card__cover';
-    coverLink.style.backgroundImage = `url(${material.cover})`;
     coverLink.href = `#/material/${material.id}`;
     coverLink.setAttribute('aria-label', material.title);
+    coverLink.appendChild(
+      createResponsivePicture({
+        asset: material.cover.asset,
+        alt: material.cover.alt,
+        focalPoint: material.cover.focalPoint,
+        preset: 'coverCatalog'
+      })
+    );
 
     const info = document.createElement('div');
     info.className = 'catalog-card__info';

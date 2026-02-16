@@ -1,11 +1,13 @@
 // =================================
 // SERVICE WORKER ДЛЯ PWA
-// SPA shell + оффлайн поддержка
+// SPA shell + runtime image cache
 // =================================
 
-const CACHE_NAME = 'catalog-mvp-v15';
+const SHELL_CACHE_NAME = 'catalog-mvp-shell-v16';
+const IMAGE_CACHE_NAME = 'catalog-mvp-images-v16';
+const ACTIVE_CACHES = [SHELL_CACHE_NAME, IMAGE_CACHE_NAME];
 
-const urlsToCache = [
+const shellPrecacheUrls = [
   './',
   './index.html',
   './scripts/app.js',
@@ -21,6 +23,7 @@ const urlsToCache = [
   './scripts/app/services/auth-service.js',
   './scripts/app/services/data-service.js',
   './scripts/app/ui/placeholders.js',
+  './scripts/app/ui/responsive-image.js',
   './scripts/app/ui/shell.js',
   './scripts/app/views/account-view.js',
   './scripts/app/views/auth-view.js',
@@ -35,24 +38,96 @@ const urlsToCache = [
   './styles/ui.css',
   './styles/pages.css',
   './assets/icons/sprite.svg',
-  './home-hero.png',
+  './assets/images/generated/home/hero-960.webp',
+  './assets/images/generated/home/hero-960.jpg',
   './icon-192.png',
   './icon-512.png'
 ];
 
+function isGeneratedImageRequest(url) {
+  return url.pathname.includes('/assets/images/generated/');
+}
+
+async function cacheShellResources() {
+  const cache = await caches.open(SHELL_CACHE_NAME);
+
+  for (const url of shellPrecacheUrls) {
+    try {
+      await cache.add(url);
+    } catch (error) {
+      console.warn('Service Worker: пропуск ресурса в precache', url, error);
+    }
+  }
+}
+
+async function cleanupOldCaches() {
+  const cacheNames = await caches.keys();
+  await Promise.all(
+    cacheNames.map((cacheName) => {
+      if (!ACTIVE_CACHES.includes(cacheName)) {
+        return caches.delete(cacheName);
+      }
+      return Promise.resolve();
+    })
+  );
+}
+
+async function handleGeneratedImageRequest(request) {
+  const cache = await caches.open(IMAGE_CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+
+  const fetchPromise = fetch(request)
+    .then((networkResponse) => {
+      if (networkResponse && networkResponse.ok && networkResponse.type === 'basic') {
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    })
+    .catch(() => null);
+
+  if (cachedResponse) {
+    void fetchPromise;
+    return cachedResponse;
+  }
+
+  const networkResponse = await fetchPromise;
+  if (networkResponse) {
+    return networkResponse;
+  }
+
+  throw new Error('Image request failed and cache miss');
+}
+
+async function handleShellRequest(request) {
+  const cache = await caches.open(SHELL_CACHE_NAME);
+
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.ok && networkResponse.type === 'basic') {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    if (request.mode === 'navigate') {
+      const shell = await cache.match('./index.html');
+      if (shell) {
+        return shell;
+      }
+    }
+
+    throw error;
+  }
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(CACHE_NAME);
-
-      for (const url of urlsToCache) {
-        try {
-          await cache.add(url);
-        } catch (error) {
-          console.warn('Service Worker: Пропуск ресурса при кэшировании', url, error);
-        }
-      }
-
+      await cacheShellResources();
       await self.skipWaiting();
     })()
   );
@@ -60,19 +135,11 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-          return Promise.resolve();
-        })
-      );
-    })
+    (async () => {
+      await cleanupOldCaches();
+      await self.clients.claim();
+    })()
   );
-
-  return self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -81,40 +148,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   const requestUrl = new URL(event.request.url);
-
   if (requestUrl.origin !== self.location.origin) {
     return;
   }
 
-  event.respondWith(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
+  if (isGeneratedImageRequest(requestUrl)) {
+    event.respondWith(handleGeneratedImageRequest(event.request));
+    return;
+  }
 
-      try {
-        const networkResponse = await fetch(event.request);
-
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          cache.put(event.request, networkResponse.clone());
-        }
-
-        return networkResponse;
-      } catch (error) {
-        const cachedResponse = await cache.match(event.request);
-
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        if (event.request.mode === 'navigate') {
-          const shell = await cache.match('./index.html');
-          if (shell) {
-            return shell;
-          }
-        }
-
-        throw error;
-      }
-    })()
-  );
+  event.respondWith(handleShellRequest(event.request));
 });
-

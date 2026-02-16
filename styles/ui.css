@@ -447,11 +447,9 @@ a:focus-visible,
   border-radius: var(--radius-md);
   border: 1px solid rgba(20, 20, 18, 0.1);
   background-color: var(--color-surface);
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
   flex-shrink: 0;
   box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 
 @supports not (aspect-ratio: 2 / 3) {
@@ -486,11 +484,10 @@ a:focus-visible,
   aspect-ratio: 2 / 3;
   border-radius: var(--radius-md);
   border: 1px solid rgba(20, 20, 18, 0.08);
-  background-position: center;
-  background-size: cover;
   background-color: var(--color-cover-placeholder);
   box-shadow: var(--shadow-subtle);
   text-decoration: none;
+  overflow: hidden;
 }
 
 .catalog-card__info {
@@ -550,6 +547,22 @@ a:focus-visible,
     flex-basis: 80px;
     width: 80px;
   }
+}
+
+.responsive-picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.material-card__cover-img,
+.catalog-card__cover-img,
+.material-page__cover-img,
+.home-banner__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Scroll containers / carousels */

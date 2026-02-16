@@ -3,8 +3,22 @@ const { test, expect } = require('@playwright/test');
 test('home route renders and loads materials', async ({ page }) => {
   await page.goto('/#/');
   await expect(page.locator('h1.page-title')).toHaveText('Каталог материалов');
+
+  const heroImage = page.locator('#homeHeroImage img.home-banner__img');
+  await expect(heroImage).toBeVisible();
+  await expect(heroImage).toHaveAttribute('fetchpriority', 'high');
+  await expect(heroImage).toHaveAttribute('width', '1280');
+  await expect(heroImage).toHaveAttribute('height', '480');
+
   await expect(page.locator('#main-materials .material-card').first()).toBeVisible();
+  await expect(page.locator('#main-materials .material-card__cover img').first()).toBeVisible();
   await expect(page.locator('#materials-5ht .material-card').first()).toBeVisible();
+
+  const hasInlineHomeCoverBackground = await page
+    .locator('#main-materials .material-card__cover')
+    .first()
+    .evaluate((element) => String(element.getAttribute('style') || '').includes('background-image'));
+  expect(hasInlineHomeCoverBackground).toBeFalsy();
 });
 
 test('catalog search and category filtering work', async ({ page }) => {
@@ -12,6 +26,14 @@ test('catalog search and category filtering work', async ({ page }) => {
 
   const cards = page.locator('#catalog-list .catalog-card');
   await expect(cards.first()).toBeVisible();
+  await expect(page.locator('#catalog-list .catalog-card__cover img').first()).toBeVisible();
+
+  const hasInlineCatalogCoverBackground = await page
+    .locator('#catalog-list .catalog-card__cover')
+    .first()
+    .evaluate((element) => String(element.getAttribute('style') || '').includes('background-image'));
+  expect(hasInlineCatalogCoverBackground).toBeFalsy();
+
   const initialCount = await cards.count();
   expect(initialCount).toBeGreaterThan(1);
 
@@ -19,7 +41,7 @@ test('catalog search and category filtering work', async ({ page }) => {
   await expect(cards).toHaveCount(1);
   await expect(page.locator('#catalog-list .catalog-card__title-link').first()).toContainText('JavaScript');
 
-  await page.locator('button.catalog-categories__button:has-text("Дизайн")').click();
+  await page.locator('button.catalog-categories__button:has-text("Книга")').click();
   await expect(cards).toHaveCount(0);
   await expect(page.locator('#catalog-list .empty-state')).toBeVisible();
 });
@@ -27,11 +49,33 @@ test('catalog search and category filtering work', async ({ page }) => {
 test('material guest CTA redirects to auth with redirect hash', async ({ page }) => {
   await page.goto('/#/material/1');
 
+  await expect(page.locator('#materialCover img.material-page__cover-img')).toBeVisible();
+  const hasInlineMaterialBackground = await page
+    .locator('#materialCover')
+    .evaluate((element) => String(element.getAttribute('style') || '').includes('background-image'));
+  expect(hasInlineMaterialBackground).toBeFalsy();
+
+  const description = page.locator('#materialDescription');
+  await expect(description.locator('p').first()).toContainText('Поведенческая активация - доказательный психотерапевтический протокол лечения депрессии.');
+  await expect(description.locator('ul')).toHaveCount(1);
+  const descriptionListItems = description.locator('ul > li');
+  await expect(descriptionListItems).toHaveCount(7);
+  await expect(descriptionListItems.first()).toHaveText('Психообразовательный блок');
+
   const downloadButton = page.locator('#downloadBtn');
   await expect(downloadButton).toHaveText('Войти и скачать');
   await downloadButton.click();
 
   await expect(page).toHaveURL(/#\/auth\?redirect=%23%2Fmaterial%2F1/);
+});
+
+test('material with plain description renders single paragraph', async ({ page }) => {
+  await page.goto('/#/material/2');
+
+  const description = page.locator('#materialDescription');
+  await expect(description.locator('ul')).toHaveCount(0);
+  await expect(description.locator('p')).toHaveCount(1);
+  await expect(description.locator('p').first()).toContainText('Изучите принципы создания удобных и красивых интерфейсов.');
 });
 
 test('account route redirects guest to auth', async ({ page }) => {
