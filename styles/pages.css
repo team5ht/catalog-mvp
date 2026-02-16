@@ -38,8 +38,7 @@
   display: block;
   width: 100%;
   height: clamp(160px, 38vw, 220px);
-  object-fit: cover;
-  object-position: center;
+  overflow: hidden;
 }
 
 .home-banner__content {
@@ -464,8 +463,6 @@
   width: 116px;
   aspect-ratio: 2 / 3;
   border-radius: var(--radius-md);
-  background-size: cover;
-  background-position: center;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-subtle);
@@ -529,6 +526,27 @@
 
 .material-page__description {
   margin: var(--space-md) 0 0;
+}
+
+.material-page__description p {
+  margin: 0;
+}
+
+.material-page__description p + p,
+.material-page__description p + ul,
+.material-page__description ul + p,
+.material-page__description ul + ul {
+  margin-top: var(--space-sm);
+}
+
+.material-page__description ul {
+  margin: 0;
+  padding-left: 1.2em;
+  list-style: disc;
+}
+
+.material-page__description li + li {
+  margin-top: var(--space-xs);
 }
 
 .material-page__tags {

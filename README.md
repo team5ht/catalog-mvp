@@ -7,6 +7,7 @@
 - SPA-shell: один входной файл `index.html` + маршруты `#/...`.
 - Сборщика и серверного рендера нет.
 - Каталог и карточки материалов берутся из `data.json`.
+- Изображения материалов и hero генерируются локальным pipeline (`sharp`) в `assets/images/generated/*`.
 - Авторизация: Supabase email/password (вход, регистрация, выход, восстановление пароля по OTP-коду).
 - Auth-синхронизация централизована через `window.authStore`.
 - Скриптовая часть `app` декомпозирована на ESM-модули (`scripts/app/*`).
@@ -31,6 +32,7 @@
 - `scripts/app/routing/*` - hash parsing, navigation, route processing
 - `scripts/app/services/*` - доступ к auth-store/supabase и `data.json`
 - `scripts/app/ui/*` - shell state и skeleton/error rendering
+- `scripts/app/ui/responsive-image.js` - helper для `<picture>/<img>` с preset-ами `srcset/sizes`
 - `scripts/app/views/*` - рендеры экранов (`home`, `catalog`, `material`, `auth`, `account`)
 - `scripts/app/platform/*` - orientation guard и регистрация SW
 - `scripts/nav-auth.js` - состояние кнопки аккаунта в нижней навигации
@@ -38,6 +40,10 @@
 - `scripts/auth-store.js` - единый источник auth-состояния (`window.authStore`)
 - `supabase-config.js` - `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY`
 - `data.json` - категории и материалы
+- `assets/images/src/*` - исходники изображений (`.jpg`)
+- `assets/images/generated/*` - сгенерированные responsive-изображения (`.webp` + `.jpg`)
+- `scripts/images/build.mjs` - генерация responsive-вариантов изображений
+- `scripts/images/check.mjs` - валидация ассетов и budget-лимитов
 - `sw.js` - кэширование и оффлайн-fallback
 - `manifest.json` - PWA-манифест
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - стили
@@ -47,6 +53,8 @@
 - `playwright.config.js` - конфигурация Playwright
 - `docs/adr/2026-02-11-app-js-modularization.md` - подробный отчет по рефакторингу
 - `docs/adr/2026-02-12-auth-recovery-otp.md` - переход на OTP recovery без ссылок
+- `docs/adr/2026-02-16-image-pipeline-refactor.md` - переход на semantic responsive image pipeline
+- `docs/IMAGE-WORKFLOW-CHEATSHEET.md` - практическая шпаргалка по workflow изображений
 
 ## Архитектура скриптов (ESM)
 
@@ -123,11 +131,33 @@
 
 - `id` (number)
 - `title` (string)
-- `description` (string)
-- `cover` (string URL)
+- `description` (string; на странице `#/material/:id` поддерживает легкую разметку: пустая строка = новый абзац, строка с префиксом `- ` = пункт списка)
+- `cover` (object)
+  - `asset` (string, например `materials/1/cover`)
+  - `alt` (string)
+  - `focalPoint` (string, optional, по умолчанию `50% 50%`)
 - `pdfUrl` (string URL)
 - `categoryId` (number)
 - `tags` (string[])
+
+## Image pipeline
+
+- Контентные изображения рендерятся через `<picture><source type="image/webp"> + <img>` (без `background-image`).
+- Генерация ассетов:
+  - cover: `160/240/320/480w`, ratio `2:3`
+  - hero: `640/960/1280w`, ratio `8:3`
+  - форматы: `webp` (q=72) + `jpg` (q=78, progressive mozjpeg)
+- Команды:
+
+```bash
+npm run images:build
+npm run images:check
+```
+
+- `images:check` проверяет:
+  - наличие `assets/images/src/...`
+  - наличие `assets/images/generated/...`
+  - budget-лимиты размеров файлов для WebP/JPEG
 
 ## Supabase
 
@@ -160,9 +190,12 @@
 
 ## PWA / Service Worker
 
-- Кэш-версия: `catalog-mvp-v15`.
-- Pre-cache: shell, ESM-модули app, стили, `data.json`, иконки и ключевые изображения.
-- Стратегия на `fetch`: network-first с fallback в кэш.
+- Кэши:
+  - shell: `catalog-mvp-shell-v16`
+  - images: `catalog-mvp-images-v16`
+- Pre-cache: app shell, ESM-модули, стили, `data.json`, иконки, hero fallback.
+- Runtime image cache (`/assets/images/generated/`): `stale-while-revalidate`.
+- Остальные same-origin GET запросы: `network-first` с fallback в cache.
 - Для `navigate` запросов fallback на `./index.html`.
 - `manifest.json`: `start_url` и `scope` выставлены в `./`.
 
@@ -184,6 +217,7 @@ npx serve .
 
 ```bash
 npm install
+npm run images:build
 npx playwright install chromium
 ```
 
@@ -193,16 +227,24 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
+Проверить image budgets:
+
+```bash
+npm run images:check
+```
+
 Покрытие smoke-тестов:
 
 - `#/` (базовый рендер и загрузка карточек)
+- `#/` (hero через `<img>` с `fetchpriority="high"`, загрузка карточек)
 - `#/catalog` (поиск + фильтрация)
-- `#/material/1` (guest CTA и redirect в auth)
+- `#/material/1` (guest CTA и redirect в auth, обложка через `<img>`)
 - `#/account` (auth-gating)
 - `#/auth?mode=forgot` (OTP-восстановление, шаг 1/3)
 - `#/auth?mode=recovery` (legacy redirect в OTP flow)
 - `#/unknown` (редирект на home)
 - sanity по active state нижней навигации
+- sanity на отсутствие inline `background-image` в контентных обложках
 
 Дополнительные e2e сценарии (`tests/e2e/auth-reset-otp.spec.js`):
 

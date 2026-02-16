@@ -1,3 +1,5 @@
+import { createResponsivePicture } from './responsive-image.js';
+
 export function renderInlineError(containerId, message) {
   const container = document.getElementById(containerId);
   if (!container) {
@@ -122,7 +124,14 @@ export function renderMaterialsCarousel(containerId, materials, limit = 5) {
 
     const cover = document.createElement('div');
     cover.className = 'material-card__cover';
-    cover.style.backgroundImage = `url(${material.cover})`;
+    cover.appendChild(
+      createResponsivePicture({
+        asset: material.cover.asset,
+        alt: material.cover.alt,
+        focalPoint: material.cover.focalPoint,
+        preset: 'coverCarousel'
+      })
+    );
 
     const title = document.createElement('p');
     title.className = 'material-card__title';
