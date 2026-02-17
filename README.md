@@ -54,6 +54,7 @@
 - `docs/adr/2026-02-11-app-js-modularization.md` - подробный отчет по рефакторингу
 - `docs/adr/2026-02-12-auth-recovery-otp.md` - переход на OTP recovery без ссылок
 - `docs/adr/2026-02-16-image-pipeline-refactor.md` - переход на semantic responsive image pipeline
+- `docs/adr/2026-02-17-cover-ratio-3-4.md` - переход обложек на ratio `3:4`
 - `docs/IMAGE-WORKFLOW-CHEATSHEET.md` - практическая шпаргалка по workflow изображений
 
 ## Архитектура скриптов (ESM)
@@ -144,7 +145,7 @@
 
 - Контентные изображения рендерятся через `<picture><source type="image/webp"> + <img>` (без `background-image`).
 - Генерация ассетов:
-  - cover: `160/240/320/480w`, ratio `2:3`
+  - cover: `160/240/320/480w`, ratio `3:4`
   - hero: `640/960/1280w`, ratio `8:3`
   - форматы: `webp` (q=72) + `jpg` (q=78, progressive mozjpeg)
 - Команды:
@@ -192,7 +193,7 @@ npm run images:check
 
 - Кэши:
   - shell: `catalog-mvp-shell-v16`
-  - images: `catalog-mvp-images-v16`
+  - images: `catalog-mvp-images-v17`
 - Pre-cache: app shell, ESM-модули, стили, `data.json`, иконки, hero fallback.
 - Runtime image cache (`/assets/images/generated/`): `stale-while-revalidate`.
 - Остальные same-origin GET запросы: `network-first` с fallback в cache.

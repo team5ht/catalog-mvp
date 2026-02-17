@@ -1,10 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import sharp from 'sharp';
 import {
   COVER_ASSET_PREFIX,
+  COVER_RATIO,
   COVER_WIDTHS,
   GENERATED_ROOT,
   HERO_ASSET,
+  HERO_RATIO,
   HERO_WIDTHS,
   JPEG_MAX_SIZE_RATIO,
   SOURCE_ROOT,
@@ -50,8 +53,16 @@ function getWidthsForAsset(assetType) {
   return assetType === 'hero' ? HERO_WIDTHS : COVER_WIDTHS;
 }
 
+function getRatioForAsset(assetType) {
+  return assetType === 'hero' ? HERO_RATIO : COVER_RATIO;
+}
+
 function getWebpBudgetKb(assetType, width) {
   return WEBP_BUDGETS_KB[assetType][width];
+}
+
+function getExpectedHeight(width, ratio) {
+  return Math.round((width * ratio.height) / ratio.width);
 }
 
 async function pathExists(filePath) {
@@ -66,6 +77,14 @@ async function pathExists(filePath) {
 async function getFileSizeBytes(filePath) {
   const stat = await fs.stat(filePath);
   return stat.size;
+}
+
+async function getImageDimensions(filePath) {
+  const metadata = await sharp(filePath).metadata();
+  return {
+    width: metadata.width ?? null,
+    height: metadata.height ?? null
+  };
 }
 
 async function readDataJson() {
@@ -118,6 +137,24 @@ async function checkSourceFile(asset, errors) {
   }
 }
 
+async function checkGeneratedGeometry(filePath, asset, assetType, width, formatLabel, errors) {
+  const ratio = getRatioForAsset(assetType);
+  const expectedHeight = getExpectedHeight(width, ratio);
+
+  try {
+    const dimensions = await getImageDimensions(filePath);
+    if (dimensions.width !== width || dimensions.height !== expectedHeight) {
+      errors.push(
+        `Некорректная геометрия ${formatLabel} (${asset}, ${width}w): `
+        + `${dimensions.width ?? 'unknown'}x${dimensions.height ?? 'unknown'}, `
+        + `ожидается ${width}x${expectedHeight} (${ratio.width}:${ratio.height})`
+      );
+    }
+  } catch (error) {
+    errors.push(`Не удалось прочитать размеры generated файла: ${filePath} (${error.message})`);
+  }
+}
+
 async function checkGeneratedFilesAndBudgets(asset, assetType, errors) {
   const widths = getWidthsForAsset(assetType);
 
@@ -136,6 +173,7 @@ async function checkGeneratedFilesAndBudgets(asset, assetType, errors) {
           `Превышен budget WEBP (${asset}, ${width}w): ${formatKb(sizeKb)} > ${formatKb(webpBudgetKb)}`
         );
       }
+      await checkGeneratedGeometry(webpPath, asset, assetType, width, 'WEBP', errors);
     }
 
     if (!(await pathExists(jpgPath))) {
@@ -147,6 +185,7 @@ async function checkGeneratedFilesAndBudgets(asset, assetType, errors) {
           `Превышен budget JPEG (${asset}, ${width}w): ${formatKb(sizeKb)} > ${formatKb(jpgBudgetKb)}`
         );
       }
+      await checkGeneratedGeometry(jpgPath, asset, assetType, width, 'JPEG', errors);
     }
   }
 }

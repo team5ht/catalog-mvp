@@ -8,7 +8,7 @@ export const HERO_ASSET = 'home/hero';
 export const COVER_WIDTHS = [160, 240, 320, 480];
 export const HERO_WIDTHS = [640, 960, 1280];
 
-export const COVER_RATIO = { width: 2, height: 3 };
+export const COVER_RATIO = { width: 3, height: 4 };
 export const HERO_RATIO = { width: 8, height: 3 };
 
 export const WEBP_QUALITY = 72;

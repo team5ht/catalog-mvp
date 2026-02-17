@@ -1,5 +1,18 @@
 const { test, expect } = require('@playwright/test');
 
+async function expectCoverImageDimensions(imageLocator) {
+  await expect(imageLocator).toHaveAttribute('width', '480');
+  await expect(imageLocator).toHaveAttribute('height', '640');
+}
+
+async function expectCoverContainerRatio(containerLocator) {
+  const ratio = await containerLocator.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.width / rect.height;
+  });
+  expect(ratio).toBeCloseTo(0.75, 2);
+}
+
 test('home route renders and loads materials', async ({ page }) => {
   await page.goto('/#/');
   await expect(page.locator('h1.page-title')).toHaveText('Каталог материалов');
@@ -11,7 +24,11 @@ test('home route renders and loads materials', async ({ page }) => {
   await expect(heroImage).toHaveAttribute('height', '480');
 
   await expect(page.locator('#main-materials .material-card').first()).toBeVisible();
-  await expect(page.locator('#main-materials .material-card__cover img').first()).toBeVisible();
+  const homeCoverContainer = page.locator('#main-materials .material-card__cover').first();
+  const homeCoverImage = homeCoverContainer.locator('img');
+  await expect(homeCoverImage).toBeVisible();
+  await expectCoverImageDimensions(homeCoverImage);
+  await expectCoverContainerRatio(homeCoverContainer);
   await expect(page.locator('#materials-5ht .material-card').first()).toBeVisible();
 
   const hasInlineHomeCoverBackground = await page
@@ -26,7 +43,11 @@ test('catalog search and category filtering work', async ({ page }) => {
 
   const cards = page.locator('#catalog-list .catalog-card');
   await expect(cards.first()).toBeVisible();
-  await expect(page.locator('#catalog-list .catalog-card__cover img').first()).toBeVisible();
+  const catalogCoverContainer = page.locator('#catalog-list .catalog-card__cover').first();
+  const catalogCoverImage = catalogCoverContainer.locator('img');
+  await expect(catalogCoverImage).toBeVisible();
+  await expectCoverImageDimensions(catalogCoverImage);
+  await expectCoverContainerRatio(catalogCoverContainer);
 
   const hasInlineCatalogCoverBackground = await page
     .locator('#catalog-list .catalog-card__cover')
@@ -49,7 +70,11 @@ test('catalog search and category filtering work', async ({ page }) => {
 test('material guest CTA redirects to auth with redirect hash', async ({ page }) => {
   await page.goto('/#/material/1');
 
-  await expect(page.locator('#materialCover img.material-page__cover-img')).toBeVisible();
+  const materialCoverContainer = page.locator('#materialCover');
+  const materialCoverImage = materialCoverContainer.locator('img.material-page__cover-img');
+  await expect(materialCoverImage).toBeVisible();
+  await expectCoverImageDimensions(materialCoverImage);
+  await expectCoverContainerRatio(materialCoverContainer);
   const hasInlineMaterialBackground = await page
     .locator('#materialCover')
     .evaluate((element) => String(element.getAttribute('style') || '').includes('background-image'));

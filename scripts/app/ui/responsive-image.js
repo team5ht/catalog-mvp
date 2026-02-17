@@ -4,7 +4,7 @@ const HERO_WIDTHS = [640, 960, 1280];
 const PRESETS = {
   coverCarousel: {
     widths: COVER_WIDTHS,
-    ratio: { width: 2, height: 3 },
+    ratio: { width: 3, height: 4 },
     sizes: '(max-width: 480px) 126px, 140px',
     defaultLoading: 'lazy',
     defaultFetchPriority: 'auto',
@@ -12,7 +12,7 @@ const PRESETS = {
   },
   coverCatalog: {
     widths: COVER_WIDTHS,
-    ratio: { width: 2, height: 3 },
+    ratio: { width: 3, height: 4 },
     sizes: '(max-width: 480px) 80px, 88px',
     defaultLoading: 'lazy',
     defaultFetchPriority: 'auto',
@@ -20,7 +20,7 @@ const PRESETS = {
   },
   coverDetail: {
     widths: COVER_WIDTHS,
-    ratio: { width: 2, height: 3 },
+    ratio: { width: 3, height: 4 },
     sizes: '(max-width: 380px) 106px, (max-width: 480px) 96px, 116px',
     defaultLoading: 'eager',
     defaultFetchPriority: 'high',
