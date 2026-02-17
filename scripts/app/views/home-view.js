@@ -32,15 +32,15 @@ export function renderHomeView(renderToken) {
       </section>
       <section class="materials-section ui-enter">
         <div class="materials-section__header">
-          <h2 class="materials-section__title">Переводы</h2>
+          <h2 class="materials-section__title">Новое</h2>
           <span class="materials-section__action">Подборка</span>
         </div>
         <div id="main-materials" class="materials-carousel"></div>
       </section>
       <section class="materials-section ui-enter">
         <div class="materials-section__header">
-          <h2 class="materials-section__title">Материалы 5HT</h2>
-          <span class="materials-section__action">Новое</span>
+          <h2 class="materials-section__title">Популярное</h2>
+          <span class="materials-section__action">ТОП-5</span>
         </div>
         <div id="materials-5ht" class="materials-carousel"></div>
       </section>
