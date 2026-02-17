@@ -58,11 +58,11 @@ test('catalog search and category filtering work', async ({ page }) => {
   const initialCount = await cards.count();
   expect(initialCount).toBeGreaterThan(1);
 
-  await page.locator('#catalogSearchInput').fill('JavaScript');
+  await page.locator('#catalogSearchInput').fill('Дневник тревожных прогнозов');
   await expect(cards).toHaveCount(1);
-  await expect(page.locator('#catalog-list .catalog-card__title-link').first()).toContainText('JavaScript');
+  await expect(page.locator('#catalog-list .catalog-card__title-link').first()).toContainText('Дневник тревожных прогнозов');
 
-  await page.locator('button.catalog-categories__button:has-text("Книга")').click();
+  await page.locator('button.catalog-categories__button:has-text("Раздаточный материал")').click();
   await expect(cards).toHaveCount(0);
   await expect(page.locator('#catalog-list .empty-state')).toBeVisible();
 });
@@ -81,7 +81,7 @@ test('material guest CTA redirects to auth with redirect hash', async ({ page })
   expect(hasInlineMaterialBackground).toBeFalsy();
 
   const description = page.locator('#materialDescription');
-  await expect(description.locator('p').first()).toContainText('Поведенческая активация - доказательный психотерапевтический протокол лечения депрессии.');
+  await expect(description.locator('p').first()).toContainText('Поведенческая активация — доказательный психотерапевтический протокол лечения депрессии.');
   await expect(description.locator('ul')).toHaveCount(1);
   const descriptionListItems = description.locator('ul > li');
   await expect(descriptionListItems).toHaveCount(7);
@@ -95,12 +95,12 @@ test('material guest CTA redirects to auth with redirect hash', async ({ page })
 });
 
 test('material with plain description renders single paragraph', async ({ page }) => {
-  await page.goto('/#/material/2');
+  await page.goto('/#/material/7');
 
   const description = page.locator('#materialDescription');
   await expect(description.locator('ul')).toHaveCount(0);
   await expect(description.locator('p')).toHaveCount(1);
-  await expect(description.locator('p').first()).toContainText('Изучите принципы создания удобных и красивых интерфейсов.');
+  await expect(description.locator('p').first()).toContainText('Компактная заготовка для фиксации тревожных мыслей и проверки их реалистичности на фактах.');
 });
 
 test('account route redirects guest to auth', async ({ page }) => {

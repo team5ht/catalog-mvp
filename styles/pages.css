@@ -465,6 +465,7 @@
 
 .material-page__cover {
   width: 116px;
+  align-self: center;
   aspect-ratio: 3 / 4;
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
@@ -595,5 +596,6 @@
 
   .material-page__cover {
     width: 106px;
+    align-self: start;
   }
 }

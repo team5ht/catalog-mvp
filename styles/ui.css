@@ -481,6 +481,7 @@ a:focus-visible,
 .catalog-card__cover {
   flex: 0 0 88px;
   width: 88px;
+  align-self: flex-start;
   aspect-ratio: 3 / 4;
   border-radius: var(--radius-md);
   border: 1px solid rgba(20, 20, 18, 0.08);
