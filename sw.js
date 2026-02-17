@@ -4,7 +4,7 @@
 // =================================
 
 const SHELL_CACHE_NAME = 'catalog-mvp-shell-v16';
-const IMAGE_CACHE_NAME = 'catalog-mvp-images-v16';
+const IMAGE_CACHE_NAME = 'catalog-mvp-images-v17';
 const ACTIVE_CACHES = [SHELL_CACHE_NAME, IMAGE_CACHE_NAME];
 
 const shellPrecacheUrls = [

@@ -28,9 +28,13 @@
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(180deg, rgba(20, 20, 18, 0.1), rgba(20, 20, 18, 0.68)),
-    linear-gradient(90deg, rgba(20, 20, 18, 0.08), rgba(20, 20, 18, 0.52));
+  background: linear-gradient(
+    to top right,
+    rgba(20, 20, 18, 0.025) 10%,
+    rgba(20, 20, 18, 0.04) 46%,
+    rgba(20, 20, 18, 0.11) 70%,
+    rgba(20, 20, 18, 0.165) 100%
+  );
   pointer-events: none;
 }
 
@@ -49,7 +53,7 @@
   z-index: 1;
   color: #fff;
   max-width: 68%;
-  text-shadow: 0 2px 8px rgba(20, 20, 18, 0.35);
+  text-shadow: 0 1px 4px rgba(20, 20, 18, 0.22);
 }
 
 .home-banner__title {
@@ -461,7 +465,7 @@
 
 .material-page__cover {
   width: 116px;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 3 / 4;
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);

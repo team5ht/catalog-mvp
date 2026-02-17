@@ -2,6 +2,7 @@
 
 - Date: 2026-02-16
 - Status: Accepted
+- Superseded (partially): `docs/adr/2026-02-17-cover-ratio-3-4.md` для ratio обложек и image cache version
 - Scope: image data contract, UI rendering, SW caching, image build tooling
 - Policy: `behavior-change`
 
