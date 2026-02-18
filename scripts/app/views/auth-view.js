@@ -20,7 +20,6 @@ import {
 import { navigateTo } from '../routing/navigation.js';
 import {
   getSupabaseClient,
-  isAuthenticated,
   refreshAuthSession,
   requestPasswordResetOtp,
   updateUserPassword,
@@ -324,11 +323,6 @@ export async function renderAuthView(route, renderToken) {
     return;
   }
 
-  if (authMode === AUTH_MODE_LOGIN && isAuthenticated()) {
-    navigateTo(redirectHash, { replace: true });
-    return;
-  }
-
   let authTitle = 'Вход или регистрация';
   let authSubtitle = 'Используйте email и пароль, чтобы войти или создать аккаунт.';
   let authNote = `
@@ -399,15 +393,6 @@ export async function renderAuthView(route, renderToken) {
         </section>
       </div>
     `;
-
-  void refreshAuthSession().then(() => {
-    if (!isCurrentRender(renderToken) || authMode !== AUTH_MODE_LOGIN) {
-      return;
-    }
-    if (isAuthenticated()) {
-      navigateTo(redirectHash, { replace: true });
-    }
-  });
 
   const form = document.getElementById('authForm');
   const statusEl = document.getElementById('authStatus');

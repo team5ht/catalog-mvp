@@ -1,20 +1,14 @@
-import {
-  AUTH_MODE_LOGIN,
-  HOME_HASH
-} from './constants.js';
-import {
-  buildAuthHash,
-  getAuthModeFromRoute,
-  sanitizeRedirectHash
-} from './routing/hash.js';
+import { HOME_HASH } from './constants.js';
 import {
   consumePendingHistoryMode,
   setReplaceNavigationHandler,
   navigateTo
 } from './routing/navigation.js';
+import { resolveAuthRedirect } from './routing/auth-guard.js';
 import { processCurrentHash, getActiveRoute } from './routing/router.js';
 import { initializeAuthStore } from './services/auth-service.js';
 import { bindStaticNav } from './ui/shell.js';
+import { bindAccountNav } from './ui/account-nav.js';
 import { renderDownloadButtonState } from './views/material-view.js';
 import { registerOrientationGuard } from './platform/orientation-guard.js';
 import { registerServiceWorker } from './platform/service-worker-registration.js';
@@ -82,24 +76,16 @@ function registerAuthListener() {
       return;
     }
 
-    if (currentRoute.name === 'auth' && authed) {
-      const authMode = getAuthModeFromRoute(currentRoute);
-      if (authMode !== AUTH_MODE_LOGIN) {
-        return;
-      }
-      const redirectHash = sanitizeRedirectHash(currentRoute.query.redirect) || HOME_HASH;
+    const redirectHash = resolveAuthRedirect(currentRoute, authed);
+    if (redirectHash) {
       navigateTo(redirectHash, { replace: true });
-      return;
-    }
-
-    if (currentRoute.name === 'account' && !authed) {
-      navigateTo(buildAuthHash('#/account'), { replace: true });
     }
   });
 }
 
 function init() {
   bindStaticNav();
+  bindAccountNav();
   bindHashAnchorNavigation();
   registerAuthListener();
   registerOrientationGuard();

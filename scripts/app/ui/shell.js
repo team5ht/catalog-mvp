@@ -1,5 +1,5 @@
 import { HOME_HASH } from '../constants.js';
-import { getBottomNav, getSpaRoot } from '../dom.js';
+import { getSpaRoot } from '../dom.js';
 import { navigateTo } from '../routing/navigation.js';
 
 export function updateBottomNavActive(routeName) {
@@ -28,7 +28,6 @@ export function updateBottomNavActive(routeName) {
 
 export function applyShellState(routeName) {
   const root = getSpaRoot();
-  const nav = getBottomNav();
 
   if (!root) {
     return;
@@ -41,9 +40,6 @@ export function applyShellState(routeName) {
   }
 
   document.body.classList.remove('fullscreen-static');
-  if (nav) {
-    nav.hidden = false;
-  }
 
   if (routeName === 'material') {
     root.className = 'material-page app-container';

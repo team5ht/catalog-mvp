@@ -35,17 +35,17 @@ npm run test:e2e:headed
 - `scripts/app.js` - тонкий entrypoint (`initApp()`).
 - `scripts/app/bootstrap.js` - инициализация, hashchange, auth-listener, SW/orientation.
 - `scripts/app/routing/*` - parse/normalize hash, navigate/replace, route dispatch.
+- `scripts/app/routing/auth-guard.js` - единые правила auth/account redirect.
 - `scripts/app/views/*` - рендер экранов `home`, `catalog`, `material`, `auth`, `account`.
 - `scripts/app/services/*` - `data.json`, Supabase/auth-store интеграция.
-- `scripts/app/ui/*` - shell-state, placeholders/skeleton, responsive image helper.
+- `scripts/app/ui/*` - shell-state, account nav, placeholders/skeleton, responsive image helper.
 - `scripts/app/state.js` - route/render token/catalog UI state/in-app history.
-- `scripts/nav-auth.js` - динамика кнопки аккаунта в нижней навигации.
 - `scripts/supabase-client.js` - инициализация `window.supabaseClient`.
 - `scripts/auth-store.js` - глобальный store auth-сессии.
 - `scripts/images/build.mjs` - генерация responsive-изображений.
 - `scripts/images/check.mjs` - проверка data-контракта и image budgets/геометрии.
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - 3 CSS-слоя.
-- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js` - e2e сценарии.
+- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
 
 ## Маршруты
 
@@ -162,7 +162,6 @@ npm run images:check
 <script src="scripts/supabase-client.js"></script>
 <script src="scripts/auth-store.js"></script>
 <script type="module" src="scripts/app.js"></script>
-<script src="scripts/nav-auth.js"></script>
 ```
 
 Важно:
@@ -233,6 +232,7 @@ npm run test:e2e
 - active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
 - OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`): success/error/rate-limit ветки
+- auth/navigation guard сценарии (`tests/e2e/navigation-auth-guards.spec.js`): owner redirect и поведение кнопки аккаунта
 
 ## Деплой
 
