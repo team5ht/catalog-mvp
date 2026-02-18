@@ -7,13 +7,52 @@ import {
   getAuthModeFromRoute,
   sanitizeRedirectHash
 } from './routing/hash.js';
-import { setReplaceNavigationHandler, navigateTo } from './routing/navigation.js';
+import {
+  consumePendingHistoryMode,
+  setReplaceNavigationHandler,
+  navigateTo
+} from './routing/navigation.js';
 import { processCurrentHash, getActiveRoute } from './routing/router.js';
 import { initializeAuthStore } from './services/auth-service.js';
 import { bindStaticNav } from './ui/shell.js';
 import { renderDownloadButtonState } from './views/material-view.js';
 import { registerOrientationGuard } from './platform/orientation-guard.js';
 import { registerServiceWorker } from './platform/service-worker-registration.js';
+
+function bindHashAnchorNavigation() {
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button !== 0) {
+      return;
+    }
+
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const anchor = target.closest('a[href]');
+    if (!anchor || anchor.hasAttribute('download')) {
+      return;
+    }
+
+    const anchorTarget = anchor.getAttribute('target');
+    if (anchorTarget && anchorTarget !== '_self') {
+      return;
+    }
+
+    const href = anchor.getAttribute('href');
+    if (!href || !href.startsWith('#/')) {
+      return;
+    }
+
+    event.preventDefault();
+    navigateTo(href, { historyMode: 'push' });
+  });
+}
 
 function syncMaterialDownloadCta() {
   const currentRoute = getActiveRoute();
@@ -61,21 +100,23 @@ function registerAuthListener() {
 
 function init() {
   bindStaticNav();
+  bindHashAnchorNavigation();
   registerAuthListener();
   registerOrientationGuard();
   registerServiceWorker();
 
-  setReplaceNavigationHandler(() => processCurrentHash());
+  setReplaceNavigationHandler(() => processCurrentHash({ historyMode: 'replace' }));
 
   window.addEventListener('hashchange', () => {
-    void processCurrentHash();
+    const historyMode = consumePendingHistoryMode(window.location.hash) || 'auto';
+    void processCurrentHash({ historyMode });
   });
 
   if (!window.location.hash || window.location.hash === '#') {
     window.location.hash = HOME_HASH;
   }
 
-  void processCurrentHash();
+  void processCurrentHash({ historyMode: 'initial' });
 }
 
 export function initApp() {

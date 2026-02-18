@@ -4,7 +4,7 @@ import { navigateTo } from './navigation.js';
 import {
   getCurrentRoute,
   nextRenderToken,
-  pushRouteHistory,
+  recordRouteVisit,
   setCurrentRoute
 } from '../state.js';
 import { applyShellState, updateBottomNavActive } from '../ui/shell.js';
@@ -14,13 +14,25 @@ import { renderHomeView } from '../views/home-view.js';
 import { renderMaterialView } from '../views/material-view.js';
 import { renderAccountView } from '../views/account-view.js';
 
+function applyScrollPolicy(navigationType) {
+  if (
+    navigationType === 'initial'
+    || navigationType === 'push'
+    || navigationType === 'replace'
+  ) {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }
+}
+
 export async function applyRoute(route, options = {}) {
-  const { skipHistory = false } = options;
+  const { skipHistory = false, historyMode = 'auto' } = options;
 
   setCurrentRoute(route);
+  let navigationType = 'noop';
   if (!skipHistory) {
-    pushRouteHistory(route.fullHash);
+    navigationType = recordRouteVisit(route.fullHash, historyMode);
   }
+  applyScrollPolicy(navigationType);
 
   const renderToken = nextRenderToken();
 
