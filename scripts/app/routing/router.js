@@ -1,6 +1,8 @@
 import { HOME_HASH } from '../constants.js';
 import { parseHash } from './hash.js';
+import { resolveAuthRedirect } from './auth-guard.js';
 import { navigateTo } from './navigation.js';
+import { isAuthenticated, refreshAuthSession } from '../services/auth-service.js';
 import {
   getCurrentRoute,
   nextRenderToken,
@@ -72,6 +74,15 @@ export async function processCurrentHash(options = {}) {
   if (route.name === 'unknown') {
     navigateTo(HOME_HASH, { replace: true });
     return;
+  }
+
+  if (route.name === 'auth' || route.name === 'account') {
+    await refreshAuthSession();
+    const redirectHash = resolveAuthRedirect(route, isAuthenticated());
+    if (redirectHash && redirectHash !== route.fullHash) {
+      navigateTo(redirectHash, { replace: true });
+      return;
+    }
   }
 
   await applyRoute(route, options);
