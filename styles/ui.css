@@ -467,6 +467,15 @@ a:focus-visible,
   color: var(--color-text);
 }
 
+.materials-carousel .material-card__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(2 * 1em * 1.32);
+}
+
 .catalog-card {
   display: flex;
   gap: var(--space-md);

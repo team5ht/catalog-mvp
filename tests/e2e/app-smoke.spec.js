@@ -13,6 +13,26 @@ async function expectCoverContainerRatio(containerLocator) {
   expect(ratio).toBeCloseTo(0.75, 2);
 }
 
+async function expectCarouselTitleClamp(page, carouselId) {
+  const titleLocator = page.locator(`#${carouselId} a.material-card .material-card__title`).first();
+  await expect(titleLocator).toBeVisible();
+
+  const titleMetrics = await titleLocator.evaluate((element) => {
+    const styles = window.getComputedStyle(element);
+    return {
+      webkitLineClamp: styles.webkitLineClamp,
+      overflow: styles.overflow,
+      lineHeight: Number.parseFloat(styles.lineHeight),
+      height: element.getBoundingClientRect().height
+    };
+  });
+
+  expect(titleMetrics.webkitLineClamp).toBe('2');
+  expect(titleMetrics.overflow).toBe('hidden');
+  expect(titleMetrics.lineHeight).toBeGreaterThan(0);
+  expect(titleMetrics.height).toBeLessThanOrEqual((titleMetrics.lineHeight * 2) + 1);
+}
+
 test('home route renders and loads materials', async ({ page }) => {
   await page.goto('/#/');
   await expect(page.locator('h1.page-title')).toHaveText('Каталог материалов');
@@ -36,6 +56,9 @@ test('home route renders and loads materials', async ({ page }) => {
     .first()
     .evaluate((element) => String(element.getAttribute('style') || '').includes('background-image'));
   expect(hasInlineHomeCoverBackground).toBeFalsy();
+
+  await expectCarouselTitleClamp(page, 'main-materials');
+  await expectCarouselTitleClamp(page, 'materials-5ht');
 });
 
 test('catalog search and category filtering work', async ({ page }) => {
