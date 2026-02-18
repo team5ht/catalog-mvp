@@ -788,6 +788,11 @@ a:focus-visible,
 .ui-stagger > *:nth-child(5) { animation-delay: 0.18s; }
 .ui-stagger > *:nth-child(6) { animation-delay: 0.22s; }
 
+body.is-history-pop .ui-enter,
+body.is-history-pop .ui-stagger > * {
+  animation: none;
+}
+
 @keyframes ui-enter {
   from {
     opacity: 0;

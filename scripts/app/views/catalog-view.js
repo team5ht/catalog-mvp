@@ -14,37 +14,6 @@ import {
 
 const catalogUiState = getCatalogUiState();
 let loadedCatalogData = null;
-let catalogViewNode = null;
-let catalogHydrated = false;
-let catalogLoadPromise = null;
-
-function createCatalogViewNode() {
-  const viewNode = document.createElement('section');
-  viewNode.className = 'catalog-view';
-  viewNode.innerHTML = `
-      <section class="catalog-shell">
-        <header class="screen-header ui-enter">
-          <p class="screen-header__kicker">Библиотека</p>
-          <h1 class="page-title">Каталог</h1>
-          <p class="screen-header__subtitle text-body">Фильтруйте материалы по категориям и быстро находите нужное по названию, описанию или тегам.</p>
-        </header>
-        <section class="catalog-search ui-enter" aria-label="Поиск по каталогу">
-          <div class="catalog-search__field">
-            <svg class="catalog-search__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M15.5 14h-.79l-.28-.27a6 6 0 1 0-.71.71l.27.28v.79l4.25 4.25a1 1 0 0 0 1.42-1.42L15.5 14zm-5 0a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <input id="catalogSearchInput" class="catalog-search__input" type="search" name="search" placeholder="Поиск материалов" aria-label="Поиск по каталогу" />
-          </div>
-        </section>
-        <div class="catalog-categories-wrap ui-enter">
-          <section id="categories" class="catalog-categories"></section>
-        </div>
-        <section id="catalog-list" class="catalog-list ui-stagger"></section>
-      </section>
-    `;
-
-  return viewNode;
-}
 
 function getFilteredCatalogMaterials(data) {
   if (!data || !Array.isArray(data.materials)) {
@@ -210,29 +179,35 @@ export function renderCatalogView(renderToken) {
   }
   root.setAttribute('aria-busy', 'true');
 
-  const firstMount = catalogViewNode === null;
-  if (firstMount) {
-    catalogViewNode = createCatalogViewNode();
-  }
-
-  if (root.firstElementChild !== catalogViewNode || root.childElementCount !== 1) {
-    root.replaceChildren(catalogViewNode);
-  }
+  root.innerHTML = `
+      <section class="catalog-shell">
+        <header class="screen-header ui-enter">
+          <p class="screen-header__kicker">Библиотека</p>
+          <h1 class="page-title">Каталог</h1>
+          <p class="screen-header__subtitle text-body">Фильтруйте материалы по категориям и быстро находите нужное по названию, описанию или тегам.</p>
+        </header>
+        <section class="catalog-search ui-enter" aria-label="Поиск по каталогу">
+          <div class="catalog-search__field">
+            <svg class="catalog-search__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M15.5 14h-.79l-.28-.27a6 6 0 1 0-.71.71l.27.28v.79l4.25 4.25a1 1 0 0 0 1.42-1.42L15.5 14zm-5 0a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <input id="catalogSearchInput" class="catalog-search__input" type="search" name="search" placeholder="Поиск материалов" aria-label="Поиск по каталогу" />
+          </div>
+        </section>
+        <div class="catalog-categories-wrap ui-enter">
+          <section id="categories" class="catalog-categories"></section>
+        </div>
+        <section id="catalog-list" class="catalog-list ui-stagger"></section>
+      </section>
+    `;
 
   const searchInput = document.getElementById('catalogSearchInput');
   if (searchInput) {
     searchInput.value = catalogUiState.query || '';
-    if (firstMount) {
-      searchInput.addEventListener('input', () => {
-        catalogUiState.query = searchInput.value || '';
-        applyCatalogFilters(loadedCatalogData);
-      });
-    }
-  }
-
-  if (catalogHydrated) {
-    root.setAttribute('aria-busy', 'false');
-    return;
+    searchInput.addEventListener('input', () => {
+      catalogUiState.query = searchInput.value || '';
+      applyCatalogFilters(loadedCatalogData);
+    });
   }
 
   const availableData = loadedCatalogData || getLoadedAppData();
@@ -245,30 +220,22 @@ export function renderCatalogView(renderToken) {
     catalogUiState.categoryId = Number(catalogUiState.categoryId) || 0;
     renderCategories(availableData.categories, availableData);
     applyCatalogFilters(availableData);
-    catalogHydrated = true;
     root.setAttribute('aria-busy', 'false');
     return;
   }
 
-  if (firstMount) {
-    renderCategoriesSkeleton(5);
-    renderCatalogSkeleton(4);
-  }
+  renderCategoriesSkeleton(5);
+  renderCatalogSkeleton(4);
 
-  if (catalogLoadPromise) {
-    return;
-  }
-
-  catalogLoadPromise = loadAppData()
+  loadAppData()
     .then((data) => {
-      loadedCatalogData = data;
       if (!isCurrentRender(renderToken)) {
         return;
       }
+      loadedCatalogData = data;
       catalogUiState.categoryId = Number(catalogUiState.categoryId) || 0;
       renderCategories(data.categories, data);
       applyCatalogFilters(data);
-      catalogHydrated = true;
       root.setAttribute('aria-busy', 'false');
     })
     .catch(() => {
@@ -278,8 +245,5 @@ export function renderCatalogView(renderToken) {
       renderInlineError('categories', 'Не удалось загрузить категории.');
       renderInlineError('catalog-list', 'Не удалось загрузить материалы.');
       root.setAttribute('aria-busy', 'false');
-    })
-    .finally(() => {
-      catalogLoadPromise = null;
     });
 }

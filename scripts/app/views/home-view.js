@@ -8,14 +8,14 @@ import {
   renderMaterialsSkeleton
 } from '../ui/placeholders.js';
 
-let homeViewNode = null;
-let homeHydrated = false;
-let homeLoadPromise = null;
+export function renderHomeView(renderToken) {
+  const root = getSpaRoot();
+  if (!root) {
+    return;
+  }
+  root.setAttribute('aria-busy', 'true');
 
-function createHomeViewNode() {
-  const viewNode = document.createElement('section');
-  viewNode.className = 'home-view';
-  viewNode.innerHTML = `
+  root.innerHTML = `
       <header class="screen-header ui-enter">
         <p class="screen-header__kicker">5HT</p>
         <h1 class="page-title">Каталог материалов</h1>
@@ -46,70 +46,35 @@ function createHomeViewNode() {
       </section>
     `;
 
-  return viewNode;
-}
-
-function renderHomeContentFromData(root, data) {
-  renderMaterialsCarousel('main-materials', data.materials);
-  renderMaterialsCarousel('materials-5ht', data.materials);
-  homeHydrated = true;
-  root.setAttribute('aria-busy', 'false');
-}
-
-export function renderHomeView(renderToken) {
-  const root = getSpaRoot();
-  if (!root) {
-    return;
-  }
-  root.setAttribute('aria-busy', 'true');
-
-  const firstMount = homeViewNode === null;
-  if (firstMount) {
-    homeViewNode = createHomeViewNode();
-  }
-
-  if (root.firstElementChild !== homeViewNode || root.childElementCount !== 1) {
-    root.replaceChildren(homeViewNode);
-  }
-
-  if (firstMount) {
-    const heroContainer = document.getElementById('homeHeroImage');
-    if (heroContainer) {
-      const heroPicture = createResponsivePicture({
-        asset: 'home/hero',
-        alt: 'Баннер приглашения к участию',
-        preset: 'homeHero'
-      });
-      heroContainer.appendChild(heroPicture);
-    }
-  }
-
-  if (homeHydrated) {
-    root.setAttribute('aria-busy', 'false');
-    return;
+  const heroContainer = document.getElementById('homeHeroImage');
+  if (heroContainer) {
+    const heroPicture = createResponsivePicture({
+      asset: 'home/hero',
+      alt: 'Баннер приглашения к участию',
+      preset: 'homeHero'
+    });
+    heroContainer.appendChild(heroPicture);
   }
 
   const cachedData = getLoadedAppData();
   if (cachedData && Array.isArray(cachedData.materials)) {
-    renderHomeContentFromData(root, cachedData);
+    renderMaterialsCarousel('main-materials', cachedData.materials);
+    renderMaterialsCarousel('materials-5ht', cachedData.materials);
+    root.setAttribute('aria-busy', 'false');
     return;
   }
 
-  if (firstMount) {
-    renderMaterialsSkeleton('main-materials', 5);
-    renderMaterialsSkeleton('materials-5ht', 5);
-  }
+  renderMaterialsSkeleton('main-materials', 5);
+  renderMaterialsSkeleton('materials-5ht', 5);
 
-  if (homeLoadPromise) {
-    return;
-  }
-
-  homeLoadPromise = loadAppData()
+  loadAppData()
     .then((data) => {
       if (!isCurrentRender(renderToken)) {
         return;
       }
-      renderHomeContentFromData(root, data);
+      renderMaterialsCarousel('main-materials', data.materials);
+      renderMaterialsCarousel('materials-5ht', data.materials);
+      root.setAttribute('aria-busy', 'false');
     })
     .catch(() => {
       if (!isCurrentRender(renderToken)) {
@@ -118,8 +83,5 @@ export function renderHomeView(renderToken) {
       renderInlineError('main-materials', 'Не удалось загрузить материалы.');
       renderInlineError('materials-5ht', 'Не удалось загрузить материалы.');
       root.setAttribute('aria-busy', 'false');
-    })
-    .finally(() => {
-      homeLoadPromise = null;
     });
 }
