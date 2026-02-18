@@ -2,6 +2,10 @@ import { DATA_URL } from '../constants.js';
 
 let appData = null;
 
+export function getLoadedAppData() {
+  return appData;
+}
+
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
