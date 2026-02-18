@@ -1,5 +1,5 @@
 import { getSpaRoot } from '../dom.js';
-import { loadAppData } from '../services/data-service.js';
+import { getLoadedAppData, loadAppData } from '../services/data-service.js';
 import { isCurrentRender } from '../state.js';
 import { createResponsivePicture } from '../ui/responsive-image.js';
 import {
@@ -54,6 +54,14 @@ export function renderHomeView(renderToken) {
       preset: 'homeHero'
     });
     heroContainer.appendChild(heroPicture);
+  }
+
+  const cachedData = getLoadedAppData();
+  if (cachedData && Array.isArray(cachedData.materials)) {
+    renderMaterialsCarousel('main-materials', cachedData.materials);
+    renderMaterialsCarousel('materials-5ht', cachedData.materials);
+    root.setAttribute('aria-busy', 'false');
+    return;
   }
 
   renderMaterialsSkeleton('main-materials', 5);

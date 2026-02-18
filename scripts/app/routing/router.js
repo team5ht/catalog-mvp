@@ -33,6 +33,7 @@ export async function applyRoute(route, options = {}) {
     navigationType = recordRouteVisit(route.fullHash, historyMode);
   }
   applyScrollPolicy(navigationType);
+  document.body.classList.toggle('is-history-pop', navigationType === 'pop');
 
   const renderToken = nextRenderToken();
 

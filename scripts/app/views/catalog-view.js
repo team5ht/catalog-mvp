@@ -1,5 +1,9 @@
 import { getSpaRoot } from '../dom.js';
-import { loadAppData, getCategoryNameById } from '../services/data-service.js';
+import {
+  getLoadedAppData,
+  loadAppData,
+  getCategoryNameById
+} from '../services/data-service.js';
 import { getCatalogUiState, isCurrentRender } from '../state.js';
 import { createResponsivePicture } from '../ui/responsive-image.js';
 import {
@@ -197,9 +201,6 @@ export function renderCatalogView(renderToken) {
       </section>
     `;
 
-  renderCategoriesSkeleton(5);
-  renderCatalogSkeleton(4);
-
   const searchInput = document.getElementById('catalogSearchInput');
   if (searchInput) {
     searchInput.value = catalogUiState.query || '';
@@ -208,6 +209,23 @@ export function renderCatalogView(renderToken) {
       applyCatalogFilters(loadedCatalogData);
     });
   }
+
+  const availableData = loadedCatalogData || getLoadedAppData();
+  if (
+    availableData
+    && Array.isArray(availableData.categories)
+    && Array.isArray(availableData.materials)
+  ) {
+    loadedCatalogData = availableData;
+    catalogUiState.categoryId = Number(catalogUiState.categoryId) || 0;
+    renderCategories(availableData.categories, availableData);
+    applyCatalogFilters(availableData);
+    root.setAttribute('aria-busy', 'false');
+    return;
+  }
+
+  renderCategoriesSkeleton(5);
+  renderCatalogSkeleton(4);
 
   loadAppData()
     .then((data) => {
