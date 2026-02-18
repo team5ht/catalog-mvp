@@ -8,14 +8,14 @@ import {
   renderMaterialsSkeleton
 } from '../ui/placeholders.js';
 
-export function renderHomeView(renderToken) {
-  const root = getSpaRoot();
-  if (!root) {
-    return;
-  }
-  root.setAttribute('aria-busy', 'true');
+let homeViewNode = null;
+let homeHydrated = false;
+let homeLoadPromise = null;
 
-  root.innerHTML = `
+function createHomeViewNode() {
+  const viewNode = document.createElement('section');
+  viewNode.className = 'home-view';
+  viewNode.innerHTML = `
       <header class="screen-header ui-enter">
         <p class="screen-header__kicker">5HT</p>
         <h1 class="page-title">Каталог материалов</h1>
@@ -102,23 +102,21 @@ export function renderHomeView(renderToken) {
 
   const cachedData = getLoadedAppData();
   if (cachedData && Array.isArray(cachedData.materials)) {
-    renderMaterialsCarousel('main-materials', cachedData.materials);
-    renderMaterialsCarousel('materials-5ht', cachedData.materials);
-    root.setAttribute('aria-busy', 'false');
+    renderHomeContentFromData(root, cachedData);
     return;
   }
 
-  renderMaterialsSkeleton('main-materials', 5);
-  renderMaterialsSkeleton('materials-5ht', 5);
+  if (firstMount) {
+    renderMaterialsSkeleton('main-materials', 5);
+    renderMaterialsSkeleton('materials-5ht', 5);
+  }
 
   void ensureHomeLoadPromise()
     .then((data) => {
       if (!isCurrentRender(renderToken)) {
         return;
       }
-      renderMaterialsCarousel('main-materials', data.materials);
-      renderMaterialsCarousel('materials-5ht', data.materials);
-      root.setAttribute('aria-busy', 'false');
+      renderHomeContentFromData(root, data);
     })
     .catch(() => {
       if (!isCurrentRender(renderToken)) {
