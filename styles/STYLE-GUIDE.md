@@ -1,6 +1,6 @@
-# Стили проекта: актуальное состояние
+# Стили проекта: текущее состояние
 
-Файл фиксирует реальную структуру CSS и основные контракты между стилями и JS.
+Документ фиксирует фактическую CSS-структуру и селекторы, от которых напрямую зависит JS.
 
 ## 1) Структура `styles/`
 
@@ -12,54 +12,118 @@ styles/
   STYLE-GUIDE.md
 ```
 
-Папок `styles/components/` и `styles/pages/` в репозитории сейчас нет.
+Папок `styles/components/` и `styles/pages/` нет.
 
-## 2) Порядок подключения CSS
+## 2) Порядок подключения
 
-Подключение вручную в `index.html`, порядок обязателен:
+В `index.html` стили подключаются строго в таком порядке:
 
 1. `styles/tokens.css`
 2. `styles/ui.css`
 3. `styles/pages.css`
 
-## 3) Ответственность слоев
+## 3) Назначение CSS-слоев
 
-### `styles/tokens.css`
+### `tokens.css`
 
-- Канонический источник дизайн-токенов (`:root`).
-- Цвета, типографика, радиусы, отступы, тени.
-- Safe-area и размеры нижней навигации.
-- Motion-токены (`--motion-*`, `--motion-ease-standard`).
+- Источник дизайн-токенов в `:root`.
+- Цвета, типографика, spacing, радиусы, тени.
+- Safe-area токены и размеры нижней навигации.
+- Motion tokens (`--motion-*`, `--motion-ease-standard`).
 
-### `styles/ui.css`
+### `ui.css`
 
-- Глобальный reset и базовые правила (`box-sizing`, `body`, `main`, `hidden`).
-- Общие UI-компоненты: кнопки (`.button*`), чипы (`.chip*`), карточки (`.material-card*`, `.catalog-card*`), карусели и общие контейнеры.
-- Нижняя навигация (`.bottom-nav*`) и визуальные состояния аккаунта.
-- Utility-классы (`.text-body`, `.load-error`, `.empty-state`, `.skeleton*`).
-- Анимации входа (`.ui-enter`, `.ui-stagger`) и reduce-motion fallback.
-- Экранный блокер ориентации (`.orientation-blocker`, `body.is-landscape-blocked`).
+- Глобальный reset и базовая типографика/контейнеры.
+- Кнопки, чипы, карточки, карусели, skeleton, utility-классы.
+- Нижняя навигация и ее состояния (`--active`, `is-loading`, `is-state-changing`).
+- Анимации (`.ui-enter`, `.ui-stagger`) и `prefers-reduced-motion` fallback.
+- Orientation guard: `.orientation-blocker`, `body.is-landscape-blocked`.
 
-### `styles/pages.css`
+### `pages.css`
 
-- Page-specific layout для экранов: home (`.home-banner*`), catalog (`.catalog-shell`, `.catalog-search*`, `.catalog-list`), auth (`.auth-*`), material (`.material-page*`, `.material-download`), account (`.account-*`).
-- Точечные responsive-правила для узких экранов.
+- Экранные layout-слои:
+  - home (`.home-banner*`)
+  - catalog (`.catalog-*`)
+  - auth (`.auth-*`, `.auth-stepper*`)
+  - material (`.material-page*`, `.material-download`)
+  - account (`.account-*`)
+- Responsive корректировки для узких ширин (`480px`, `380px`).
 
-## 4) DOM-контракты, на которые опирается JS
+## 4) JS DOM-контракты
 
-Классы и id ниже используются в JS напрямую; переименование без правок JS сломает поведение:
+Ниже id/классы, которые JS читает или модифицирует напрямую. Переименование без синхронных правок JS сломает поведение.
+
+### Общие
 
 - `#spa-root`
-- `#nav-home`, `#nav-catalog`, `#nav-account`
-- `#main-materials`, `#materials-5ht`
-- `#categories`, `#catalog-list`, `#catalogSearchInput`
-- `#materialBackButton`, `#downloadBtn`, `#materialCover`, `#materialKicker`, `#materialTitle`, `#materialDescription`, `#materialTags`
-- `#authLoginForm`, `#authEmail`, `#authPassword`, `#authError`
-- `#accountEmail`, `#changePasswordButton`, `#logoutButton`, `#accountError`
+- `#nav-home`
+- `#nav-catalog`
+- `#nav-account`
+- `.bottom-nav`
+- `.bottom-nav__button--active`
+- `body.fullscreen-static`
+- `body.is-landscape-blocked`
+- `.orientation-blocker`
 
-## 5) Практические правила поддержки
+### Home
 
-- Новые токены добавлять в `tokens.css`, а не в page-файлы.
-- Общие компоненты/утилиты добавлять в `ui.css`.
+- `#homeHeroImage`
+- `#main-materials`
+- `#materials-5ht`
+
+### Catalog
+
+- `#catalogSearchInput`
+- `#categories`
+- `#catalog-list`
+- `.catalog-categories__button`
+- `.chip`
+- `.chip--active`
+
+### Material
+
+- `#materialBackButton`
+- `#downloadBtn`
+- `#materialCover`
+- `#materialKicker`
+- `#materialTitle`
+- `#materialDescription`
+- `#materialTags`
+- `.button--download.is-loading`
+
+### Auth (login + forgot OTP)
+
+- `#authForm`
+- `#authStatus`
+- `#authEmail`
+- `#authPassword`
+- `#authForgotStepper`
+- `#authStepProgress`
+- `#authStepBody`
+- `#authStepActions`
+- `#authRecoveryEmail`
+- `#authRecoveryOtp`
+- `#authRecoveryEmailReadonly`
+- `#authNewPassword`
+- `#authConfirmPassword`
+- `button[data-action]`
+- `button[data-cooldown-button="true"]`
+
+### Account
+
+- `#accountEmail`
+- `#accountStatus`
+- `#logoutButton`
+- `#changePasswordButton`
+- `#accountPasswordForm`
+- `#accountNewPassword`
+- `#accountConfirmPassword`
+- `#accountSavePasswordButton`
+- `#accountCancelPasswordButton`
+
+## 5) Правила поддержки
+
+- Новые токены добавлять только в `tokens.css`.
+- Переиспользуемые UI-компоненты/утилиты добавлять в `ui.css`.
 - Экранно-специфичные стили добавлять в `pages.css`.
-- Сохранять BEM-подобный нейминг (`block__element--modifier`) и существующие префиксы.
+- При изменении id/классов из раздела "JS DOM-контракты" обновлять JS в `scripts/app/*` и `scripts/nav-auth.js` в том же PR.

@@ -2,167 +2,157 @@
 
 Статичное PWA-приложение на чистых HTML/CSS/JS с hash-routing и Supabase Auth.
 
-## Актуальный статус
+## Текущее состояние
 
-- SPA-shell: один входной файл `index.html` + маршруты `#/...`.
-- Сборщика и серверного рендера нет.
-- Каталог и карточки материалов берутся из `data.json`.
-- Изображения материалов и hero генерируются локальным pipeline (`sharp`) в `assets/images/generated/*`.
-- Авторизация: Supabase email/password (вход, регистрация, выход, восстановление пароля по OTP-коду).
-- Auth-синхронизация централизована через `window.authStore`.
-- Скриптовая часть `app` декомпозирована на ESM-модули (`scripts/app/*`).
-- Установка как PWA: `manifest.json` + `sw.js`.
+- Один HTML shell (`index.html`) и маршрутизация через hash (`#/...`).
+- Без bundler и серверного рендера: браузерные ESM-модули подключаются напрямую.
+- Контент и каталог берутся из `data.json`.
+- Обложки материалов и home hero генерируются локальным pipeline на `sharp`.
+- Авторизация: Supabase email/password + OTP-восстановление пароля в приложении.
+- Единый auth-state хранится в `window.authStore`.
+- PWA: `manifest.json` + `sw.js` с precache shell и runtime cache изображений.
 
-## Технологический стек
+## Стек
 
 - HTML/CSS/JS (vanilla)
-- ESM (browser-native modules, без bundler)
+- Browser ESM (без сборщика)
 - Supabase JS SDK через CDN (`@supabase/supabase-js@2`)
 - Service Worker API + Web App Manifest
-- Playwright (`@playwright/test`) для smoke e2e
+- Playwright (`@playwright/test`) для e2e
 
-## Структура проекта
+## Скрипты npm
 
-- `index.html` - HTML shell и подключение всех стилей/скриптов
-- `scripts/app.js` - тонкий ESM entrypoint (`initApp`)
-- `scripts/app/bootstrap.js` - инициализация приложения и подписки
-- `scripts/app/constants.js` - общие константы маршрутов/auth
-- `scripts/app/state.js` - runtime state (`currentRoute`, render token, ui state)
-- `scripts/app/dom.js` - доступ к ключевым DOM-узлам shell
-- `scripts/app/routing/*` - hash parsing, navigation, route processing
-- `scripts/app/services/*` - доступ к auth-store/supabase и `data.json`
-- `scripts/app/ui/*` - shell state и skeleton/error rendering
-- `scripts/app/ui/responsive-image.js` - helper для `<picture>/<img>` с preset-ами `srcset/sizes`
-- `scripts/app/views/*` - рендеры экранов (`home`, `catalog`, `material`, `auth`, `account`)
-- `scripts/app/platform/*` - orientation guard и регистрация SW
-- `scripts/nav-auth.js` - состояние кнопки аккаунта в нижней навигации
-- `scripts/supabase-client.js` - инициализация `window.supabaseClient`
-- `scripts/auth-store.js` - единый источник auth-состояния (`window.authStore`)
-- `supabase-config.js` - `window.SUPABASE_URL` и `window.SUPABASE_PUBLISHABLE_KEY`
-- `data.json` - категории и материалы
-- `assets/images/src/*` - исходники изображений (`.jpg`)
-- `assets/images/generated/*` - сгенерированные responsive-изображения (`.webp` + `.jpg`)
-- `scripts/images/build.mjs` - генерация responsive-вариантов изображений
-- `scripts/images/check.mjs` - валидация ассетов и budget-лимитов
-- `sw.js` - кэширование и оффлайн-fallback
-- `manifest.json` - PWA-манифест
-- `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - стили
-- `styles/STYLE-GUIDE.md` - актуальный гид по CSS-слоям
-- `tests/e2e/app-smoke.spec.js` - smoke-тесты маршрутов и auth-gating
-- `tests/e2e/auth-reset-otp.spec.js` - e2e сценарии OTP-восстановления с mock Supabase
-- `playwright.config.js` - конфигурация Playwright
-- `docs/adr/2026-02-11-app-js-modularization.md` - подробный отчет по рефакторингу
-- `docs/adr/2026-02-12-auth-recovery-otp.md` - переход на OTP recovery без ссылок
-- `docs/adr/2026-02-16-image-pipeline-refactor.md` - переход на semantic responsive image pipeline
-- `docs/adr/2026-02-17-cover-ratio-3-4.md` - переход обложек на ratio `3:4`
-- `docs/IMAGE-WORKFLOW-CHEATSHEET.md` - практическая шпаргалка по workflow изображений
+```bash
+npm run images:build
+npm run images:check
+npm run test:e2e
+npm run test:e2e:headed
+```
 
-## Архитектура скриптов (ESM)
+## Структура
 
-- `scripts/app.js` только импортирует `initApp` из `scripts/app/bootstrap.js`.
-- Роутинг и hash-утилиты вынесены в `scripts/app/routing/hash.js` и `scripts/app/routing/router.js`.
-- Навигация с `replace`-обработчиком вынесена в `scripts/app/routing/navigation.js`.
-- View-логика разделена по экранам, без изменения контрактов маршрутов и селекторов.
-- State хранится централизованно в `scripts/app/state.js`.
-- После 2026-02-12 auth recovery работает через OTP-код в PWA (без recovery-ссылок).
+- `index.html` - shell, навигация, подключение CSS/JS.
+- `scripts/app.js` - тонкий entrypoint (`initApp()`).
+- `scripts/app/bootstrap.js` - инициализация, hashchange, auth-listener, SW/orientation.
+- `scripts/app/routing/*` - parse/normalize hash, navigate/replace, route dispatch.
+- `scripts/app/views/*` - рендер экранов `home`, `catalog`, `material`, `auth`, `account`.
+- `scripts/app/services/*` - `data.json`, Supabase/auth-store интеграция.
+- `scripts/app/ui/*` - shell-state, placeholders/skeleton, responsive image helper.
+- `scripts/app/state.js` - route/render token/catalog UI state/in-app history.
+- `scripts/nav-auth.js` - динамика кнопки аккаунта в нижней навигации.
+- `scripts/supabase-client.js` - инициализация `window.supabaseClient`.
+- `scripts/auth-store.js` - глобальный store auth-сессии.
+- `scripts/images/build.mjs` - генерация responsive-изображений.
+- `scripts/images/check.mjs` - проверка data-контракта и image budgets/геометрии.
+- `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - 3 CSS-слоя.
+- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js` - e2e сценарии.
 
-## Контракт маршрутов
+## Маршруты
 
-Канонические hash-маршруты:
-
-- `#/` - главная
-- `#/catalog` - каталог
-- `#/material/:id` - детальная страница материала
-- `#/auth` - вход/регистрация
-- `#/account` - личный кабинет
+- `#/` - главная.
+- `#/catalog` - каталог.
+- `#/material/:id` - страница материала.
+- `#/auth` - вход/регистрация.
+- `#/account` - личный кабинет.
 
 Правила:
 
-- Неизвестный маршрут -> редирект на `#/`.
-- Невалидный `#/material/:id` -> редирект на `#/`.
-- Auth redirect работает через `#/auth?redirect=<hash-route>`.
-- `redirect` принимается только для внутренних и известных hash-route (`#/...`), иначе fallback в `#/`.
+- Неизвестные маршруты редиректятся на `#/`.
+- Невалидный `#/material/:id` редиректится на `#/`.
+- Redirect после auth передается через `#/auth?redirect=<hash>`.
+- `redirect` принимается только для известных внутренних hash-route (`#/...`), иначе fallback `#/`.
 
 ## Поведение экранов
 
 ### Главная (`#/`)
 
-- Хедер, промо-баннер и 2 карусели материалов.
-- Обе карусели заполняются списком `data.materials`.
+- Рендерит hero-баннер и две карусели (`Новое`, `Популярное`).
+- Обе карусели заполняются из `data.materials`.
 
 ### Каталог (`#/catalog`)
 
-- Рабочий текстовый поиск (по `title`, `description`, `tags`).
-- Фильтрация по категориям из `data.json`.
-- Пустая выдача показывает сообщение "Ничего не найдено...".
+- Фильтрация по категории + текстовый поиск по `title`, `description`, `tags`.
+- При пустой выдаче показывается `Ничего не найдено. Измените запрос или фильтр.`
 
 ### Материал (`#/material/:id`)
 
-- Обложка, категория, описание, теги.
-- Для авторизованного кнопка скачивания открывает `pdfUrl`.
-- Для гостя кнопка скачивания ведет в auth с возвратом на текущий материал.
-- Кнопка "Назад": `history.back()` при наличии in-app истории, иначе переход в `#/catalog`.
+- Показывает обложку, категорию, описание, теги.
+- Описание поддерживает простой markdown-like формат:
+  - пустая строка -> новый абзац
+  - строка с `- ` -> пункт списка
+- Кнопка скачивания:
+  - для гостя -> `#/auth?redirect=#/material/:id`
+  - для авторизованного -> `window.open(pdfUrl)`
+- Кнопка "Назад": `history.back()` при наличии in-app истории, иначе `#/catalog`.
 
 ### Auth (`#/auth`)
 
-- Единый экран с режимами через query-параметр `mode`:
-  - `#/auth` - вход/регистрация
-  - `#/auth?mode=forgot` - OTP flow восстановления: email -> код -> новый пароль
-- Валидация email и пароля (минимум 6 символов), для смены/сброса - проверка подтверждения пароля и OTP-кода длиной 6-8 цифр.
-- Ссылка "Забыли пароль?" ведет в `mode=forgot`.
-- После успешного входа - переход на `redirect` или `#/`.
-- Legacy `#/auth?mode=recovery` автоматически нормализуется к `#/auth?mode=forgot` с уведомлением пользователя.
+- `mode=login` (по умолчанию): вход/регистрация по email+паролю.
+- `mode=forgot`: OTP recovery flow в 3 шага:
+  - `request_code`
+  - `verify_code`
+  - `set_new_password`
+- Валидации:
+  - email regex
+  - пароль минимум 6 символов
+  - OTP только цифры, длина 6-8
+- Legacy `mode=recovery` автоматически переводится в `mode=forgot` с инфо-сообщением.
+- Состояние шага восстановления и cooldown хранится в `localStorage`.
 
 ### Account (`#/account`)
 
-- Доступ только при активной сессии.
+- Доступ только при активной сессии, иначе redirect в auth.
 - Показывает email пользователя.
-- Поддерживает смену пароля (форма "Новый пароль" + "Подтверждение") через `supabase.auth.updateUser({ password })`.
-- `Logout` через `supabase.auth.signOut()`.
+- Поддерживает смену пароля (`supabase.auth.updateUser({ password })`).
+- Выход через `supabase.auth.signOut()`.
 
-## Данные (`data.json`)
+## Контракт `data.json`
 
-`categories`:
+`categories[]`:
 
 - `id` (number)
 - `name` (string)
 - `slug` (string)
 
-`materials`:
+`materials[]`:
 
 - `id` (number)
 - `title` (string)
-- `description` (string; на странице `#/material/:id` поддерживает легкую разметку: пустая строка = новый абзац, строка с префиксом `- ` = пункт списка)
+- `description` (string)
 - `cover` (object)
-  - `asset` (string, например `materials/1/cover`)
-  - `alt` (string)
-  - `focalPoint` (string, optional, по умолчанию `50% 50%`)
-- `pdfUrl` (string URL)
+  - `asset` (string, обязательно, формат `materials/<id>/cover`)
+  - `alt` (string, обязательно)
+  - `focalPoint` (string, optional, default `50% 50%`)
+- `pdfUrl` (string)
 - `categoryId` (number)
 - `tags` (string[])
 
 ## Image pipeline
 
-- Контентные изображения рендерятся через `<picture><source type="image/webp"> + <img>` (без `background-image`).
-- Генерация ассетов:
-  - cover: `160/240/320/480w`, ratio `3:4`
-  - hero: `640/960/1280w`, ratio `8:3`
-  - форматы: `webp` (q=72) + `jpg` (q=78, progressive mozjpeg)
-- Команды:
+Команды:
 
 ```bash
 npm run images:build
 npm run images:check
 ```
 
-- `images:check` проверяет:
-  - наличие `assets/images/src/...`
-  - наличие `assets/images/generated/...`
-  - budget-лимиты размеров файлов для WebP/JPEG
+Параметры генерации:
 
-## Supabase
+- Cover: `160/240/320/480w`, ratio `3:4`
+- Hero: `640/960/1280w`, ratio `8:3`
+- Форматы: `webp` (quality 72) и `jpg` (quality 78, progressive mozjpeg)
 
-Подключение в `index.html`:
+Что валидирует `images:check`:
+
+- корректность `cover`-контракта в `data.json` (`asset`, `alt`, `focalPoint`)
+- наличие source-файлов в `assets/images/src/...`
+- наличие generated-файлов в `assets/images/generated/...`
+- budgets веса для WebP/JPEG
+- геометрию generated-файлов (ожидаемые width/height по ratio)
+
+## Supabase и auth-store
+
+Порядок подключения в `index.html`:
 
 ```html
 <script src="supabase-config.js"></script>
@@ -176,33 +166,32 @@ npm run images:check
 Важно:
 
 - `supabase-config.js` должен быть загружен до `scripts/supabase-client.js`.
-- `scripts/auth-store.js` должен быть загружен после `scripts/supabase-client.js` и до `scripts/app.js` / `scripts/nav-auth.js`.
-- В браузерном коде допустим только publishable key.
-- Secret/service-role ключи нельзя хранить в репозитории и фронтенде.
+- В браузере используется только publishable key.
+- Secret/service-role ключи нельзя хранить во фронтенде.
 
 Контракт `window.authStore`:
 
-- `init()` - идемпотентная инициализация
-- `subscribe(callback)` - подписка на auth-изменения
-- `getSession()` - snapshot текущей сессии
-- `isAuthenticated()` - признак авторизации
-- `whenReady()` - промис первичной синхронизации
-- `refresh()` - ручная пересинхронизация
+- `init()`
+- `subscribe(callback)`
+- `getSession()`
+- `isAuthenticated()`
+- `whenReady()`
+- `refresh()`
 
 ## PWA / Service Worker
 
-- Кэши:
+- Cache names:
   - shell: `catalog-mvp-shell-v16`
   - images: `catalog-mvp-images-v17`
-- Pre-cache: app shell, ESM-модули, стили, `data.json`, иконки, hero fallback.
-- Runtime image cache (`/assets/images/generated/`): `stale-while-revalidate`.
-- Остальные same-origin GET запросы: `network-first` с fallback в cache.
-- Для `navigate` запросов fallback на `./index.html`.
-- `manifest.json`: `start_url` и `scope` выставлены в `./`.
+- Shell precache: `index.html`, ESM-модули, стили, `data.json`, манифест, иконки, hero-ассеты.
+- Runtime для `/assets/images/generated/`: `stale-while-revalidate`.
+- Для остальных same-origin GET: `network-first` с fallback в cache.
+- Для `navigate` fallback на `./index.html`.
+- В `manifest.json`: `start_url` и `scope` равны `./`.
 
 ## Локальный запуск
 
-Нужен HTTP-сервер (из файловой системы `fetch`/SW работают некорректно):
+Нужен HTTP-сервер (без него `fetch` и SW работают некорректно):
 
 ```bash
 python -m http.server 8000
@@ -214,7 +203,7 @@ npx serve .
 
 ## Тестирование (Playwright)
 
-Установить зависимости:
+Подготовка:
 
 ```bash
 npm install
@@ -222,45 +211,33 @@ npm run images:build
 npx playwright install chromium
 ```
 
-Запустить smoke e2e:
+Запуск:
 
 ```bash
 npm run test:e2e
 ```
 
-Проверить image budgets:
+`playwright.config.js` поднимает локальный сервер командой `python -m http.server 4173`.
 
-```bash
-npm run images:check
-```
+Что покрыто e2e:
 
-Покрытие smoke-тестов:
-
-- `#/` (базовый рендер и загрузка карточек)
-- `#/` (hero через `<img>` с `fetchpriority="high"`, загрузка карточек)
-- `#/catalog` (поиск + фильтрация)
-- `#/material/1` (guest CTA и redirect в auth, обложка через `<img>`)
-- `#/account` (auth-gating)
-- `#/auth?mode=forgot` (OTP-восстановление, шаг 1/3)
-- `#/auth?mode=recovery` (legacy redirect в OTP flow)
-- `#/unknown` (редирект на home)
-- sanity по active state нижней навигации
+- рендер `#/` и hero через `<img>` (`fetchpriority="high"`)
+- каталог: поиск + фильтрация + empty state
+- материал: корректный рендер описания (абзацы/список), CTA для гостя, redirect в auth
+- `#/account` auth-gating
+- `#/auth?mode=forgot` (OTP stepper)
+- `#/auth?mode=recovery` (legacy redirect в forgot)
+- `#/unknown` redirect на home
+- active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
-
-Дополнительные e2e сценарии (`tests/e2e/auth-reset-otp.spec.js`):
-
-- `resetPasswordForEmail` success -> переход на шаг ввода кода и cooldown
-- `verifyOtp` success -> переход на шаг нового пароля
-- `verifyOtp` invalid -> ошибка без смены шага
-- `updateUserPassword` success -> переход в `#/account`
-- `429` на recover/verify -> корректный retry-after текст
+- OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`): success/error/rate-limit ветки
 
 ## Деплой
 
-Проект рассчитан на GitHub Pages (корень/подпапка) за счет hash-routing.
+Проект рассчитан на GitHub Pages (корень или подпапка) благодаря hash-routing.
 
 - Канонический вход: `.../index.html#/...`
-- Серверные rewrite-правила для deep links не требуются.
+- Серверные rewrite для deep links не нужны.
 
 ## Известные ограничения
 
