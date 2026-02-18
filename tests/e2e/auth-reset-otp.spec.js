@@ -237,6 +237,37 @@ test('updateUser success redirects to account after password change', async ({ p
   await expect(page).toHaveURL(/#\/account/);
 });
 
+test('manual navigation after password reset is not overridden by delayed redirect', async ({ page }) => {
+  await setupMockSupabase(page, {
+    resetPasswordForEmail: 'success',
+    verifyOtp: 'success',
+    updateUser: 'success'
+  });
+
+  await page.goto('/#/auth?mode=forgot');
+
+  await page.locator('#authRecoveryEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_code"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
+
+  await page.locator('#authRecoveryOtp').fill('123456');
+  await page.locator('button[data-action="verify_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 3 из 3');
+
+  await page.locator('#authNewPassword').fill('123456');
+  await page.locator('#authConfirmPassword').fill('123456');
+  await page.locator('button[data-action="set_password"]').click();
+
+  await page.waitForTimeout(120);
+  await page.evaluate(() => {
+    window.location.hash = '#/catalog';
+  });
+
+  await page.waitForTimeout(900);
+  await expect(page).toHaveURL(/#\/catalog/);
+  await expect(page.locator('#catalogSearchInput')).toBeVisible();
+});
+
 test('429 on recover shows retry timing', async ({ page }) => {
   await setupMockSupabase(page, {
     resetPasswordForEmail: 'rate_limit'

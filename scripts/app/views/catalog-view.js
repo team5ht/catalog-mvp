@@ -203,6 +203,21 @@ function renderCategories(categories, data) {
   syncActiveCategoryChip();
 }
 
+function ensureCatalogLoadPromise() {
+  if (!catalogLoadPromise) {
+    catalogLoadPromise = loadAppData()
+      .then((data) => {
+        loadedCatalogData = data;
+        return data;
+      })
+      .finally(() => {
+        catalogLoadPromise = null;
+      });
+  }
+
+  return catalogLoadPromise;
+}
+
 export function renderCatalogView(renderToken) {
   const root = getSpaRoot();
   if (!root) {
@@ -255,13 +270,8 @@ export function renderCatalogView(renderToken) {
     renderCatalogSkeleton(4);
   }
 
-  if (catalogLoadPromise) {
-    return;
-  }
-
-  catalogLoadPromise = loadAppData()
+  void ensureCatalogLoadPromise()
     .then((data) => {
-      loadedCatalogData = data;
       if (!isCurrentRender(renderToken)) {
         return;
       }
@@ -278,8 +288,5 @@ export function renderCatalogView(renderToken) {
       renderInlineError('categories', 'Не удалось загрузить категории.');
       renderInlineError('catalog-list', 'Не удалось загрузить материалы.');
       root.setAttribute('aria-busy', 'false');
-    })
-    .finally(() => {
-      catalogLoadPromise = null;
     });
 }

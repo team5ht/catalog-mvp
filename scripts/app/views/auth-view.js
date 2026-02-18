@@ -551,6 +551,7 @@ export async function renderAuthView(route, renderToken) {
   let isLoading = false;
   let otpCooldownSeconds = getOtpCooldownRemainingSecondsFromStorage();
   let otpCooldownInterval = null;
+  let successRedirectTimeoutId = null;
 
   const persistedFlow = readPasswordResetFlowState();
   let resetEmail = persistedFlow.email;
@@ -956,7 +957,15 @@ export async function renderAuthView(route, renderToken) {
       clearPasswordResetFlowState();
       stopOtpCooldown();
       setStatus('Пароль обновлен. Перенаправляем в личный кабинет...', 'success');
-      window.setTimeout(() => {
+      if (successRedirectTimeoutId) {
+        window.clearTimeout(successRedirectTimeoutId);
+      }
+
+      successRedirectTimeoutId = window.setTimeout(() => {
+        successRedirectTimeoutId = null;
+        if (!isCurrentRender(renderToken)) {
+          return;
+        }
         navigateTo('#/account', { replace: true });
       }, 550);
     } catch (error) {

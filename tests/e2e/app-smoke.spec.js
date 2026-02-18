@@ -67,6 +67,14 @@ test('home route renders and loads materials', async ({ page }) => {
   await expectCarouselTitleClamp(page, 'materials-5ht');
 });
 
+test('cold start without hash canonicalizes route and hydrates home', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveURL(/#\//);
+  await expect(page.locator('#main-materials .material-card').first()).toBeVisible();
+  await expect(page.locator('#main-materials .material-card--skeleton')).toHaveCount(0);
+  await expect(page.locator('#spa-root')).toHaveAttribute('aria-busy', 'false');
+});
+
 test('catalog search and category filtering work', async ({ page }) => {
   await page.goto('/#/catalog');
 
@@ -269,6 +277,37 @@ test('replace redirect from unknown route opens home from top', async ({ page })
 
   const homeScroll = await page.evaluate(() => window.scrollY);
   expect(homeScroll).toBeLessThanOrEqual(2);
+});
+
+test('catalog route recovers hydration after delayed data load and route churn', async ({ page }) => {
+  let firstDataRequest = true;
+
+  await page.route('**/data.json', async (route) => {
+    if (firstDataRequest) {
+      firstDataRequest = false;
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+
+    await route.continue();
+  });
+
+  await page.goto('/#/catalog');
+  await page.waitForTimeout(80);
+
+  await page.evaluate(() => {
+    window.location.hash = '#/material/1';
+  });
+
+  await page.waitForTimeout(80);
+
+  await page.evaluate(() => {
+    window.location.hash = '#/catalog';
+  });
+
+  await expect(page).toHaveURL(/#\/catalog/);
+  await expect(page.locator('#catalog-list .catalog-card').first()).toBeVisible();
+  await expect(page.locator('#catalog-list .catalog-card--skeleton')).toHaveCount(0);
+  await expect(page.locator('#spa-root')).toHaveAttribute('aria-busy', 'false');
 });
 
 test('bottom nav active state follows route', async ({ page }) => {

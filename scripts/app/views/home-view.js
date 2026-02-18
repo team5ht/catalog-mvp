@@ -56,6 +56,17 @@ function renderHomeContentFromData(root, data) {
   root.setAttribute('aria-busy', 'false');
 }
 
+function ensureHomeLoadPromise() {
+  if (!homeLoadPromise) {
+    homeLoadPromise = loadAppData()
+      .finally(() => {
+        homeLoadPromise = null;
+      });
+  }
+
+  return homeLoadPromise;
+}
+
 export function renderHomeView(renderToken) {
   const root = getSpaRoot();
   if (!root) {
@@ -100,11 +111,7 @@ export function renderHomeView(renderToken) {
     renderMaterialsSkeleton('materials-5ht', 5);
   }
 
-  if (homeLoadPromise) {
-    return;
-  }
-
-  homeLoadPromise = loadAppData()
+  void ensureHomeLoadPromise()
     .then((data) => {
       if (!isCurrentRender(renderToken)) {
         return;
@@ -118,8 +125,5 @@ export function renderHomeView(renderToken) {
       renderInlineError('main-materials', 'Не удалось загрузить материалы.');
       renderInlineError('materials-5ht', 'Не удалось загрузить материалы.');
       root.setAttribute('aria-busy', 'false');
-    })
-    .finally(() => {
-      homeLoadPromise = null;
     });
 }
