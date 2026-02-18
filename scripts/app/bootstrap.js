@@ -113,7 +113,8 @@ function init() {
   });
 
   if (!window.location.hash || window.location.hash === '#') {
-    window.location.hash = HOME_HASH;
+    const { pathname, search } = window.location;
+    window.history.replaceState(null, '', `${pathname}${search}${HOME_HASH}`);
   }
 
   void processCurrentHash({ historyMode: 'initial' });
