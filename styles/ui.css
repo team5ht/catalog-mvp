@@ -21,7 +21,6 @@ button,
 .material-card,
 .catalog-card__title-link {
   -webkit-tap-highlight-color: transparent;
-  tap-highlight-color: transparent;
 }
 
 html,
@@ -471,6 +470,7 @@ a:focus-visible,
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
   max-height: calc(2 * 1em * 1.32);
