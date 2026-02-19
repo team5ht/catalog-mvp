@@ -91,12 +91,21 @@ styles/
 - `#materialTags`
 - `.button--download.is-loading`
 
-### Auth (login + forgot OTP)
+### Auth (login + signup OTP + forgot OTP)
 
 - `#authForm`
 - `#authStatus`
 - `#authEmail`
 - `#authPassword`
+- `#authSignupStepper`
+- `#authSignupStepProgress`
+- `#authSignupStepBody`
+- `#authSignupStepActions`
+- `#authSignupEmail`
+- `#authSignupEmailReadonly`
+- `#authSignupOtp`
+- `#authSignupPassword`
+- `#authSignupConfirmPassword`
 - `#authForgotStepper`
 - `#authStepProgress`
 - `#authStepBody`

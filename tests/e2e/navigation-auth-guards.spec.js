@@ -57,6 +57,9 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
     async signUp() {
       return { data: { user: null, session: null }, error: null };
     },
+    async signInWithOtp() {
+      return { data: { user: null, session: null }, error: null };
+    },
     async signOut() {
       emit('SIGNED_OUT', null);
       return { error: null };
@@ -151,4 +154,13 @@ test('authed opening forgot route does not redirect away from auth', async ({ pa
   await expect(page).toHaveURL(/#\/auth\?mode=forgot/);
   await expect(page.locator('#authTitle')).toHaveText('Восстановление пароля');
   await expect(page.locator('#authRecoveryEmail')).toBeVisible();
+});
+
+test('authed opening signup route redirects to redirect hash', async ({ page }) => {
+  await setupMockSupabase(page, { authenticated: true });
+
+  await page.goto('/#/auth?mode=signup&redirect=%23%2Fcatalog');
+
+  await expect(page).toHaveURL(/#\/catalog/);
+  await expect(page.locator('#catalogSearchInput')).toBeVisible();
 });

@@ -72,6 +72,90 @@ export async function requestPasswordResetOtp(email, options = {}) {
   }
 }
 
+export async function requestSignupOtp(email, options = {}) {
+  const client = getSupabaseClient();
+  if (!client || !client.auth || typeof client.auth.signInWithOtp !== 'function') {
+    return {
+      ok: false,
+      error: new Error('SUPABASE_CLIENT_UNAVAILABLE')
+    };
+  }
+
+  const captchaToken = typeof options.captchaToken === 'string' ? options.captchaToken.trim() : '';
+  const otpOptions = {
+    shouldCreateUser: true
+  };
+
+  if (captchaToken) {
+    otpOptions.captchaToken = captchaToken;
+  }
+
+  try {
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: otpOptions
+    });
+    if (error) {
+      return { ok: false, error };
+    }
+
+    return { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error };
+  }
+}
+
+export async function verifySignupOtp(params = {}) {
+  const client = getSupabaseClient();
+  if (!client || !client.auth || typeof client.auth.verifyOtp !== 'function') {
+    return {
+      ok: false,
+      error: new Error('SUPABASE_CLIENT_UNAVAILABLE'),
+      session: null,
+      user: null
+    };
+  }
+
+  const email = typeof params.email === 'string' ? params.email.trim() : '';
+  const token = typeof params.token === 'string' ? params.token.trim() : '';
+  const captchaToken = typeof params.captchaToken === 'string' ? params.captchaToken.trim() : '';
+  const verifyParams = {
+    email,
+    token,
+    type: 'email'
+  };
+
+  if (captchaToken) {
+    verifyParams.options = { captchaToken };
+  }
+
+  try {
+    const { data, error } = await client.auth.verifyOtp(verifyParams);
+    if (error) {
+      return {
+        ok: false,
+        error,
+        session: null,
+        user: null
+      };
+    }
+
+    return {
+      ok: true,
+      error: null,
+      session: data ? data.session : null,
+      user: data ? data.user : null
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error,
+      session: null,
+      user: null
+    };
+  }
+}
+
 export async function verifyPasswordResetOtp(params = {}) {
   const client = getSupabaseClient();
   if (!client || !client.auth || typeof client.auth.verifyOtp !== 'function') {

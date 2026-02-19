@@ -1,6 +1,7 @@
 import {
   AUTH_MODE_FORGOT,
   AUTH_MODE_LOGIN,
+  AUTH_MODE_SIGNUP,
   HOME_HASH,
   LEGACY_FORGOT_COOLDOWN_STORAGE_KEY,
   LEGACY_RECOVERY_NOTICE_STORAGE_KEY,
@@ -9,7 +10,9 @@ import {
   PASSWORD_RESET_OTP_COOLDOWN_STORAGE_KEY,
   PASSWORD_RESET_OTP_MAX_LENGTH,
   PASSWORD_RESET_OTP_MIN_LENGTH,
-  PASSWORD_RESET_OTP_RESEND_COOLDOWN_SECONDS
+  PASSWORD_RESET_OTP_RESEND_COOLDOWN_SECONDS,
+  SIGNUP_FLOW_STORAGE_KEY,
+  SIGNUP_OTP_COOLDOWN_STORAGE_KEY
 } from '../constants.js';
 import { getSpaRoot } from '../dom.js';
 import {
@@ -21,6 +24,8 @@ import { navigateTo } from '../routing/navigation.js';
 import {
   getSupabaseClient,
   refreshAuthSession,
+  requestSignupOtp,
+  verifySignupOtp,
   requestPasswordResetOtp,
   updateUserPassword,
   verifyPasswordResetOtp
@@ -30,6 +35,9 @@ import { isCurrentRender } from '../state.js';
 const RESET_STEP_REQUEST = 'request_code';
 const RESET_STEP_VERIFY = 'verify_code';
 const RESET_STEP_PASSWORD = 'set_new_password';
+const SIGNUP_STEP_REQUEST = 'request_code';
+const SIGNUP_STEP_VERIFY = 'verify_code';
+const SIGNUP_STEP_PASSWORD = 'set_new_password';
 const OTP_CODE_REGEX = new RegExp(`^\\d{${PASSWORD_RESET_OTP_MIN_LENGTH},${PASSWORD_RESET_OTP_MAX_LENGTH}}$`);
 
 function isValidEmail(value) {
@@ -53,6 +61,19 @@ function normalizeResetStep(inputStep) {
   }
 
   return RESET_STEP_REQUEST;
+}
+
+function normalizeSignupStep(inputStep) {
+  if (typeof inputStep !== 'string') {
+    return SIGNUP_STEP_REQUEST;
+  }
+
+  const step = inputStep.trim().toLowerCase();
+  if (step === SIGNUP_STEP_REQUEST || step === SIGNUP_STEP_VERIFY || step === SIGNUP_STEP_PASSWORD) {
+    return step;
+  }
+
+  return SIGNUP_STEP_REQUEST;
 }
 
 function validatePasswordPair(password, confirmPassword) {
@@ -198,6 +219,71 @@ function clearPasswordResetFlowState() {
   }
 }
 
+function readSignupFlowState() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return {
+      step: SIGNUP_STEP_REQUEST,
+      email: ''
+    };
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(SIGNUP_FLOW_STORAGE_KEY);
+    if (!rawValue) {
+      return {
+        step: SIGNUP_STEP_REQUEST,
+        email: ''
+      };
+    }
+
+    const parsed = JSON.parse(rawValue);
+    const email = typeof parsed.email === 'string' ? parsed.email.trim() : '';
+
+    return {
+      step: normalizeSignupStep(parsed.step),
+      email
+    };
+  } catch (_error) {
+    return {
+      step: SIGNUP_STEP_REQUEST,
+      email: ''
+    };
+  }
+}
+
+function persistSignupFlowState(step, email) {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
+
+  const safeEmail = typeof email === 'string' ? email.trim() : '';
+  const safeStep = normalizeSignupStep(step);
+
+  try {
+    window.localStorage.setItem(
+      SIGNUP_FLOW_STORAGE_KEY,
+      JSON.stringify({
+        step: safeStep,
+        email: safeEmail
+      })
+    );
+  } catch (_error) {
+    // ignore storage write errors
+  }
+}
+
+function clearSignupFlowState() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(SIGNUP_FLOW_STORAGE_KEY);
+  } catch (_error) {
+    // ignore storage remove errors
+  }
+}
+
 function getOtpCooldownRemainingSecondsFromStorage() {
   if (typeof window === 'undefined' || !window.localStorage) {
     return 0;
@@ -258,6 +344,66 @@ function clearOtpCooldownStorage() {
   }
 }
 
+function getSignupOtpCooldownRemainingSecondsFromStorage() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return 0;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(SIGNUP_OTP_COOLDOWN_STORAGE_KEY);
+    if (!rawValue) {
+      return 0;
+    }
+
+    const cooldownUntil = Number(rawValue);
+    if (!Number.isFinite(cooldownUntil) || cooldownUntil <= 0) {
+      window.localStorage.removeItem(SIGNUP_OTP_COOLDOWN_STORAGE_KEY);
+      return 0;
+    }
+
+    const remainingSeconds = Math.ceil((cooldownUntil - Date.now()) / 1000);
+    if (remainingSeconds <= 0) {
+      window.localStorage.removeItem(SIGNUP_OTP_COOLDOWN_STORAGE_KEY);
+      return 0;
+    }
+
+    return remainingSeconds;
+  } catch (_error) {
+    return 0;
+  }
+}
+
+function persistSignupOtpCooldownSeconds(seconds) {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
+
+  const normalizedSeconds = Math.max(1, Math.floor(Number(seconds) || 0));
+  if (!normalizedSeconds) {
+    return;
+  }
+
+  const cooldownUntil = Date.now() + normalizedSeconds * 1000;
+
+  try {
+    window.localStorage.setItem(SIGNUP_OTP_COOLDOWN_STORAGE_KEY, String(cooldownUntil));
+  } catch (_error) {
+    // ignore storage write errors
+  }
+}
+
+function clearSignupOtpCooldownStorage() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(SIGNUP_OTP_COOLDOWN_STORAGE_KEY);
+  } catch (_error) {
+    // ignore storage remove errors
+  }
+}
+
 function markLegacyRecoveryNotice() {
   if (typeof window === 'undefined' || !window.localStorage) {
     return;
@@ -311,10 +457,13 @@ export async function renderAuthView(route, renderToken) {
     return;
   }
 
-  const redirectHash = sanitizeRedirectHash(route.query.redirect) || HOME_HASH;
+  const redirectFromQuery = sanitizeRedirectHash(route.query.redirect);
+  const redirectHash = redirectFromQuery || HOME_HASH;
+  const signupSuccessRedirectHash = redirectFromQuery || '#/account';
   const requestedMode = typeof route?.query?.mode === 'string' ? route.query.mode.trim().toLowerCase() : '';
   const authMode = getAuthModeFromRoute(route);
   const loginHash = buildAuthHash(redirectHash);
+  const signupHash = buildAuthHash(redirectHash, { mode: AUTH_MODE_SIGNUP });
   const forgotHash = buildAuthHash(redirectHash, { mode: AUTH_MODE_FORGOT });
 
   if (requestedMode === 'recovery') {
@@ -323,11 +472,11 @@ export async function renderAuthView(route, renderToken) {
     return;
   }
 
-  let authTitle = 'Вход или регистрация';
-  let authSubtitle = 'Используйте email и пароль, чтобы войти или создать аккаунт.';
+  let authTitle = 'Вход в аккаунт';
+  let authSubtitle = 'Используйте email и пароль для входа.';
   let authNote = `
       Пароль должен содержать не менее ${PASSWORD_MIN_LENGTH} символов.
-      Мы отправим письмо для подтверждения на ваш email.
+      Для регистрации используйте одноразовый код из письма.
     `;
   let formMarkup = `
       <input
@@ -352,14 +501,29 @@ export async function renderAuthView(route, renderToken) {
       <p id="authStatus" class="auth-form__status" role="alert" aria-live="polite"></p>
       <div class="auth-form__actions">
         <button type="submit" class="button button--primary" data-action="login">Войти</button>
-        <button type="submit" class="button button--secondary" data-action="signup">Зарегистрироваться</button>
       </div>
       <div class="auth-form__meta">
+        <a class="auth-form__link" href="${signupHash}">Создать аккаунт</a>
         <a class="auth-form__link" href="${forgotHash}">Забыли пароль?</a>
       </div>
     `;
 
-  if (authMode === AUTH_MODE_FORGOT) {
+  if (authMode === AUTH_MODE_SIGNUP) {
+    authTitle = 'Регистрация';
+    authSubtitle = 'Введите email, подтвердите код из письма и задайте пароль внутри приложения.';
+    authNote = 'Код действует ограниченное время. Не передавайте его третьим лицам.';
+    formMarkup = `
+        <div class="auth-stepper" id="authSignupStepper" data-step="${SIGNUP_STEP_REQUEST}">
+          <p id="authSignupStepProgress" class="auth-stepper__progress">Шаг 1 из 3</p>
+          <div id="authSignupStepBody" class="auth-stepper__body"></div>
+          <p id="authStatus" class="auth-form__status" role="alert" aria-live="polite"></p>
+          <div id="authSignupStepActions" class="auth-form__actions"></div>
+          <div class="auth-form__meta">
+            <a class="auth-form__link" href="${loginHash}">Назад ко входу</a>
+          </div>
+        </div>
+      `;
+  } else if (authMode === AUTH_MODE_FORGOT) {
     authTitle = 'Восстановление пароля';
     authSubtitle = 'Введите email, получите одноразовый код и задайте новый пароль внутри приложения.';
     authNote = 'Код действует ограниченное время. Не передавайте его третьим лицам.';
@@ -442,9 +606,7 @@ export async function renderAuthView(route, renderToken) {
       });
     }
 
-    let submitAction = 'login';
-
-    async function handleAuth(action) {
+    async function handleLogin() {
       setStatus('');
 
       if (!client || typeof client.auth.signInWithPassword !== 'function') {
@@ -468,30 +630,6 @@ export async function renderAuthView(route, renderToken) {
       setLoading(true);
 
       try {
-        if (action === 'signup') {
-          const { error } = await client.auth.signUp({ email, password });
-          if (error) {
-            const code = error.code || '';
-            const message = (error.message || '').toLowerCase();
-            if (
-              code === 'user_already_exists' ||
-              message.includes('user already registered') ||
-              message.includes('user already exists')
-            ) {
-              setStatus('Этот email уже зарегистрирован. Попробуйте войти или восстановить пароль.');
-            } else {
-              setStatus('Не удалось зарегистрироваться. Попробуйте ещё раз или чуть позже.');
-            }
-            return;
-          }
-
-          setStatus(
-            'Мы отправили письмо для подтверждения. После подтверждения вернитесь и войдите с паролем.',
-            'success'
-          );
-          return;
-        }
-
         const { error } = await client.auth.signInWithPassword({ email, password });
         if (error) {
           setStatus('Не удалось войти. Проверьте email и пароль и попробуйте ещё раз.');
@@ -507,18 +645,508 @@ export async function renderAuthView(route, renderToken) {
       }
     }
 
-    form.addEventListener('click', (event) => {
-      const actionButton = event.target.closest('button[data-action]');
-      if (actionButton && actionButton.dataset.action) {
-        submitAction = actionButton.dataset.action;
-      }
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      void handleLogin();
     });
+
+    return;
+  }
+
+  if (authMode === AUTH_MODE_SIGNUP) {
+    const stepProgressEl = document.getElementById('authSignupStepProgress');
+    const stepBodyEl = document.getElementById('authSignupStepBody');
+    const stepActionsEl = document.getElementById('authSignupStepActions');
+    const stepperEl = document.getElementById('authSignupStepper');
+
+    if (!stepProgressEl || !stepBodyEl || !stepActionsEl || !stepperEl) {
+      return;
+    }
+
+    let isLoading = false;
+    let otpCooldownSeconds = getSignupOtpCooldownRemainingSecondsFromStorage();
+    let otpCooldownInterval = null;
+    let successRedirectTimeoutId = null;
+
+    const persistedFlow = readSignupFlowState();
+    let signupEmail = persistedFlow.email;
+    let currentStep = persistedFlow.step;
+
+    if (!isValidEmail(signupEmail)) {
+      signupEmail = '';
+      currentStep = SIGNUP_STEP_REQUEST;
+    }
+
+    if (!signupEmail && currentStep !== SIGNUP_STEP_REQUEST) {
+      currentStep = SIGNUP_STEP_REQUEST;
+    }
+
+    const canStayInSignupFlow = currentStep === SIGNUP_STEP_PASSWORD && isValidEmail(signupEmail);
+    const syncedSignupState = await refreshAuthSession();
+    if (syncedSignupState && syncedSignupState.user && !canStayInSignupFlow) {
+      navigateTo(redirectHash, { replace: true });
+      return;
+    }
+
+    if (currentStep === SIGNUP_STEP_PASSWORD && !(syncedSignupState && syncedSignupState.user)) {
+      const forcedSignupState = await refreshAuthSession({ force: true });
+      if (!(forcedSignupState && forcedSignupState.user)) {
+        currentStep = signupEmail ? SIGNUP_STEP_VERIFY : SIGNUP_STEP_REQUEST;
+      }
+    }
+
+    function setSignupLoading(nextValue) {
+      isLoading = Boolean(nextValue);
+      form.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+
+      const controls = form.querySelectorAll('input, button');
+      controls.forEach((control) => {
+        control.disabled = isLoading;
+      });
+
+      if (!isLoading) {
+        applySignupOtpCooldownUi();
+      }
+    }
+
+    function getSignupCooldownButton() {
+      return form.querySelector('button[data-cooldown-button="true"]');
+    }
+
+    function applySignupOtpCooldownUi() {
+      const cooldownButton = getSignupCooldownButton();
+      if (!cooldownButton) {
+        return;
+      }
+
+      if (cooldownButton.dataset.defaultText == null) {
+        cooldownButton.dataset.defaultText = cooldownButton.textContent || 'Отправить код';
+      }
+
+      if (isLoading) {
+        return;
+      }
+
+      if (otpCooldownSeconds > 0) {
+        cooldownButton.disabled = true;
+        cooldownButton.textContent = `Повтор через ${otpCooldownSeconds} c`;
+        return;
+      }
+
+      cooldownButton.disabled = false;
+      cooldownButton.textContent = cooldownButton.dataset.defaultText;
+    }
+
+    function stopSignupOtpCooldown() {
+      if (otpCooldownInterval) {
+        window.clearInterval(otpCooldownInterval);
+        otpCooldownInterval = null;
+      }
+
+      otpCooldownSeconds = 0;
+      clearSignupOtpCooldownStorage();
+      applySignupOtpCooldownUi();
+    }
+
+    function startSignupOtpCooldown(seconds) {
+      const normalizedSeconds = Math.max(1, Math.floor(Number(seconds) || PASSWORD_RESET_OTP_RESEND_COOLDOWN_SECONDS));
+
+      if (otpCooldownInterval) {
+        window.clearInterval(otpCooldownInterval);
+        otpCooldownInterval = null;
+      }
+
+      otpCooldownSeconds = normalizedSeconds;
+      persistSignupOtpCooldownSeconds(normalizedSeconds);
+      applySignupOtpCooldownUi();
+
+      otpCooldownInterval = window.setInterval(() => {
+        if (!isCurrentRender(renderToken)) {
+          window.clearInterval(otpCooldownInterval);
+          otpCooldownInterval = null;
+          return;
+        }
+
+        otpCooldownSeconds -= 1;
+        if (otpCooldownSeconds <= 0) {
+          stopSignupOtpCooldown();
+          return;
+        }
+
+        applySignupOtpCooldownUi();
+      }, 1000);
+    }
+
+    function focusSignupStepInput() {
+      const selectors = {
+        [SIGNUP_STEP_REQUEST]: '#authSignupEmail',
+        [SIGNUP_STEP_VERIFY]: '#authSignupOtp',
+        [SIGNUP_STEP_PASSWORD]: '#authSignupPassword'
+      };
+
+      const selector = selectors[currentStep];
+      if (!selector) {
+        return;
+      }
+
+      const input = form.querySelector(selector);
+      if (input && typeof input.focus === 'function') {
+        input.focus();
+      }
+    }
+
+    function persistSignupState() {
+      persistSignupFlowState(currentStep, signupEmail);
+    }
+
+    function renderSignupStep() {
+      if (currentStep === SIGNUP_STEP_REQUEST) {
+        stepperEl.dataset.step = SIGNUP_STEP_REQUEST;
+        stepProgressEl.textContent = 'Шаг 1 из 3: Email';
+        stepBodyEl.innerHTML = `
+            <input
+              type="email"
+              id="authSignupEmail"
+              class="auth-form__input"
+              placeholder="name@example.com"
+              value="${signupEmail}"
+              required
+              autocomplete="email"
+              inputmode="email"
+              aria-label="Email для регистрации"
+            />
+          `;
+        stepActionsEl.innerHTML = `
+            <button
+              type="submit"
+              class="button button--primary"
+              data-action="request_code"
+              data-cooldown-button="true"
+            >Отправить код</button>
+          `;
+        applySignupOtpCooldownUi();
+        return;
+      }
+
+      if (currentStep === SIGNUP_STEP_VERIFY) {
+        stepperEl.dataset.step = SIGNUP_STEP_VERIFY;
+        stepProgressEl.textContent = 'Шаг 2 из 3: Код из письма';
+        stepBodyEl.innerHTML = `
+            <input
+              type="email"
+              id="authSignupEmailReadonly"
+              class="auth-form__input"
+              value="${signupEmail}"
+              readonly
+              aria-label="Email для регистрации"
+            />
+            <input
+              type="text"
+              id="authSignupOtp"
+              class="auth-form__input auth-form__input--otp"
+              placeholder="Код из письма"
+              maxlength="${PASSWORD_RESET_OTP_MAX_LENGTH}"
+              minlength="${PASSWORD_RESET_OTP_MIN_LENGTH}"
+              inputmode="numeric"
+              pattern="[0-9]{${PASSWORD_RESET_OTP_MIN_LENGTH},${PASSWORD_RESET_OTP_MAX_LENGTH}}"
+              autocomplete="one-time-code"
+              aria-label="Одноразовый код"
+              required
+            />
+          `;
+        stepActionsEl.innerHTML = `
+            <button type="submit" class="button button--primary" data-action="verify_otp">Проверить код</button>
+            <button
+              type="button"
+              class="button button--secondary"
+              data-action="resend_otp"
+              data-cooldown-button="true"
+            >Отправить код повторно</button>
+            <button type="button" class="button button--secondary" data-action="edit_email">Изменить email</button>
+          `;
+        applySignupOtpCooldownUi();
+        return;
+      }
+
+      stepperEl.dataset.step = SIGNUP_STEP_PASSWORD;
+      stepProgressEl.textContent = 'Шаг 3 из 3: Пароль';
+      stepBodyEl.innerHTML = `
+          <input
+            type="password"
+            id="authSignupPassword"
+            class="auth-form__input"
+            placeholder="Придумайте пароль"
+            required
+            autocomplete="new-password"
+            aria-label="Пароль"
+          />
+          <input
+            type="password"
+            id="authSignupConfirmPassword"
+            class="auth-form__input"
+            placeholder="Подтвердите пароль"
+            required
+            autocomplete="new-password"
+            aria-label="Подтверждение пароля"
+          />
+        `;
+      stepActionsEl.innerHTML = `
+          <button type="submit" class="button button--primary" data-action="set_password">Создать аккаунт</button>
+          <button type="button" class="button button--secondary" data-action="restart_signup">Запросить новый код</button>
+        `;
+    }
+
+    function setSignupStep(nextStep, options = {}) {
+      const { keepStatus = false, focus = true } = options;
+      currentStep = normalizeSignupStep(nextStep);
+
+      if (!signupEmail && currentStep !== SIGNUP_STEP_REQUEST) {
+        currentStep = SIGNUP_STEP_REQUEST;
+      }
+
+      persistSignupState();
+      renderSignupStep();
+
+      if (!keepStatus) {
+        setStatus('');
+      }
+
+      if (focus) {
+        focusSignupStepInput();
+      }
+    }
+
+    async function handleSignupRequestOtp() {
+      setStatus('');
+
+      const emailInput = document.getElementById('authSignupEmail');
+      const email = (emailInput ? emailInput.value : signupEmail || '').trim();
+
+      if (!isValidEmail(email)) {
+        setStatus('Введите корректный email.');
+        return;
+      }
+
+      if (otpCooldownSeconds > 0) {
+        setStatus(`Повторная отправка будет доступна через ${otpCooldownSeconds} сек.`, 'info');
+        return;
+      }
+
+      signupEmail = email;
+      persistSignupState();
+
+      setSignupLoading(true);
+
+      try {
+        const result = await requestSignupOtp(email, {
+          captchaToken: resolveCaptchaToken()
+        });
+
+        if (!result.ok) {
+          const error = result.error;
+
+          if (isAuthRateLimitError(error)) {
+            const retryAfterSeconds = getRetryAfterSeconds(error, PASSWORD_RESET_OTP_RESEND_COOLDOWN_SECONDS);
+            startSignupOtpCooldown(retryAfterSeconds);
+            setStatus(`Слишком частая отправка. Повторить можно через ${retryAfterSeconds} сек.`, 'info');
+            return;
+          }
+
+          setStatus('Не удалось отправить код. Попробуйте ещё раз чуть позже.');
+          return;
+        }
+
+        setStatus(
+          `Если вход или регистрация для этого email доступны, мы отправили одноразовый код. Повторная отправка будет доступна через ${PASSWORD_RESET_OTP_RESEND_COOLDOWN_SECONDS} сек.`,
+          'success'
+        );
+        startSignupOtpCooldown(PASSWORD_RESET_OTP_RESEND_COOLDOWN_SECONDS);
+        setSignupStep(SIGNUP_STEP_VERIFY, {
+          keepStatus: true
+        });
+      } catch (error) {
+        console.warn('Ошибка отправки signup OTP', error);
+        setStatus('Не удалось отправить код. Попробуйте ещё раз чуть позже.');
+      } finally {
+        setSignupLoading(false);
+      }
+    }
+
+    async function handleSignupVerifyOtp() {
+      setStatus('');
+
+      if (!isValidEmail(signupEmail)) {
+        setSignupStep(SIGNUP_STEP_REQUEST);
+        setStatus('Сначала укажите email для регистрации.', 'info');
+        return;
+      }
+
+      const otpInput = document.getElementById('authSignupOtp');
+      const otpCode = String(otpInput ? otpInput.value : '')
+        .trim()
+        .replace(/\s+/g, '');
+
+      if (!OTP_CODE_REGEX.test(otpCode)) {
+        setStatus(`Введите ${PASSWORD_RESET_OTP_MIN_LENGTH}-${PASSWORD_RESET_OTP_MAX_LENGTH}-значный код из письма.`);
+        return;
+      }
+
+      setSignupLoading(true);
+
+      try {
+        const result = await verifySignupOtp({
+          email: signupEmail,
+          token: otpCode,
+          captchaToken: resolveCaptchaToken()
+        });
+
+        if (!result.ok) {
+          const error = result.error;
+
+          if (isAuthRateLimitError(error)) {
+            const retryAfterSeconds = getRetryAfterSeconds(error, PASSWORD_RESET_OTP_RESEND_COOLDOWN_SECONDS);
+            setStatus(`Слишком много попыток. Повторите через ${retryAfterSeconds} сек.`, 'info');
+            return;
+          }
+
+          if (isOtpInvalidOrExpiredError(error)) {
+            setStatus('Код недействителен или истек. Запросите новый код и попробуйте снова.');
+            return;
+          }
+
+          setStatus('Не удалось подтвердить код. Попробуйте ещё раз.');
+          return;
+        }
+
+        const syncedState = await refreshAuthSession({ force: true });
+        if (!(syncedState && syncedState.user)) {
+          setStatus('Не удалось подтвердить email. Запросите новый код.');
+          return;
+        }
+
+        setStatus('Email подтвержден. Теперь задайте пароль.', 'success');
+        setSignupStep(SIGNUP_STEP_PASSWORD, {
+          keepStatus: true
+        });
+      } catch (error) {
+        console.warn('Ошибка проверки signup OTP', error);
+        setStatus('Не удалось подтвердить код. Попробуйте ещё раз.');
+      } finally {
+        setSignupLoading(false);
+      }
+    }
+
+    async function handleSignupSetPassword() {
+      setStatus('');
+
+      const newPasswordInput = document.getElementById('authSignupPassword');
+      const confirmPasswordInput = document.getElementById('authSignupConfirmPassword');
+
+      if (!newPasswordInput || !confirmPasswordInput) {
+        setStatus('Форма установки пароля недоступна. Попробуйте ещё раз.');
+        return;
+      }
+
+      const validationMessage = validatePasswordPair(newPasswordInput.value || '', confirmPasswordInput.value || '');
+      if (validationMessage) {
+        setStatus(validationMessage);
+        return;
+      }
+
+      setSignupLoading(true);
+
+      try {
+        let syncedState = await refreshAuthSession({ force: true });
+        if (!(syncedState && syncedState.user)) {
+          await new Promise((resolve) => {
+            window.setTimeout(resolve, 240);
+          });
+          syncedState = await refreshAuthSession({ force: true });
+        }
+
+        if (!(syncedState && syncedState.user)) {
+          setSignupStep(SIGNUP_STEP_VERIFY);
+          setStatus('Сессия подтверждения устарела. Подтвердите код повторно.', 'info');
+          return;
+        }
+
+        const result = await updateUserPassword(client, newPasswordInput.value || '');
+        if (!result.ok) {
+          setStatus('Не удалось завершить регистрацию. Запросите новый код и попробуйте ещё раз.');
+          return;
+        }
+
+        clearSignupFlowState();
+        stopSignupOtpCooldown();
+        setStatus('Аккаунт создан. Выполняем вход...', 'success');
+        if (successRedirectTimeoutId) {
+          window.clearTimeout(successRedirectTimeoutId);
+        }
+
+        successRedirectTimeoutId = window.setTimeout(() => {
+          successRedirectTimeoutId = null;
+          if (!isCurrentRender(renderToken)) {
+            return;
+          }
+          navigateTo(signupSuccessRedirectHash, { replace: true });
+        }, 550);
+      } catch (error) {
+        console.warn('Ошибка завершения регистрации', error);
+        setStatus('Не удалось завершить регистрацию. Попробуйте ещё раз.');
+      } finally {
+        setSignupLoading(false);
+      }
+    }
 
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      void handleAuth(submitAction);
+
+      if (currentStep === SIGNUP_STEP_REQUEST) {
+        void handleSignupRequestOtp();
+        return;
+      }
+
+      if (currentStep === SIGNUP_STEP_VERIFY) {
+        void handleSignupVerifyOtp();
+        return;
+      }
+
+      void handleSignupSetPassword();
     });
 
+    form.addEventListener('click', (event) => {
+      const actionButton = event.target.closest('button[data-action]');
+      if (!actionButton || actionButton.type === 'submit') {
+        return;
+      }
+
+      const action = actionButton.dataset.action || '';
+
+      if (action === 'resend_otp') {
+        void handleSignupRequestOtp();
+        return;
+      }
+
+      if (action === 'edit_email') {
+        setSignupStep(SIGNUP_STEP_REQUEST);
+        return;
+      }
+
+      if (action === 'restart_signup') {
+        clearSignupFlowState();
+        setSignupStep(SIGNUP_STEP_REQUEST);
+        setStatus('Введите email, чтобы запросить новый код.', 'info');
+      }
+    });
+
+    renderSignupStep();
+    persistSignupState();
+
+    if (otpCooldownSeconds > 0) {
+      startSignupOtpCooldown(otpCooldownSeconds);
+    }
+
+    focusSignupStepInput();
     return;
   }
 

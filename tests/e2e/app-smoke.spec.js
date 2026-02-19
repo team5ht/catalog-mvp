@@ -148,6 +148,21 @@ test('account route redirects guest to auth', async ({ page }) => {
   await expect(page).toHaveURL(/#\/auth\?redirect=%23%2Faccount/);
 });
 
+test('login auth mode renders login-only form and signup link', async ({ page }) => {
+  await page.goto('/#/auth');
+  await expect(page.locator('#authTitle')).toHaveText('Вход в аккаунт');
+  await expect(page.locator('button[data-action="login"]')).toBeVisible();
+  await expect(page.locator('button[data-action="signup"]')).toHaveCount(0);
+  await expect(page.locator('a.auth-form__link[href*="mode=signup"]')).toBeVisible();
+});
+
+test('signup auth mode renders OTP signup stepper', async ({ page }) => {
+  await page.goto('/#/auth?mode=signup');
+  await expect(page.locator('#authTitle')).toHaveText('Регистрация');
+  await expect(page.locator('#authSignupStepProgress')).toContainText('Шаг 1 из 3');
+  await expect(page.locator('#authSignupEmail')).toBeVisible();
+});
+
 test('forgot auth mode renders OTP recovery stepper', async ({ page }) => {
   await page.goto('/#/auth?mode=forgot');
   await expect(page.locator('#authTitle')).toHaveText('Восстановление пароля');

@@ -8,7 +8,7 @@
 - Без bundler и серверного рендера: браузерные ESM-модули подключаются напрямую.
 - Контент и каталог берутся из `data.json`.
 - Обложки материалов и home hero генерируются локальным pipeline на `sharp`.
-- Авторизация: Supabase email/password + OTP-восстановление пароля в приложении.
+- Авторизация: Supabase email/password + OTP-регистрация и OTP-восстановление пароля в приложении.
 - Единый auth-state хранится в `window.authStore`.
 - PWA: `manifest.json` + `sw.js` с precache shell и runtime cache изображений.
 
@@ -45,7 +45,7 @@ npm run test:e2e:headed
 - `scripts/images/build.mjs` - генерация responsive-изображений.
 - `scripts/images/check.mjs` - проверка data-контракта и image budgets/геометрии.
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - 3 CSS-слоя.
-- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
+- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-signup-otp.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
 
 ## Маршруты
 
@@ -89,7 +89,11 @@ npm run test:e2e:headed
 
 ### Auth (`#/auth`)
 
-- `mode=login` (по умолчанию): вход/регистрация по email+паролю.
+- `mode=login` (по умолчанию): вход по email+паролю.
+- `mode=signup`: OTP registration flow в 3 шага:
+  - `request_code`
+  - `verify_code`
+  - `set_new_password`
 - `mode=forgot`: OTP recovery flow в 3 шага:
   - `request_code`
   - `verify_code`
@@ -226,11 +230,13 @@ npm run test:e2e
 - каталог: поиск + фильтрация + empty state
 - материал: корректный рендер описания (абзацы/список), CTA для гостя, redirect в auth
 - `#/account` auth-gating
+- `#/auth?mode=signup` (OTP stepper)
 - `#/auth?mode=forgot` (OTP stepper)
 - `#/auth?mode=recovery` (legacy redirect в forgot)
 - `#/unknown` redirect на home
 - active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
+- signup OTP сценарии (`tests/e2e/auth-signup-otp.spec.js`): success/error/rate-limit + redirects
 - OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`): success/error/rate-limit ветки
 - auth/navigation guard сценарии (`tests/e2e/navigation-auth-guards.spec.js`): owner redirect и поведение кнопки аккаунта
 
