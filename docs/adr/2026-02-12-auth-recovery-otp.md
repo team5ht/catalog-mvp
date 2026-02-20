@@ -1,9 +1,11 @@
 # ADR: Переход с recovery-ссылок на OTP recovery в PWA
 
 - Date: 2026-02-12
-- Status: Accepted
+- Status: Superseded (2026-02-20)
 - Scope: `scripts/app/views/auth-view.js`, `scripts/app/routing/*`, `scripts/app/constants.js`, `scripts/app/services/auth-service.js`, e2e tests, docs
 - Policy: `behavior-change`
+
+> Superseded by `docs/adr/2026-02-20-auth-mvp-v2-otp-first.md` (введены режимы `login/signup/reset`, удален legacy `forgot/recovery` UX и persistence flow-state).
 
 ## Контекст
 

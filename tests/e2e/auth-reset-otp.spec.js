@@ -41,21 +41,45 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
         }
       };
     },
-    async signUp() {
-      return { error: null, data: { user: null, session: null } };
-    },
     async signInWithPassword() {
       return { error: createError({ message: 'Mock sign-in disabled' }), data: null };
     },
-    async signOut() {
-      emit('SIGNED_OUT', null);
-      return { error: null };
+    async signInWithOtp(params) {
+      window.__OTP_TEST_CALLS = window.__OTP_TEST_CALLS || [];
+      window.__OTP_TEST_CALLS.push({ method: 'signInWithOtp', params });
+
+      if (!(params && params.options && params.options.shouldCreateUser)) {
+        return {
+          data: null,
+          error: createError({ message: 'Unexpected non-signup OTP call', code: 'invalid_call' })
+        };
+      }
+
+      if (scenario.requestSignupOtp === 'rate_limit') {
+        return {
+          data: null,
+          error: createError({
+            status: 429,
+            code: 'over_email_send_rate_limit',
+            message: 'Only request this after 41 seconds'
+          })
+        };
+      }
+
+      if (scenario.requestSignupOtp === 'fail') {
+        return {
+          data: null,
+          error: createError({ message: 'Signup OTP failed' })
+        };
+      }
+
+      return { data: {}, error: null };
     },
     async resetPasswordForEmail(email, options) {
       window.__OTP_TEST_CALLS = window.__OTP_TEST_CALLS || [];
       window.__OTP_TEST_CALLS.push({ method: 'resetPasswordForEmail', email, options: options || {} });
 
-      if (scenario.resetPasswordForEmail === 'rate_limit') {
+      if (scenario.requestResetOtp === 'rate_limit') {
         return {
           data: null,
           error: createError({
@@ -66,10 +90,10 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
         };
       }
 
-      if (scenario.resetPasswordForEmail === 'fail') {
+      if (scenario.requestResetOtp === 'fail') {
         return {
           data: null,
-          error: createError({ message: 'Reset email failed' })
+          error: createError({ message: 'Reset OTP failed' })
         };
       }
 
@@ -79,7 +103,9 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
       window.__OTP_TEST_CALLS = window.__OTP_TEST_CALLS || [];
       window.__OTP_TEST_CALLS.push({ method: 'verifyOtp', params });
 
-      if (scenario.verifyOtp === 'rate_limit') {
+      const verifyScenario = params && params.type === 'email' ? scenario.verifySignupOtp : scenario.verifyResetOtp;
+
+      if (verifyScenario === 'rate_limit') {
         return {
           data: null,
           error: createError({
@@ -90,7 +116,7 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
         };
       }
 
-      if (scenario.verifyOtp === 'invalid') {
+      if (verifyScenario === 'invalid') {
         return {
           data: null,
           error: createError({
@@ -108,11 +134,11 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
         token_type: 'bearer',
         user: {
           id: 'mock-user-id',
-          email: params.email
+          email: params && params.email ? params.email : 'user@example.com'
         }
       };
 
-      emit('PASSWORD_RECOVERY', nextSession);
+      emit(params && params.type === 'recovery' ? 'PASSWORD_RECOVERY' : 'SIGNED_IN', nextSession);
 
       return {
         data: {
@@ -135,6 +161,12 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
 
       emit('USER_UPDATED', session);
       return { data: { user: session ? session.user : null }, error: null };
+    },
+    async signOut() {
+      window.__OTP_TEST_CALLS = window.__OTP_TEST_CALLS || [];
+      window.__OTP_TEST_CALLS.push({ method: 'signOut' });
+      emit('SIGNED_OUT', null);
+      return { error: null };
     }
   };
 
@@ -161,137 +193,148 @@ async function setupMockSupabase(page, scenario = {}) {
   });
 }
 
-test('resetPasswordForEmail success opens OTP verification step and starts cooldown', async ({ page }) => {
+test('reset OTP success opens verification step and starts cooldown', async ({ page }) => {
   await setupMockSupabase(page, {
-    resetPasswordForEmail: 'success'
+    requestResetOtp: 'success'
   });
 
-  await page.goto('/#/auth?mode=forgot');
+  await page.goto('/#/auth?mode=reset');
 
-  await page.locator('#authRecoveryEmail').fill('user@example.com');
-  await page.locator('button[data-action="request_code"]').click();
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
 
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
-  await expect(page.locator('button[data-action="resend_otp"]')).toContainText('Повтор через');
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
+  await expect(page.locator('button[data-action="resend_reset_otp"]')).toContainText('Повтор через');
 });
 
-test('verifyOtp success opens new password step', async ({ page }) => {
+test('reset OTP verify and password update redirects to account', async ({ page }) => {
   await setupMockSupabase(page, {
-    resetPasswordForEmail: 'success',
-    verifyOtp: 'success'
-  });
-
-  await page.goto('/#/auth?mode=forgot');
-
-  await page.locator('#authRecoveryEmail').fill('user@example.com');
-  await page.locator('button[data-action="request_code"]').click();
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
-
-  await page.locator('#authRecoveryOtp').fill('12345678');
-  await page.locator('button[data-action="verify_otp"]').click();
-
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 3 из 3');
-  await expect(page.locator('#authNewPassword')).toBeVisible();
-});
-
-test('verifyOtp invalid shows error and keeps verification step', async ({ page }) => {
-  await setupMockSupabase(page, {
-    resetPasswordForEmail: 'success',
-    verifyOtp: 'invalid'
-  });
-
-  await page.goto('/#/auth?mode=forgot');
-
-  await page.locator('#authRecoveryEmail').fill('user@example.com');
-  await page.locator('button[data-action="request_code"]').click();
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
-
-  await page.locator('#authRecoveryOtp').fill('123456');
-  await page.locator('button[data-action="verify_otp"]').click();
-
-  await expect(page.locator('#authStatus')).toContainText('Код недействителен или истек');
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
-});
-
-test('updateUser success redirects to account after password change', async ({ page }) => {
-  await setupMockSupabase(page, {
-    resetPasswordForEmail: 'success',
-    verifyOtp: 'success',
+    requestResetOtp: 'success',
+    verifyResetOtp: 'success',
     updateUser: 'success'
   });
 
-  await page.goto('/#/auth?mode=forgot');
+  await page.goto('/#/auth?mode=reset');
 
-  await page.locator('#authRecoveryEmail').fill('user@example.com');
-  await page.locator('button[data-action="request_code"]').click();
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
 
-  await page.locator('#authRecoveryOtp').fill('123456');
-  await page.locator('button[data-action="verify_otp"]').click();
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 3 из 3');
-
-  await page.locator('#authNewPassword').fill('123456');
-  await page.locator('#authConfirmPassword').fill('123456');
-  await page.locator('button[data-action="set_password"]').click();
+  await page.locator('#authResetOtp').fill('123456');
+  await page.locator('#authResetPassword').fill('123456');
+  await page.locator('button[data-action="verify_reset_otp"]').click();
 
   await expect(page).toHaveURL(/#\/account/);
 });
 
-test('manual navigation after password reset is not overridden by delayed redirect', async ({ page }) => {
+test('invalid reset OTP counts attempts and blocks verify after 5 failures', async ({ page }) => {
   await setupMockSupabase(page, {
-    resetPasswordForEmail: 'success',
-    verifyOtp: 'success',
-    updateUser: 'success'
+    requestResetOtp: 'success',
+    verifyResetOtp: 'invalid'
   });
 
-  await page.goto('/#/auth?mode=forgot');
+  await page.goto('/#/auth?mode=reset');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
 
-  await page.locator('#authRecoveryEmail').fill('user@example.com');
-  await page.locator('button[data-action="request_code"]').click();
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    await page.locator('#authResetOtp').fill('123456');
+    await page.locator('#authResetPassword').fill('123456');
+    await page.locator('button[data-action="verify_reset_otp"]').click();
 
-  await page.locator('#authRecoveryOtp').fill('123456');
-  await page.locator('button[data-action="verify_otp"]').click();
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 3 из 3');
+    if (attempt < 5) {
+      await expect(page.locator('#authStatus')).toContainText('Код недействителен или истек');
+    }
+  }
 
-  await page.locator('#authNewPassword').fill('123456');
-  await page.locator('#authConfirmPassword').fill('123456');
-  await page.locator('button[data-action="set_password"]').click();
-
-  await page.waitForTimeout(120);
-  await page.evaluate(() => {
-    window.location.hash = '#/catalog';
-  });
-
-  await page.waitForTimeout(900);
-  await expect(page).toHaveURL(/#\/catalog/);
-  await expect(page.locator('#catalogSearchInput')).toBeVisible();
+  await expect(page.locator('#authStatus')).toContainText('Лимит попыток исчерпан');
+  await expect(page.locator('button[data-action="verify_reset_otp"]')).toBeDisabled();
 });
 
-test('429 on recover shows retry timing', async ({ page }) => {
+test('reload on reset stage 2 returns to stage 1', async ({ page }) => {
   await setupMockSupabase(page, {
-    resetPasswordForEmail: 'rate_limit'
+    requestResetOtp: 'success'
   });
 
-  await page.goto('/#/auth?mode=forgot');
+  await page.goto('/#/auth?mode=reset');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
 
-  await page.locator('#authRecoveryEmail').fill('user@example.com');
-  await page.locator('button[data-action="request_code"]').click();
-  await expect(page.locator('#authStatus')).toContainText('Повторить можно через 42 сек');
+  await page.reload();
+
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 2');
+  await expect(page.locator('#authResetEmail')).toBeVisible();
 });
 
-test('429 on verify shows retry timing', async ({ page }) => {
+test('edit email/password from reset stage 2 clears cooldown UI and returns to stage 1', async ({ page }) => {
   await setupMockSupabase(page, {
-    resetPasswordForEmail: 'success',
-    verifyOtp: 'rate_limit'
+    requestResetOtp: 'success'
   });
 
-  await page.goto('/#/auth?mode=forgot');
-  await page.locator('#authRecoveryEmail').fill('user@example.com');
-  await page.locator('button[data-action="request_code"]').click();
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 3');
+  await page.goto('/#/auth?mode=reset');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+  await expect(page.locator('button[data-action="resend_reset_otp"]')).toContainText('Повтор через');
 
-  await page.locator('#authRecoveryOtp').fill('123456');
-  await page.locator('button[data-action="verify_otp"]').click();
-  await expect(page.locator('#authStatus')).toContainText('Повторите через 37 сек');
+  await page.locator('button[data-action="edit_reset_email"]').click();
+
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 2');
+  await expect(page.locator('button[data-action="request_reset_otp"]')).toHaveText('Отправить код');
+});
+
+test('429 on reset request shows retry timing', async ({ page }) => {
+  await setupMockSupabase(page, {
+    requestResetOtp: 'rate_limit'
+  });
+
+  await page.goto('/#/auth?mode=reset');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+
+  await expect(page.locator('#authStatus')).toContainText('42 сек');
+});
+
+test('429 on reset verify shows retry timing', async ({ page }) => {
+  await setupMockSupabase(page, {
+    requestResetOtp: 'success',
+    verifyResetOtp: 'rate_limit'
+  });
+
+  await page.goto('/#/auth?mode=reset');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
+
+  await page.locator('#authResetOtp').fill('123456');
+  await page.locator('#authResetPassword').fill('123456');
+  await page.locator('button[data-action="verify_reset_otp"]').click();
+
+  await expect(page.locator('#authStatus')).toContainText('37 сек');
+});
+
+test('updateUser failure after reset verify signs out and returns to stage 1', async ({ page }) => {
+  await setupMockSupabase(page, {
+    requestResetOtp: 'success',
+    verifyResetOtp: 'success',
+    updateUser: 'fail'
+  });
+
+  await page.goto('/#/auth?mode=reset');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
+
+  await page.locator('#authResetOtp').fill('123456');
+  await page.locator('#authResetPassword').fill('123456');
+  await page.locator('button[data-action="verify_reset_otp"]').click();
+
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 2');
+  await expect(page.locator('#authStatus')).toContainText('Не удалось завершить установку пароля');
+
+  const signOutCallCount = await page.evaluate(() => {
+    return (window.__OTP_TEST_CALLS || []).filter((call) => call.method === 'signOut').length;
+  });
+  expect(signOutCallCount).toBeGreaterThan(0);
 });

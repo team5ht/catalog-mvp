@@ -8,7 +8,7 @@
 - Без bundler и серверного рендера: браузерные ESM-модули подключаются напрямую.
 - Контент и каталог берутся из `data.json`.
 - Обложки материалов и home hero генерируются локальным pipeline на `sharp`.
-- Авторизация: Supabase email/password + OTP-восстановление пароля в приложении.
+- Авторизация: Supabase email/password + OTP-first регистрация и восстановление пароля в приложении.
 - Единый auth-state хранится в `window.authStore`.
 - PWA: `manifest.json` + `sw.js` с precache shell и runtime cache изображений.
 
@@ -45,7 +45,7 @@ npm run test:e2e:headed
 - `scripts/images/build.mjs` - генерация responsive-изображений.
 - `scripts/images/check.mjs` - проверка data-контракта и image budgets/геометрии.
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - 3 CSS-слоя.
-- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
+- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
 
 ## Маршруты
 
@@ -61,6 +61,7 @@ npm run test:e2e:headed
 - Невалидный `#/material/:id` редиректится на `#/`.
 - Redirect после auth передается через `#/auth?redirect=<hash>`.
 - `redirect` принимается только для известных внутренних hash-route (`#/...`), иначе fallback `#/`.
+- Если авторизованный пользователь открывает `#/auth`, выполняется redirect: на `redirect`, если он валиден, иначе на `#/account`.
 - Прокрутка: при `push/replace` новый экран открывается сверху, при `Back/Forward` браузер восстанавливает предыдущую позицию.
 
 ## Поведение экранов
@@ -89,17 +90,23 @@ npm run test:e2e:headed
 
 ### Auth (`#/auth`)
 
-- `mode=login` (по умолчанию): вход/регистрация по email+паролю.
-- `mode=forgot`: OTP recovery flow в 3 шага:
-  - `request_code`
-  - `verify_code`
-  - `set_new_password`
+- Поддерживаемые режимы: `mode=login` (по умолчанию), `mode=signup`, `mode=reset`.
+- `mode=login`: email + пароль (`signInWithPassword`).
+- `mode=signup`: 2 этапа внутри экрана:
+  - этап 1: email + пароль -> отправка OTP (`signInWithOtp(...shouldCreateUser=true)`).
+  - этап 2: OTP -> `verifyOtp(type='email')` -> `updateUser({ password })`.
+- `mode=reset`: 2 этапа внутри экрана:
+  - этап 1: email -> отправка OTP (`resetPasswordForEmail`, без reset-ссылок).
+  - этап 2: OTP + новый пароль -> `verifyOtp(type='recovery')` -> `updateUser({ password })`.
+- Невалидный `mode` нормализуется в `mode=login`.
 - Валидации:
-  - email regex
-  - пароль минимум 6 символов
-  - OTP только цифры, длина 6-8
-- Legacy `mode=recovery` автоматически переводится в `mode=forgot` с инфо-сообщением.
-- Состояние шага восстановления и cooldown хранится в `localStorage`.
+  - email regex;
+  - пароль минимум 6 символов;
+  - OTP только цифры, длина 6-8.
+- Cooldown отправки/повтора OTP: 60 секунд.
+- Лимит неверных verify OTP: 5 попыток, затем доступен только resend.
+- Stage 2 (signup/reset) не персистится и при reload всегда сбрасывается в Stage 1.
+- Пароли и OTP не хранятся в `localStorage/sessionStorage/IndexedDB`.
 
 ### Account (`#/account`)
 
@@ -226,12 +233,12 @@ npm run test:e2e
 - каталог: поиск + фильтрация + empty state
 - материал: корректный рендер описания (абзацы/список), CTA для гостя, redirect в auth
 - `#/account` auth-gating
-- `#/auth?mode=forgot` (OTP stepper)
-- `#/auth?mode=recovery` (legacy redirect в forgot)
+- `#/auth?mode=signup` (OTP регистрация)
+- `#/auth?mode=reset` (OTP восстановление)
 - `#/unknown` redirect на home
 - active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
-- OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`): success/error/rate-limit ветки
+- OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`): success/error/rate-limit/attempt-limit ветки
 - auth/navigation guard сценарии (`tests/e2e/navigation-auth-guards.spec.js`): owner redirect и поведение кнопки аккаунта
 
 ## Деплой

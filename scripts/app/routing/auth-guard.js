@@ -1,5 +1,4 @@
-import { AUTH_MODE_LOGIN, HOME_HASH } from '../constants.js';
-import { buildAuthHash, getAuthModeFromRoute, sanitizeRedirectHash } from './hash.js';
+import { buildAuthHash, sanitizeRedirectHash } from './hash.js';
 
 export function resolveAuthRedirect(route, authed) {
   if (!route || typeof route !== 'object') {
@@ -11,12 +10,11 @@ export function resolveAuthRedirect(route, authed) {
       return null;
     }
 
-    const authMode = getAuthModeFromRoute(route);
-    if (authMode !== AUTH_MODE_LOGIN) {
+    if (typeof window !== 'undefined' && window.__AUTH_MVP_V2_BLOCK_AUTH_REDIRECT) {
       return null;
     }
 
-    return sanitizeRedirectHash(route.query?.redirect) || HOME_HASH;
+    return sanitizeRedirectHash(route.query?.redirect) || '#/account';
   }
 
   if (route.name === 'account') {

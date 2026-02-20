@@ -1,6 +1,7 @@
 import {
-  AUTH_MODE_FORGOT,
+  AUTH_MODE_RESET,
   AUTH_MODE_LOGIN,
+  AUTH_MODE_SIGNUP,
   HOME_HASH
 } from '../constants.js';
 
@@ -21,8 +22,8 @@ export function normalizeAuthMode(inputMode) {
   }
 
   const mode = inputMode.trim().toLowerCase();
-  if (mode === AUTH_MODE_FORGOT || mode === 'recovery') {
-    return AUTH_MODE_FORGOT;
+  if (mode === AUTH_MODE_SIGNUP || mode === AUTH_MODE_RESET) {
+    return mode;
   }
 
   return AUTH_MODE_LOGIN;

@@ -54,8 +54,8 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
         }
       };
     },
-    async signUp() {
-      return { data: { user: null, session: null }, error: null };
+    async signInWithOtp() {
+      return { data: {}, error: null };
     },
     async signOut() {
       emit('SIGNED_OUT', null);
@@ -143,12 +143,20 @@ test('authed opening auth login route redirects to redirect hash', async ({ page
   await expect(page.locator('#catalogSearchInput')).toBeVisible();
 });
 
-test('authed opening forgot route does not redirect away from auth', async ({ page }) => {
+test('authed opening signup route redirects away from auth', async ({ page }) => {
   await setupMockSupabase(page, { authenticated: true });
 
-  await page.goto('/#/auth?mode=forgot');
+  await page.goto('/#/auth?mode=signup');
 
-  await expect(page).toHaveURL(/#\/auth\?mode=forgot/);
-  await expect(page.locator('#authTitle')).toHaveText('Восстановление пароля');
-  await expect(page.locator('#authRecoveryEmail')).toBeVisible();
+  await expect(page).toHaveURL(/#\/account/);
+  await expect(page.locator('#accountEmail')).toBeVisible();
+});
+
+test('authed opening reset route redirects away from auth', async ({ page }) => {
+  await setupMockSupabase(page, { authenticated: true });
+
+  await page.goto('/#/auth?mode=reset');
+
+  await expect(page).toHaveURL(/#\/account/);
+  await expect(page.locator('#accountEmail')).toBeVisible();
 });

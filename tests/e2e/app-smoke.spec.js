@@ -148,18 +148,25 @@ test('account route redirects guest to auth', async ({ page }) => {
   await expect(page).toHaveURL(/#\/auth\?redirect=%23%2Faccount/);
 });
 
-test('forgot auth mode renders OTP recovery stepper', async ({ page }) => {
-  await page.goto('/#/auth?mode=forgot');
-  await expect(page.locator('#authTitle')).toHaveText('Восстановление пароля');
-  await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 3');
-  await expect(page.locator('#authRecoveryEmail')).toBeVisible();
+test('signup auth mode renders stage 1 with email and password', async ({ page }) => {
+  await page.goto('/#/auth?mode=signup');
+  await expect(page.locator('#authTitle')).toHaveText('Регистрация');
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 2');
+  await expect(page.locator('#authSignupEmail')).toBeVisible();
+  await expect(page.locator('#authSignupPassword')).toBeVisible();
 });
 
-test('legacy recovery mode redirects to forgot OTP flow', async ({ page }) => {
-  await page.goto('/#/auth?mode=recovery');
-  await expect(page).toHaveURL(/#\/auth\?.*mode=forgot/);
-  await expect(page.locator('#authStatus')).toContainText('Ссылки восстановления отключены');
-  await expect(page.locator('#authRecoveryEmail')).toBeVisible();
+test('reset auth mode renders stage 1 with email input', async ({ page }) => {
+  await page.goto('/#/auth?mode=reset');
+  await expect(page.locator('#authTitle')).toHaveText('Восстановление пароля');
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 2');
+  await expect(page.locator('#authResetEmail')).toBeVisible();
+});
+
+test('invalid auth mode falls back to login', async ({ page }) => {
+  await page.goto('/#/auth?mode=forgot');
+  await expect(page.locator('#authTitle')).toHaveText('Вход');
+  await expect(page.locator('#authEmail')).toBeVisible();
 });
 
 test('unknown route redirects to home', async ({ page }) => {
