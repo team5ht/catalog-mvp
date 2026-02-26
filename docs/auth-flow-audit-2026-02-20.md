@@ -23,6 +23,16 @@
   - результат: `36 passed`.
 - `P2` и `P3` из этого отчета остаются открытыми.
 
+## Status update (2026-02-26)
+
+- Закрыта часть `P2` про ownership redirect-lock: глобальный `window.__*` контракт удален.
+- Введен явный app-level coordinator `scripts/app/services/auth-redirect-coordinator.js` (module-scope lock API).
+- `scripts/app/views/auth-view.js` теперь пишет lock через coordinator, `scripts/app/routing/auth-guard.js` читает его через coordinator.
+- Валидация после изменения:
+  - `npm run test:e2e`
+  - результат: `36 passed`.
+- Остальной `P2` finding про verify rate-limit cooldown и оба `P3` остаются открытыми.
+
 ## Findings
 
 ### P1 (высокий, Resolved 2026-02-20): дублирование двух state-machine в `auth-view`
@@ -37,10 +47,11 @@
   - выделить общий `createOtpFlowController(config)` с параметрами (`mode`, `copy`, `verifyType`, `requestFn`, `verifyFn`, `needPasswordOnVerify`).
   - оставить в `renderAuthView` только wiring и layout.
 
-### P2 (средний): скрытая межмодульная связка через глобальный redirect-lock
+### P2 (средний, Resolved 2026-02-26): скрытая межмодульная связка через глобальный redirect-lock
 
-- Запись глобального флага: `scripts/app/views/auth-view.js:134`.
-- Чтение в guard: `scripts/app/routing/auth-guard.js:13`.
+- Новый coordinator: `scripts/app/services/auth-redirect-coordinator.js:1`.
+- Запись lock из view: `scripts/app/views/auth-view.js:141`.
+- Чтение lock в guard: `scripts/app/routing/auth-guard.js:14`.
 - Риск:
   - неявный ownership между view и routing-layer;
   - усложнение диагностики при race-сценариях;
@@ -94,6 +105,6 @@
 ## План исправлений
 
 1. Сначала (P1): убрать дублирование signup/reset в общий контроллер flow.
-2. Затем (P2): вынести redirect-lock из `window` в явный app-level coordinator.
+2. Затем (P2): вынести redirect-lock из `window` в явный app-level coordinator. `Done 2026-02-26`.
 3. Затем (P2/P3): выровнять UX поведения verify-rate-limit и reset-invalid-OTP.
 4. После рефакторинга: дополнить e2e-кейсы из блока выше.

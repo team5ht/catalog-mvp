@@ -25,6 +25,7 @@ import {
   verifyResetOtp,
   verifySignupOtp
 } from '../services/auth-service.js';
+import { setAuthRedirectLock } from '../services/auth-redirect-coordinator.js';
 import { isCurrentRender } from '../state.js';
 
 const OTP_CODE_REGEX = new RegExp(`^\\d{${AUTH_OTP_MIN_LENGTH},${AUTH_OTP_MAX_LENGTH}}$`);
@@ -129,14 +130,6 @@ function createAuthLayout({ title, subtitle, note, formMarkup }) {
       </section>
     </div>
   `;
-}
-
-function setAuthRedirectLock(nextValue) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.__AUTH_MVP_V2_BLOCK_AUTH_REDIRECT = Boolean(nextValue);
 }
 
 export async function renderAuthView(route, renderToken) {

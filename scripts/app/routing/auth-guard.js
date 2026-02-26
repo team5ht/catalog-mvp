@@ -1,4 +1,5 @@
 import { buildAuthHash, sanitizeRedirectHash } from './hash.js';
+import { isAuthRedirectLockActive } from '../services/auth-redirect-coordinator.js';
 
 export function resolveAuthRedirect(route, authed) {
   if (!route || typeof route !== 'object') {
@@ -10,7 +11,7 @@ export function resolveAuthRedirect(route, authed) {
       return null;
     }
 
-    if (typeof window !== 'undefined' && window.__AUTH_MVP_V2_BLOCK_AUTH_REDIRECT) {
+    if (isAuthRedirectLockActive()) {
       return null;
     }
 

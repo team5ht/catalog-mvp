@@ -63,3 +63,10 @@
 3. Внешний контракт не менялся: сохранены route/query contract, DOM id/data-action и пользовательские тексты.
 4. Добавлен parity-тест `reload on signup stage 2 returns to stage 1` в `tests/e2e/auth-signup-otp.spec.js`.
 5. Регрессия подтверждена полным прогоном `npm run test:e2e` (`36 passed`).
+
+## Implementation status update (2026-02-26)
+
+1. Закрыта часть `P2` из `docs/auth-flow-audit-2026-02-20.md`: redirect-lock ownership переведен с `window.__*` на явный app-level coordinator.
+2. Добавлен `scripts/app/services/auth-redirect-coordinator.js` с module-scope API (`setAuthRedirectLock`, `isAuthRedirectLockActive`).
+3. `scripts/app/views/auth-view.js` и `scripts/app/routing/auth-guard.js` переведены на coordinator без изменения внешнего поведения flow.
+4. Регрессия подтверждена полным прогоном `npm run test:e2e` (`36 passed`).
