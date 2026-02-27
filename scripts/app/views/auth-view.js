@@ -26,11 +26,20 @@ import {
   verifySignupOtp
 } from '../services/auth-service.js';
 import { setAuthRedirectLock } from '../services/auth-redirect-coordinator.js';
+import {
+  authenticateViaTelegram,
+  getTelegramAuthConfig,
+  mountTelegramWidget
+} from '../services/telegram-auth-service.js';
 import { isCurrentRender } from '../state.js';
 
 const OTP_CODE_REGEX = new RegExp(`^\\d{${AUTH_OTP_MIN_LENGTH},${AUTH_OTP_MAX_LENGTH}}$`);
 const FLOW_STAGE_REQUEST = 'request';
 const FLOW_STAGE_VERIFY = 'verify';
+const TELEGRAM_LOGIN_SECTION_ID = 'authTelegramLoginSection';
+const TELEGRAM_LOGIN_WIDGET_ID = 'authTelegramLoginWidget';
+const TELEGRAM_SIGNUP_SECTION_ID = 'authTelegramSignupSection';
+const TELEGRAM_SIGNUP_WIDGET_ID = 'authTelegramSignupWidget';
 
 function escapeHtml(input) {
   return String(input || '')
@@ -112,6 +121,37 @@ function resolveCaptchaToken() {
   return '';
 }
 
+function normalizeErrorMessage(error, fallbackMessage) {
+  if (!error) {
+    return fallbackMessage;
+  }
+
+  const message = typeof error.message === 'string' ? error.message.trim() : '';
+  return message || fallbackMessage;
+}
+
+function createTelegramAuthSectionMarkup(sectionId, widgetId) {
+  return `
+    <section id="${sectionId}" class="auth-form__telegram" hidden>
+      <p class="auth-form__telegram-label">или через Telegram</p>
+      <div id="${widgetId}" class="auth-form__telegram-widget"></div>
+    </section>
+  `;
+}
+
+function setTelegramAuthHandler(handler) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (typeof handler === 'function') {
+    window.onTelegramAuth = handler;
+    return;
+  }
+
+  window.onTelegramAuth = async function onTelegramAuthNoop() {};
+}
+
 function createAuthLayout({ title, subtitle, note, formMarkup }) {
   return `
     <div class="auth-page ui-enter">
@@ -139,6 +179,7 @@ export async function renderAuthView(route, renderToken) {
   }
 
   setAuthRedirectLock(false);
+  setTelegramAuthHandler(null);
 
   const requestedMode = getAuthModeFromRoute(route);
   const redirectHash = sanitizeRedirectHash(route?.query?.redirect);
@@ -147,6 +188,105 @@ export async function renderAuthView(route, renderToken) {
   const loginHash = buildAuthHash(redirectHash, { mode: AUTH_MODE_LOGIN });
   const signupHash = buildAuthHash(redirectHash, { mode: AUTH_MODE_SIGNUP });
   const resetHash = buildAuthHash(redirectHash, { mode: AUTH_MODE_RESET });
+  const telegramAuthConfig = getTelegramAuthConfig();
+  let hasWarnedTelegramConfig = false;
+
+  function setTelegramSectionVisibility(sectionId, isVisible) {
+    const section = sectionId ? document.getElementById(sectionId) : null;
+    if (!section) {
+      return;
+    }
+
+    section.hidden = !isVisible;
+  }
+
+  function warnTelegramConfigMissing() {
+    if (hasWarnedTelegramConfig) {
+      return;
+    }
+
+    hasWarnedTelegramConfig = true;
+    console.warn(
+      'Telegram auth config is incomplete. Set window.TELEGRAM_LOGIN_BOT_USERNAME and window.TELEGRAM_AUTH_FUNCTION_URL.'
+    );
+  }
+
+  function mountTelegramAuthWidget(sectionId, widgetId) {
+    const widgetContainer = widgetId ? document.getElementById(widgetId) : null;
+    if (!widgetContainer) {
+      return false;
+    }
+
+    const hasRequiredConfig = Boolean(telegramAuthConfig.botUsername && telegramAuthConfig.functionUrl);
+    if (!hasRequiredConfig) {
+      setTelegramSectionVisibility(sectionId, false);
+      warnTelegramConfigMissing();
+      return false;
+    }
+
+    const mounted = mountTelegramWidget(widgetContainer, telegramAuthConfig.botUsername);
+    setTelegramSectionVisibility(sectionId, mounted);
+    return mounted;
+  }
+
+  function createTelegramAuthHandler(options = {}) {
+    const {
+      setStatus,
+      setLoading,
+      isBlocked
+    } = options;
+
+    let inFlight = false;
+
+    return async function onTelegramAuth(user) {
+      if (!isCurrentRender(renderToken)) {
+        return;
+      }
+
+      if (inFlight) {
+        return;
+      }
+
+      if (typeof isBlocked === 'function' && isBlocked()) {
+        return;
+      }
+
+      inFlight = true;
+      if (typeof setLoading === 'function') {
+        setLoading(true);
+      }
+
+      if (typeof setStatus === 'function') {
+        setStatus('Выполняем вход через Telegram...', 'info');
+      }
+
+      try {
+        await authenticateViaTelegram(user);
+        if (!isCurrentRender(renderToken)) {
+          return;
+        }
+
+        if (typeof setStatus === 'function') {
+          setStatus('Вход через Telegram выполнен. Перенаправляем...', 'success');
+        }
+      } catch (error) {
+        if (!isCurrentRender(renderToken)) {
+          return;
+        }
+
+        console.warn('Ошибка входа через Telegram', error);
+        if (typeof setStatus === 'function') {
+          const message = normalizeErrorMessage(error, 'Не удалось войти через Telegram. Попробуйте ещё раз.');
+          setStatus(`Не удалось войти через Telegram: ${message}`, 'error');
+        }
+      } finally {
+        inFlight = false;
+        if (typeof setLoading === 'function' && isCurrentRender(renderToken)) {
+          setLoading(false);
+        }
+      }
+    };
+  }
 
   if (requestedMode === AUTH_MODE_LOGIN) {
     root.innerHTML = createAuthLayout({
@@ -177,6 +317,7 @@ export async function renderAuthView(route, renderToken) {
         <div class="auth-form__actions">
           <button type="submit" class="button button--primary" data-action="login">Войти</button>
         </div>
+        ${createTelegramAuthSectionMarkup(TELEGRAM_LOGIN_SECTION_ID, TELEGRAM_LOGIN_WIDGET_ID)}
         <div class="auth-form__meta">
           <a class="auth-form__link" href="${signupHash}">Нет аккаунта? Зарегистрироваться</a>
           <a class="auth-form__link" href="${resetHash}">Забыли пароль? Восстановить</a>
@@ -264,6 +405,17 @@ export async function renderAuthView(route, renderToken) {
       });
     }
 
+    const loginTelegramAuthHandler = createTelegramAuthHandler({
+      setStatus,
+      setLoading,
+      isBlocked: () => isLoading
+    });
+
+    setTelegramAuthHandler(loginTelegramAuthHandler);
+    if (!mountTelegramAuthWidget(TELEGRAM_LOGIN_SECTION_ID, TELEGRAM_LOGIN_WIDGET_ID)) {
+      setTelegramAuthHandler(null);
+    }
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       setStatus('');
@@ -339,6 +491,35 @@ export async function renderAuthView(route, renderToken) {
     let verifyCooldownSeconds = 0;
     let verifyCooldownInterval = null;
     let isLoading = false;
+    const telegramSectionId = variant.telegram ? variant.telegram.sectionId : '';
+    const telegramWidgetId = variant.telegram ? variant.telegram.widgetId : '';
+    const hasTelegramAuth = Boolean(telegramSectionId && telegramWidgetId);
+
+    const stepperTelegramAuthHandler = createTelegramAuthHandler({
+      setStatus,
+      setLoading,
+      isBlocked: () => isLoading || currentStage !== FLOW_STAGE_REQUEST
+    });
+
+    function syncTelegramAuthUi() {
+      if (!hasTelegramAuth) {
+        setTelegramAuthHandler(null);
+        return;
+      }
+
+      if (currentStage !== FLOW_STAGE_REQUEST) {
+        setTelegramSectionVisibility(telegramSectionId, false);
+        setTelegramAuthHandler(null);
+        return;
+      }
+
+      setTelegramAuthHandler(stepperTelegramAuthHandler);
+      if (mountTelegramAuthWidget(telegramSectionId, telegramWidgetId)) {
+        return;
+      }
+
+      setTelegramAuthHandler(null);
+    }
 
     function getCooldownButton() {
       return form.querySelector('button[data-cooldown-button="true"]');
@@ -511,6 +692,7 @@ export async function renderAuthView(route, renderToken) {
         stepActionsEl.innerHTML = variant.renderVerifyActions({ verifyDisabled });
       }
 
+      syncTelegramAuthUi();
       applyInteractiveState();
       focusCurrentInput();
     }
@@ -777,6 +959,10 @@ export async function renderAuthView(route, renderToken) {
       requestError: 'Ошибка отправки signup OTP',
       verifyError: 'Ошибка подтверждения signup OTP'
     },
+    telegram: {
+      sectionId: TELEGRAM_SIGNUP_SECTION_ID,
+      widgetId: TELEGRAM_SIGNUP_WIDGET_ID
+    },
     readRequestStageData(state) {
       let nextEmail = state.email;
       let nextPassword = state.password;
@@ -857,6 +1043,7 @@ export async function renderAuthView(route, renderToken) {
           aria-label="Пароль"
           required
         />
+        ${createTelegramAuthSectionMarkup(TELEGRAM_SIGNUP_SECTION_ID, TELEGRAM_SIGNUP_WIDGET_ID)}
       `;
     },
     renderRequestActions() {

@@ -29,10 +29,10 @@ npm run test:e2e
 npm run test:e2e:headed
 ```
 
-## Валидационный baseline (2026-02-26)
+## Валидационный baseline (2026-02-27)
 
 - `npm run images:check` -> `Проверка изображений пройдена. Проверено ассетов: 14.`
-- `npm run test:e2e` -> `39 passed` (Chromium).
+- `npm run test:e2e` -> `43 passed` (Chromium).
 - Снимок текущего состояния кода: `docs/codebase-state-2026-02-26.md`.
 
 ## Структура
@@ -51,7 +51,7 @@ npm run test:e2e:headed
 - `scripts/images/build.mjs` - генерация responsive-изображений.
 - `scripts/images/check.mjs` - проверка data-контракта и image budgets/геометрии.
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - 3 CSS-слоя.
-- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
+- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`, `tests/e2e/auth-telegram.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
 
 ## Маршруты
 
@@ -98,6 +98,13 @@ npm run test:e2e:headed
 
 - Поддерживаемые режимы: `mode=login` (по умолчанию), `mode=signup`, `mode=reset`.
 - `mode=login`: email + пароль (`signInWithPassword`).
+- Telegram Login Widget:
+  - показывается в `mode=login`;
+  - показывается в `mode=signup` только на Stage 1;
+  - не показывается в `mode=reset`.
+- Callback виджета: глобальный `window.onTelegramAuth(user)`.
+- Flow callback: POST `user` как есть в `https://dgdnmenvpkyzdvhtmhmz.supabase.co/functions/v1/telegram-auth` -> `verifyOtp({ email, token_hash, type: 'magiclink' })` через существующий `window.supabaseClient`.
+- В запрос к `telegram-auth` не добавляется `Authorization` header.
 - `mode=signup`: 2 этапа внутри экрана:
   - этап 1: email + пароль -> отправка OTP (`signInWithOtp(...shouldCreateUser=true)`).
   - этап 2: OTP -> `verifyOtp(type='email')` -> `updateUser({ password })`.
@@ -182,6 +189,9 @@ npm run images:check
 - `supabase-config.js` должен быть загружен до `scripts/supabase-client.js`.
 - В браузере используется только publishable key.
 - Secret/service-role ключи нельзя хранить во фронтенде.
+- Telegram runtime config:
+  - `window.TELEGRAM_LOGIN_BOT_USERNAME` (prod: `the5htbot`);
+  - `window.TELEGRAM_AUTH_FUNCTION_URL` (по умолчанию: `https://dgdnmenvpkyzdvhtmhmz.supabase.co/functions/v1/telegram-auth`).
 
 Контракт `window.authStore`:
 
@@ -248,6 +258,7 @@ npm run test:e2e
 - active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
 - OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`): success/error/rate-limit/attempt-limit ветки
+- Telegram auth сценарии (`tests/e2e/auth-telegram.spec.js`): widget mount, edge-function POST contract, `magiclink` verify, ошибки и fallback-конфиг
 - auth/navigation guard сценарии (`tests/e2e/navigation-auth-guards.spec.js`): owner redirect и поведение кнопки аккаунта
 
 ## Деплой
