@@ -133,7 +133,7 @@ function normalizeErrorMessage(error, fallbackMessage) {
 function createTelegramAuthSectionMarkup(sectionId, widgetId) {
   return `
     <section id="${sectionId}" class="auth-form__telegram" hidden>
-      <p class="auth-form__telegram-label">или через Telegram</p>
+      <p class="auth-form__telegram-label">или</p>
       <div id="${widgetId}" class="auth-form__telegram-widget"></div>
     </section>
   `;
