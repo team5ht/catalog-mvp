@@ -1,5 +1,5 @@
-import { AUTH_MODE_LOGIN, HOME_HASH } from '../constants.js';
-import { buildAuthHash, getAuthModeFromRoute, sanitizeRedirectHash } from './hash.js';
+import { buildAuthHash, sanitizeRedirectHash } from './hash.js';
+import { isAuthRedirectLockActive } from '../services/auth-redirect-coordinator.js';
 
 export function resolveAuthRedirect(route, authed) {
   if (!route || typeof route !== 'object') {
@@ -11,12 +11,11 @@ export function resolveAuthRedirect(route, authed) {
       return null;
     }
 
-    const authMode = getAuthModeFromRoute(route);
-    if (authMode !== AUTH_MODE_LOGIN) {
+    if (isAuthRedirectLockActive()) {
       return null;
     }
 
-    return sanitizeRedirectHash(route.query?.redirect) || HOME_HASH;
+    return sanitizeRedirectHash(route.query?.redirect) || '#/account';
   }
 
   if (route.name === 'account') {

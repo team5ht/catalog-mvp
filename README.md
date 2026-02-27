@@ -8,7 +8,7 @@
 - Без bundler и серверного рендера: браузерные ESM-модули подключаются напрямую.
 - Контент и каталог берутся из `data.json`.
 - Обложки материалов и home hero генерируются локальным pipeline на `sharp`.
-- Авторизация: Supabase email/password + OTP-восстановление пароля в приложении.
+- Авторизация: Supabase email/password + OTP-first регистрация и восстановление пароля в приложении.
 - Единый auth-state хранится в `window.authStore`.
 - PWA: `manifest.json` + `sw.js` с precache shell и runtime cache изображений.
 
@@ -29,6 +29,12 @@ npm run test:e2e
 npm run test:e2e:headed
 ```
 
+## Валидационный baseline (2026-02-26)
+
+- `npm run images:check` -> `Проверка изображений пройдена. Проверено ассетов: 14.`
+- `npm run test:e2e` -> `39 passed` (Chromium).
+- Снимок текущего состояния кода: `docs/codebase-state-2026-02-26.md`.
+
 ## Структура
 
 - `index.html` - shell, навигация, подключение CSS/JS.
@@ -45,7 +51,7 @@ npm run test:e2e:headed
 - `scripts/images/build.mjs` - генерация responsive-изображений.
 - `scripts/images/check.mjs` - проверка data-контракта и image budgets/геометрии.
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - 3 CSS-слоя.
-- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
+- `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
 
 ## Маршруты
 
@@ -61,6 +67,7 @@ npm run test:e2e:headed
 - Невалидный `#/material/:id` редиректится на `#/`.
 - Redirect после auth передается через `#/auth?redirect=<hash>`.
 - `redirect` принимается только для известных внутренних hash-route (`#/...`), иначе fallback `#/`.
+- Если авторизованный пользователь открывает `#/auth`, выполняется redirect: на `redirect`, если он валиден, иначе на `#/account`.
 - Прокрутка: при `push/replace` новый экран открывается сверху, при `Back/Forward` браузер восстанавливает предыдущую позицию.
 
 ## Поведение экранов
@@ -81,7 +88,7 @@ npm run test:e2e:headed
 - Показывает обложку, категорию, описание, теги.
 - Описание поддерживает простой markdown-like формат:
   - пустая строка -> новый абзац
-  - строка с `- ` -> пункт списка
+  - строка с `-` -> пункт списка
 - Кнопка скачивания:
   - для гостя -> `#/auth?redirect=#/material/:id`
   - для авторизованного -> `window.open(pdfUrl)`
@@ -89,17 +96,23 @@ npm run test:e2e:headed
 
 ### Auth (`#/auth`)
 
-- `mode=login` (по умолчанию): вход/регистрация по email+паролю.
-- `mode=forgot`: OTP recovery flow в 3 шага:
-  - `request_code`
-  - `verify_code`
-  - `set_new_password`
+- Поддерживаемые режимы: `mode=login` (по умолчанию), `mode=signup`, `mode=reset`.
+- `mode=login`: email + пароль (`signInWithPassword`).
+- `mode=signup`: 2 этапа внутри экрана:
+  - этап 1: email + пароль -> отправка OTP (`signInWithOtp(...shouldCreateUser=true)`).
+  - этап 2: OTP -> `verifyOtp(type='email')` -> `updateUser({ password })`.
+- `mode=reset`: 2 этапа внутри экрана:
+  - этап 1: email -> отправка OTP (`resetPasswordForEmail`, без reset-ссылок).
+  - этап 2: OTP + новый пароль -> `verifyOtp(type='recovery')` -> `updateUser({ password })`.
+- Невалидный `mode` нормализуется в `mode=login`.
 - Валидации:
-  - email regex
-  - пароль минимум 6 символов
-  - OTP только цифры, длина 6-8
-- Legacy `mode=recovery` автоматически переводится в `mode=forgot` с инфо-сообщением.
-- Состояние шага восстановления и cooldown хранится в `localStorage`.
+  - email regex;
+  - пароль минимум 6 символов;
+  - OTP только цифры, длина 6-8.
+- Cooldown отправки/повтора OTP: 60 секунд.
+- Лимит неверных verify OTP: 5 попыток, затем доступен только resend.
+- Stage 2 (signup/reset) не персистится и при reload всегда сбрасывается в Stage 1.
+- Пароли и OTP не хранятся в `localStorage/sessionStorage/IndexedDB`.
 
 ### Account (`#/account`)
 
@@ -223,15 +236,18 @@ npm run test:e2e
 Что покрыто e2e:
 
 - рендер `#/` и hero через `<img>` (`fetchpriority="high"`)
+- cold start без hash (`/`) -> канонизация в `#/` и гидрация home без зависания skeleton
 - каталог: поиск + фильтрация + empty state
 - материал: корректный рендер описания (абзацы/список), CTA для гостя, redirect в auth
 - `#/account` auth-gating
-- `#/auth?mode=forgot` (OTP stepper)
-- `#/auth?mode=recovery` (legacy redirect в forgot)
+- `#/auth?mode=signup` (OTP регистрация)
+- `#/auth?mode=reset` (OTP восстановление)
 - `#/unknown` redirect на home
+- навигационная прокрутка: `push/replace` открывают экран сверху, `Back` восстанавливает scroll
+- анти-регрессия hydration для `#/catalog` при задержке `data.json` и churn маршрутов
 - active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
-- OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`): success/error/rate-limit ветки
+- OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`): success/error/rate-limit/attempt-limit ветки
 - auth/navigation guard сценарии (`tests/e2e/navigation-auth-guards.spec.js`): owner redirect и поведение кнопки аккаунта
 
 ## Деплой
@@ -244,3 +260,4 @@ npm run test:e2e
 ## Известные ограничения
 
 - В `data.json` используются demo-ссылки `YOUR_FILE_ID_*` для PDF.
+- В `sw.js` в shell precache еще присутствует legacy-путь `./scripts/nav-auth.js`; файл отсутствует, поэтому на install появляется warning и ресурс пропускается.
