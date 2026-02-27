@@ -289,7 +289,6 @@ test('login telegram auth sends raw payload, verifies magiclink and redirects to
   });
 
   expect(verifyParams).toEqual({
-    email: functionResponse.email,
     token_hash: functionResponse.token_hash,
     type: 'magiclink'
   });

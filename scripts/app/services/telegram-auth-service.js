@@ -87,8 +87,8 @@ export async function authenticateViaTelegram(user) {
 
   const email = typeof responseData?.email === 'string' ? responseData.email.trim() : '';
   const tokenHash = typeof responseData?.token_hash === 'string' ? responseData.token_hash.trim() : '';
-  if (!email || !tokenHash) {
-    throw new Error('telegram-auth response is missing email or token_hash');
+  if (!tokenHash) {
+    throw new Error('telegram-auth response is missing token_hash');
   }
 
   const client = getSupabaseClient();
@@ -97,7 +97,6 @@ export async function authenticateViaTelegram(user) {
   }
 
   const { error } = await client.auth.verifyOtp({
-    email,
     token_hash: tokenHash,
     type: 'magiclink'
   });
