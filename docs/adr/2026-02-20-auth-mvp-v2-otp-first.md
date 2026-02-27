@@ -2,7 +2,7 @@
 
 - Date: 2026-02-20
 - Status: Accepted
-- Scope: `scripts/app/constants.js`, `scripts/app/routing/*`, `scripts/app/services/auth-service.js`, `scripts/app/views/auth-view.js`, `tests/e2e/*`, `README.md`
+- Scope: `scripts/app/constants.js`, `scripts/app/routing/*`, `scripts/app/services/auth-service.js`, `scripts/app/services/auth-redirect-coordinator.js`, `scripts/app/views/auth-view.js`, `tests/e2e/*`, `README.md`
 - Policy: `behavior-change`
 
 ## Контекст
@@ -69,4 +69,14 @@
 1. Закрыта часть `P2` из `docs/auth-flow-audit-2026-02-20.md`: redirect-lock ownership переведен с `window.__*` на явный app-level coordinator.
 2. Добавлен `scripts/app/services/auth-redirect-coordinator.js` с module-scope API (`setAuthRedirectLock`, `isAuthRedirectLockActive`).
 3. `scripts/app/views/auth-view.js` и `scripts/app/routing/auth-guard.js` переведены на coordinator без изменения внешнего поведения flow.
-4. Регрессия подтверждена полным прогоном `npm run test:e2e` (`36 passed`).
+4. Закрыт remaining `P2`: при `verify 429` добавлен отдельный verify-backoff cooldown на verify-кнопке с countdown и восстановлением фокуса в OTP input после завершения backoff.
+5. Закрыт `P3` по reset invalid OTP: очищается только OTP, новый пароль в reset stage 2 сохраняется между retry.
+6. Закрыт `P3` по login CTA: удален дублирующий reset-link, оставлен один явный reset-CTA.
+7. Добавлены e2e-анти-регрессы в `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`, `tests/e2e/app-smoke.spec.js`.
+8. Регрессия подтверждена полным прогоном `npm run test:e2e` (`39 passed`).
+
+## Validation refresh (2026-02-26)
+
+1. Повторно выполнен `npm run images:check` -> `Проверка изображений пройдена. Проверено ассетов: 14.`
+2. Повторно выполнен `npm run test:e2e` -> `39 passed`.
+3. Фактическое поведение auth-flow соответствует принятому решению ADR без новых расхождений.

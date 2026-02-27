@@ -104,6 +104,10 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
       window.__OTP_TEST_CALLS.push({ method: 'verifyOtp', params });
 
       const verifyScenario = params && params.type === 'email' ? scenario.verifySignupOtp : scenario.verifyResetOtp;
+      const configuredRetryAfterSeconds = params && params.type === 'email'
+        ? scenario.verifySignupRetryAfterSeconds
+        : scenario.verifyResetRetryAfterSeconds;
+      const retryAfterSeconds = Math.max(1, Math.floor(Number(configuredRetryAfterSeconds) || 37));
 
       if (verifyScenario === 'rate_limit') {
         return {
@@ -111,7 +115,7 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
           error: createError({
             status: 429,
             code: 'over_email_send_rate_limit',
-            message: 'Only request this after 37 seconds'
+            message: 'Only request this after ' + retryAfterSeconds + ' seconds'
           })
         };
       }
@@ -252,6 +256,26 @@ test('invalid reset OTP counts attempts and blocks verify after 5 failures', asy
   await expect(page.locator('button[data-action="verify_reset_otp"]')).toBeDisabled();
 });
 
+test('invalid reset OTP clears OTP but keeps new password', async ({ page }) => {
+  await setupMockSupabase(page, {
+    requestResetOtp: 'success',
+    verifyResetOtp: 'invalid'
+  });
+
+  await page.goto('/#/auth?mode=reset');
+  await page.locator('#authResetEmail').fill('user@example.com');
+  await page.locator('button[data-action="request_reset_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
+
+  await page.locator('#authResetOtp').fill('123456');
+  await page.locator('#authResetPassword').fill('strong-pass-123');
+  await page.locator('button[data-action="verify_reset_otp"]').click();
+
+  await expect(page.locator('#authStatus')).toContainText('Код недействителен или истек');
+  await expect(page.locator('#authResetOtp')).toHaveValue('');
+  await expect(page.locator('#authResetPassword')).toHaveValue('strong-pass-123');
+});
+
 test('reload on reset stage 2 returns to stage 1', async ({ page }) => {
   await setupMockSupabase(page, {
     requestResetOtp: 'success'
@@ -299,7 +323,8 @@ test('429 on reset request shows retry timing', async ({ page }) => {
 test('429 on reset verify shows retry timing', async ({ page }) => {
   await setupMockSupabase(page, {
     requestResetOtp: 'success',
-    verifyResetOtp: 'rate_limit'
+    verifyResetOtp: 'rate_limit',
+    verifyResetRetryAfterSeconds: 2
   });
 
   await page.goto('/#/auth?mode=reset');
@@ -311,7 +336,17 @@ test('429 on reset verify shows retry timing', async ({ page }) => {
   await page.locator('#authResetPassword').fill('123456');
   await page.locator('button[data-action="verify_reset_otp"]').click();
 
-  await expect(page.locator('#authStatus')).toContainText('37 сек');
+  const verifyButton = page.locator('button[data-action="verify_reset_otp"]');
+
+  await expect(page.locator('#authStatus')).toContainText('2 сек');
+  await expect(verifyButton).toContainText('Повтор через');
+  await expect(verifyButton).toBeDisabled();
+
+  await expect(verifyButton).toHaveText('Сохранить', { timeout: 7000 });
+  await expect(verifyButton).toBeEnabled();
+
+  const activeElementId = await page.evaluate(() => (document.activeElement ? document.activeElement.id : ''));
+  expect(activeElementId).toBe('authResetOtp');
 });
 
 test('updateUser failure after reset verify signs out and returns to stage 1', async ({ page }) => {

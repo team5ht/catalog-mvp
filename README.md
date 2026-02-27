@@ -29,6 +29,12 @@ npm run test:e2e
 npm run test:e2e:headed
 ```
 
+## Валидационный baseline (2026-02-26)
+
+- `npm run images:check` -> `Проверка изображений пройдена. Проверено ассетов: 14.`
+- `npm run test:e2e` -> `39 passed` (Chromium).
+- Снимок текущего состояния кода: `docs/codebase-state-2026-02-26.md`.
+
 ## Структура
 
 - `index.html` - shell, навигация, подключение CSS/JS.
@@ -82,7 +88,7 @@ npm run test:e2e:headed
 - Показывает обложку, категорию, описание, теги.
 - Описание поддерживает простой markdown-like формат:
   - пустая строка -> новый абзац
-  - строка с `- ` -> пункт списка
+  - строка с `-` -> пункт списка
 - Кнопка скачивания:
   - для гостя -> `#/auth?redirect=#/material/:id`
   - для авторизованного -> `window.open(pdfUrl)`
@@ -230,12 +236,15 @@ npm run test:e2e
 Что покрыто e2e:
 
 - рендер `#/` и hero через `<img>` (`fetchpriority="high"`)
+- cold start без hash (`/`) -> канонизация в `#/` и гидрация home без зависания skeleton
 - каталог: поиск + фильтрация + empty state
 - материал: корректный рендер описания (абзацы/список), CTA для гостя, redirect в auth
 - `#/account` auth-gating
 - `#/auth?mode=signup` (OTP регистрация)
 - `#/auth?mode=reset` (OTP восстановление)
 - `#/unknown` redirect на home
+- навигационная прокрутка: `push/replace` открывают экран сверху, `Back` восстанавливает scroll
+- анти-регрессия hydration для `#/catalog` при задержке `data.json` и churn маршрутов
 - active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
 - OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`): success/error/rate-limit/attempt-limit ветки
@@ -251,3 +260,4 @@ npm run test:e2e
 ## Известные ограничения
 
 - В `data.json` используются demo-ссылки `YOUR_FILE_ID_*` для PDF.
+- В `sw.js` в shell precache еще присутствует legacy-путь `./scripts/nav-auth.js`; файл отсутствует, поэтому на install появляется warning и ресурс пропускается.

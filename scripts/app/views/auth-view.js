@@ -180,7 +180,6 @@ export async function renderAuthView(route, renderToken) {
         <div class="auth-form__meta">
           <a class="auth-form__link" href="${signupHash}">Нет аккаунта? Зарегистрироваться</a>
           <a class="auth-form__link" href="${resetHash}">Забыли пароль? Восстановить</a>
-          <a id="authLoginResetCta" class="auth-form__link" href="${resetHash}" hidden>Перейти к восстановлению</a>
         </div>
       `
     });
@@ -224,24 +223,18 @@ export async function renderAuthView(route, renderToken) {
 
   const form = document.getElementById('authForm');
   const statusEl = document.getElementById('authStatus');
-  const loginResetCta = document.getElementById('authLoginResetCta');
 
   if (!form || !statusEl) {
     return;
   }
 
-  function setStatus(message, tone = 'error', options = {}) {
-    const { showResetCta = false } = options;
+  function setStatus(message, tone = 'error') {
     statusEl.classList.remove(
       'auth-form__status--visible',
       'auth-form__status--error',
       'auth-form__status--success',
       'auth-form__status--info'
     );
-
-    if (loginResetCta) {
-      loginResetCta.hidden = !showResetCta;
-    }
 
     if (!message) {
       statusEl.textContent = '';
@@ -303,8 +296,7 @@ export async function renderAuthView(route, renderToken) {
         if (!result.ok) {
           setStatus(
             'Не удалось войти. Проверьте email и пароль или перейдите к восстановлению.',
-            'error',
-            { showResetCta: true }
+            'error'
           );
           return;
         }
@@ -315,7 +307,7 @@ export async function renderAuthView(route, renderToken) {
           return;
         }
         console.warn('Ошибка входа', error);
-        setStatus('Что-то пошло не так. Попробуйте ещё раз.', 'error', { showResetCta: true });
+        setStatus('Что-то пошло не так. Попробуйте ещё раз.', 'error');
       } finally {
         if (isCurrentRender(renderToken)) {
           setLoading(false);
@@ -344,10 +336,16 @@ export async function renderAuthView(route, renderToken) {
     let verifyAttempts = 0;
     let otpCooldownSeconds = 0;
     let otpCooldownInterval = null;
+    let verifyCooldownSeconds = 0;
+    let verifyCooldownInterval = null;
     let isLoading = false;
 
     function getCooldownButton() {
       return form.querySelector('button[data-cooldown-button="true"]');
+    }
+
+    function getVerifyButton() {
+      return form.querySelector(`button[data-action="${variant.actions.verify}"]`);
     }
 
     function applyOtpCooldownUi() {
@@ -369,6 +367,26 @@ export async function renderAuthView(route, renderToken) {
       }
     }
 
+    function applyVerifyCooldownUi() {
+      const verifyButton = getVerifyButton();
+      if (!verifyButton || isLoading) {
+        return;
+      }
+
+      if (verifyButton.dataset.defaultText == null) {
+        verifyButton.dataset.defaultText = verifyButton.textContent || '';
+      }
+
+      if (verifyCooldownSeconds > 0) {
+        verifyButton.disabled = true;
+        verifyButton.textContent = `Повтор через ${verifyCooldownSeconds} c`;
+        return;
+      }
+
+      verifyButton.textContent = verifyButton.dataset.defaultText;
+      verifyButton.disabled = verifyAttempts >= AUTH_VERIFY_MAX_ATTEMPTS;
+    }
+
     function applyInteractiveState() {
       form.setAttribute('aria-busy', isLoading ? 'true' : 'false');
 
@@ -378,11 +396,8 @@ export async function renderAuthView(route, renderToken) {
       });
 
       if (!isLoading) {
-        const verifyButton = form.querySelector(`button[data-action="${variant.actions.verify}"]`);
-        if (verifyButton && verifyAttempts >= AUTH_VERIFY_MAX_ATTEMPTS) {
-          verifyButton.disabled = true;
-        }
         applyOtpCooldownUi();
+        applyVerifyCooldownUi();
       }
     }
 
@@ -393,6 +408,16 @@ export async function renderAuthView(route, renderToken) {
       }
 
       otpCooldownSeconds = 0;
+      applyInteractiveState();
+    }
+
+    function stopVerifyCooldown() {
+      if (verifyCooldownInterval) {
+        window.clearInterval(verifyCooldownInterval);
+        verifyCooldownInterval = null;
+      }
+
+      verifyCooldownSeconds = 0;
       applyInteractiveState();
     }
 
@@ -424,6 +449,44 @@ export async function renderAuthView(route, renderToken) {
       }, 1000);
     }
 
+    function focusOtpInput() {
+      const otpInput = document.getElementById(variant.ids.otpInput);
+      if (otpInput && typeof otpInput.focus === 'function') {
+        otpInput.focus();
+      }
+    }
+
+    function startVerifyCooldown(seconds) {
+      const normalizedSeconds = Math.max(1, Math.floor(Number(seconds) || AUTH_OTP_COOLDOWN_SECONDS));
+
+      if (verifyCooldownInterval) {
+        window.clearInterval(verifyCooldownInterval);
+        verifyCooldownInterval = null;
+      }
+
+      verifyCooldownSeconds = normalizedSeconds;
+      applyInteractiveState();
+
+      verifyCooldownInterval = window.setInterval(() => {
+        if (!isCurrentRender(renderToken)) {
+          window.clearInterval(verifyCooldownInterval);
+          verifyCooldownInterval = null;
+          return;
+        }
+
+        verifyCooldownSeconds -= 1;
+        if (verifyCooldownSeconds <= 0) {
+          stopVerifyCooldown();
+          if (currentStage === FLOW_STAGE_VERIFY) {
+            focusOtpInput();
+          }
+          return;
+        }
+
+        applyInteractiveState();
+      }, 1000);
+    }
+
     function focusCurrentInput() {
       const selector = currentStage === FLOW_STAGE_REQUEST
         ? variant.focusSelector.request
@@ -442,7 +505,7 @@ export async function renderAuthView(route, renderToken) {
         stepBodyEl.innerHTML = variant.renderRequestBody({ email, password });
         stepActionsEl.innerHTML = variant.renderRequestActions();
       } else {
-        const verifyDisabled = verifyAttempts >= AUTH_VERIFY_MAX_ATTEMPTS;
+        const verifyDisabled = verifyAttempts >= AUTH_VERIFY_MAX_ATTEMPTS || verifyCooldownSeconds > 0;
         stepProgressEl.textContent = variant.progressText.verify;
         stepBodyEl.innerHTML = variant.renderVerifyBody({ email, password });
         stepActionsEl.innerHTML = variant.renderVerifyActions({ verifyDisabled });
@@ -465,6 +528,7 @@ export async function renderAuthView(route, renderToken) {
       });
       verifyAttempts = 0;
       stopOtpCooldown();
+      stopVerifyCooldown();
       currentStage = FLOW_STAGE_REQUEST;
       setStatus('');
       renderCurrentStage();
@@ -492,6 +556,7 @@ export async function renderAuthView(route, renderToken) {
       email = requestData.email;
       password = requestData.password;
       verifyAttempts = 0;
+      stopVerifyCooldown();
 
       setLoading(true);
       try {
@@ -539,6 +604,11 @@ export async function renderAuthView(route, renderToken) {
         return;
       }
 
+      if (verifyCooldownSeconds > 0) {
+        setStatus(`Слишком много попыток. Повторите через ${verifyCooldownSeconds} сек.`, 'info');
+        return;
+      }
+
       const prerequisites = variant.getVerifyPrerequisites({ email, password });
       if (!prerequisites.ok) {
         currentStage = FLOW_STAGE_REQUEST;
@@ -556,6 +626,7 @@ export async function renderAuthView(route, renderToken) {
         password,
         passwordInput
       });
+      password = newPassword;
 
       if (!OTP_CODE_REGEX.test(otpCode)) {
         setStatus(`Введите ${AUTH_OTP_MIN_LENGTH}-${AUTH_OTP_MAX_LENGTH} цифр из письма.`);
@@ -582,6 +653,7 @@ export async function renderAuthView(route, renderToken) {
         if (!verifyResult.ok) {
           if (isAuthRateLimitError(verifyResult.error)) {
             const retryAfterSeconds = getRetryAfterSeconds(verifyResult.error, AUTH_OTP_COOLDOWN_SECONDS);
+            startVerifyCooldown(retryAfterSeconds);
             setStatus(`Слишком много попыток. Повторите через ${retryAfterSeconds} сек.`, 'info');
             return;
           }
@@ -630,6 +702,7 @@ export async function renderAuthView(route, renderToken) {
           }
         });
         stopOtpCooldown();
+        stopVerifyCooldown();
         navigateTo(postAuthRedirectHash, { replace: true });
       } catch (error) {
         if (!isCurrentRender(renderToken)) {
@@ -874,7 +947,7 @@ export async function renderAuthView(route, renderToken) {
 
       return {
         email: nextEmail,
-        password: ''
+        password: state.password
       };
     },
     validateRequestStageData(data) {
@@ -903,19 +976,16 @@ export async function renderAuthView(route, renderToken) {
     verifyOtp(params) {
       return verifyResetOtp(params);
     },
-    handleInvalidOtp({ otpInput, passwordInput }) {
+    handleInvalidOtp({ otpInput }) {
       if (otpInput) {
         otpInput.value = '';
       }
-      if (passwordInput) {
-        passwordInput.value = '';
-      }
     },
-    onResetStageTwoState() {
-      // reset mode does not keep stage-1 password
+    onResetStageTwoState(store) {
+      store.setPassword('');
     },
-    onVerifySuccess() {
-      // reset mode has no in-memory password cache
+    onVerifySuccess(store) {
+      store.setPassword('');
     },
     renderRequestBody(state) {
       return `
@@ -969,6 +1039,7 @@ export async function renderAuthView(route, renderToken) {
           id="authResetPassword"
           class="auth-form__input"
           placeholder="Новый пароль (мин. ${PASSWORD_MIN_LENGTH} символов)"
+          value="${escapeHtml(state.password)}"
           autocomplete="new-password"
           aria-label="Новый пароль"
           required

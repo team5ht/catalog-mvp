@@ -91,21 +91,25 @@ styles/
 - `#materialTags`
 - `.button--download.is-loading`
 
-### Auth (login + forgot OTP)
+### Auth (`login/signup/reset`)
 
 - `#authForm`
 - `#authStatus`
-- `#authEmail`
-- `#authPassword`
-- `#authForgotStepper`
+- `#authStepper`
 - `#authStepProgress`
 - `#authStepBody`
 - `#authStepActions`
-- `#authRecoveryEmail`
-- `#authRecoveryOtp`
-- `#authRecoveryEmailReadonly`
-- `#authNewPassword`
-- `#authConfirmPassword`
+- `#authEmail`
+- `#authPassword`
+- `#authSignupEmail`
+- `#authSignupPassword`
+- `#authSignupEmailReadonly`
+- `#authSignupPasswordReadonly`
+- `#authSignupOtp`
+- `#authResetEmail`
+- `#authResetEmailReadonly`
+- `#authResetOtp`
+- `#authResetPassword`
 - `button[data-action]`
 - `button[data-cooldown-button="true"]`
 
@@ -126,4 +130,4 @@ styles/
 - Новые токены добавлять только в `tokens.css`.
 - Переиспользуемые UI-компоненты/утилиты добавлять в `ui.css`.
 - Экранно-специфичные стили добавлять в `pages.css`.
-- При изменении id/классов из раздела "JS DOM-контракты" обновлять JS в `scripts/app/*` и `scripts/nav-auth.js` в том же PR.
+- При изменении id/классов из раздела "JS DOM-контракты" обновлять JS в `scripts/app/*` в том же PR.

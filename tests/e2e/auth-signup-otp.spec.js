@@ -89,13 +89,15 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
         };
       }
 
+      const retryAfterSeconds = Math.max(1, Math.floor(Number(scenario.verifySignupRetryAfterSeconds) || 37));
+
       if (scenario.verifySignupOtp === 'rate_limit') {
         return {
           data: null,
           error: createError({
             status: 429,
             code: 'over_email_send_rate_limit',
-            message: 'Only request this after 37 seconds'
+            message: 'Only request this after ' + retryAfterSeconds + ' seconds'
           })
         };
       }
@@ -232,6 +234,35 @@ test('invalid signup OTP counts attempts and blocks verify after 5 failures', as
 
   await expect(page.locator('#authStatus')).toContainText('Лимит попыток исчерпан');
   await expect(page.locator('button[data-action="verify_signup_otp"]')).toBeDisabled();
+});
+
+test('429 on signup verify starts verify cooldown and restores verify action after backoff', async ({ page }) => {
+  await setupMockSupabase(page, {
+    requestSignupOtp: 'success',
+    verifySignupOtp: 'rate_limit',
+    verifySignupRetryAfterSeconds: 2
+  });
+
+  await page.goto('/#/auth?mode=signup');
+  await page.locator('#authSignupEmail').fill('user@example.com');
+  await page.locator('#authSignupPassword').fill('123456');
+  await page.locator('button[data-action="request_signup_otp"]').click();
+  await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
+
+  const verifyButton = page.locator('button[data-action="verify_signup_otp"]');
+
+  await page.locator('#authSignupOtp').fill('123456');
+  await verifyButton.click();
+
+  await expect(page.locator('#authStatus')).toContainText('2 сек');
+  await expect(verifyButton).toContainText('Повтор через');
+  await expect(verifyButton).toBeDisabled();
+
+  await expect(verifyButton).toHaveText('Подтвердить', { timeout: 7000 });
+  await expect(verifyButton).toBeEnabled();
+
+  const activeElementId = await page.evaluate(() => (document.activeElement ? document.activeElement.id : ''));
+  expect(activeElementId).toBe('authSignupOtp');
 });
 
 test('reload on signup stage 2 returns to stage 1', async ({ page }) => {
