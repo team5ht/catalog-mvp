@@ -25,6 +25,7 @@
   /* Colors: semantic / utility */
   --color-danger: #d53f45;
   --color-border: #d8d5cd;
+  --color-link-accent: #2f66e6;
   --color-neutral-weak: rgba(97, 95, 88, 0.16);
   --color-neutral-weak-strong: rgba(97, 95, 88, 0.42);
   --color-placeholder: rgba(93, 90, 82, 0.78);

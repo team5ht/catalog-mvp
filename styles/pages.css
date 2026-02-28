@@ -447,6 +447,132 @@
   color: var(--color-secondary-text-strong);
 }
 
+.auth-form__link--accent {
+  color: var(--color-link-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.auth-panel--login {
+  max-width: 392px;
+  gap: var(--space-md);
+}
+
+.auth-panel--login .auth-form__subtitle {
+  max-width: 34ch;
+  color: var(--color-secondary-text-strong);
+}
+
+.auth-form--login {
+  padding: clamp(0.95rem, 3.8vw, 1.12rem);
+  border-color: rgba(20, 20, 18, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(20, 20, 18, 0.05), 0 8px 18px rgba(20, 20, 18, 0.03);
+}
+
+.auth-form--login .auth-form__input {
+  margin: 0 0 var(--space-md);
+  padding: 0.82rem 0.9rem;
+  border-color: rgba(20, 20, 18, 0.16);
+  border-radius: 12px;
+  background: rgba(249, 249, 247, 0.9);
+}
+
+.auth-form--login .auth-form__actions {
+  margin-top: 0;
+}
+
+.auth-form--login .auth-form__status {
+  margin: 0 0 var(--space-sm);
+}
+
+.auth-form--login .button.button--primary {
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 1.02rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0;
+}
+
+.auth-form--login .auth-form__telegram {
+  margin-top: var(--space-md);
+  padding-top: 0;
+  border-top: 0;
+  gap: var(--space-md);
+}
+
+.auth-form--login .auth-form__telegram-label {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
+.auth-form--login .auth-form__telegram-label::before,
+.auth-form--login .auth-form__telegram-label::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: rgba(20, 20, 18, 0.14);
+}
+
+.auth-form--login .auth-form__telegram-widget {
+  min-height: 44px;
+  border: 1px solid rgba(20, 20, 18, 0.16);
+  border-radius: 12px;
+  background: rgba(249, 249, 247, 0.88);
+}
+
+.auth-form--login .auth-form__telegram-widget > .mock-telegram-widget-button {
+  min-height: 44px;
+  height: 44px;
+  padding: 0 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 1.02rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.005em;
+}
+
+.auth-form--login .auth-form__telegram-widget > .mock-telegram-widget-button::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(119, 171, 255, 0.95);
+  border-radius: 6px;
+  background: rgba(168, 204, 255, 0.34);
+  flex: 0 0 auto;
+}
+
+.auth-form__meta--login {
+  margin-top: var(--space-md);
+  justify-content: flex-end;
+  gap: 0;
+}
+
+.auth-form__meta--login .auth-form__link {
+  font-size: 0.95rem;
+  color: var(--color-secondary-text-strong);
+}
+
+.auth-login-signup {
+  margin: var(--space-sm) 0 0;
+  text-align: center;
+  font-size: 1rem;
+  color: var(--color-secondary-text-strong);
+}
+
+.auth-login-signup .auth-form__link {
+  margin-left: 0.3rem;
+}
+
 @media (min-width: 768px) {
   .auth-page {
     padding: clamp(1rem, 4vw, 2rem);
@@ -454,6 +580,16 @@
 
   .auth-panel {
     max-width: 440px;
+  }
+}
+
+@media (max-width: 430px) {
+  .auth-panel--login {
+    max-width: 100%;
+  }
+
+  .auth-login-signup {
+    font-size: 0.96rem;
   }
 }
 
