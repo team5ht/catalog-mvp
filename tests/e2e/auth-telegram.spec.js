@@ -64,11 +64,16 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
       window.__TELEGRAM_TEST_CALLS = window.__TELEGRAM_TEST_CALLS || [];
       window.__TELEGRAM_TEST_CALLS.push({ method: 'verifyOtp', params });
 
-      if (params && params.type === 'magiclink') {
-        if (scenario.verifyMagiclink === 'fail') {
+      if (params && (params.type === 'magiclink' || params.type === 'signup')) {
+        const shouldFail = (
+          (params.type === 'magiclink' && scenario.verifyMagiclink === 'fail')
+          || (params.type === 'signup' && scenario.verifySignup === 'fail')
+        );
+
+        if (shouldFail) {
           return {
             data: null,
-            error: createError({ message: 'Magiclink verify failed', code: 'invalid_grant' })
+            error: createError({ message: 'Email verify failed', code: 'invalid_grant' })
           };
         }
 
@@ -79,7 +84,10 @@ const MOCK_SUPABASE_CDN_SCRIPT = `
           token_type: 'bearer',
           user: {
             id: 'mock-user-id',
-            email: params.email || 'telegram@example.com'
+            email: params.email || 'telegram@example.com',
+            app_metadata: {
+              verification_type: params.type
+            }
           }
         };
         emit('SIGNED_IN', nextSession);
@@ -150,9 +158,11 @@ async function setupTelegramMocks(page, options = {}) {
     functionStatus = 200,
     functionResponse = {
       email: 'telegram@example.com',
-      token_hash: 'mock_token_hash'
+      token_hash: 'mock_token_hash',
+      verification_type: 'magiclink'
     },
-    verifyMagiclink = 'success'
+    verifyMagiclink = 'success',
+    verifySignup = 'success'
   } = options;
 
   const functionRequests = [];
@@ -160,7 +170,7 @@ async function setupTelegramMocks(page, options = {}) {
   await page.addInitScript((scenario) => {
     window.__TELEGRAM_TEST_SCENARIO = scenario;
     window.__TELEGRAM_TEST_CALLS = [];
-  }, { widgetUser, verifyMagiclink });
+  }, { widgetUser, verifyMagiclink, verifySignup });
 
   await page.route('**/supabase-config.js', (route) => {
     const body = `
@@ -235,7 +245,7 @@ window.TELEGRAM_AUTH_FUNCTION_URL = ${JSON.stringify(functionUrl)};
   return { functionRequests };
 }
 
-test('login telegram auth sends raw payload, verifies magiclink and redirects to account', async ({ page }) => {
+test('login telegram auth sends raw payload, verifies edge-provided type and redirects to account', async ({ page }) => {
   const widgetUser = {
     ...DEFAULT_WIDGET_USER,
     id: 700000001,
@@ -243,7 +253,8 @@ test('login telegram auth sends raw payload, verifies magiclink and redirects to
   };
   const functionResponse = {
     email: 'payload@example.com',
-    token_hash: 'hash_from_edge_function'
+    token_hash: 'hash_from_edge_function',
+    verification_type: 'magiclink'
   };
   const { functionRequests } = await setupTelegramMocks(page, {
     widgetUser,
@@ -294,6 +305,31 @@ test('login telegram auth sends raw payload, verifies magiclink and redirects to
   });
 });
 
+test('telegram first-login verifies signup token type from edge response', async ({ page }) => {
+  const functionResponse = {
+    email: 'first-login@example.com',
+    token_hash: 'first_login_hash',
+    verification_type: 'signup'
+  };
+  await setupTelegramMocks(page, { functionResponse });
+
+  await page.goto('/#/auth');
+  await page.locator('.mock-telegram-widget-button').first().click();
+
+  await expect(page).toHaveURL(/#\/account/);
+
+  const verifyParams = await page.evaluate(() => {
+    const calls = window.__TELEGRAM_TEST_CALLS || [];
+    const call = calls.find((entry) => entry.method === 'verifyOtp');
+    return call ? call.params : null;
+  });
+
+  expect(verifyParams).toEqual({
+    token_hash: functionResponse.token_hash,
+    type: 'signup'
+  });
+});
+
 test('signup mode shows telegram widget only on stage 1', async ({ page }) => {
   await setupTelegramMocks(page);
 
@@ -309,7 +345,7 @@ test('signup mode shows telegram widget only on stage 1', async ({ page }) => {
   await expect(page.locator('#authTelegramSignupSection')).toHaveCount(0);
 });
 
-test('telegram edge function error shows status and does not call magiclink verify', async ({ page }) => {
+test('telegram edge function error shows status and does not call verifyOtp', async ({ page }) => {
   await setupTelegramMocks(page, {
     functionStatus: 400,
     functionResponse: {
@@ -323,11 +359,33 @@ test('telegram edge function error shows status and does not call magiclink veri
 
   await expect(page.locator('#authStatus')).toContainText('Не удалось войти через Telegram');
 
-  const magiclinkCalls = await page.evaluate(() => {
+  const verifyCalls = await page.evaluate(() => {
     const calls = window.__TELEGRAM_TEST_CALLS || [];
-    return calls.filter((entry) => entry.method === 'verifyOtp' && entry.params && entry.params.type === 'magiclink').length;
+    return calls.filter((entry) => entry.method === 'verifyOtp').length;
   });
-  expect(magiclinkCalls).toBe(0);
+  expect(verifyCalls).toBe(0);
+});
+
+test('unsupported verification_type shows error and skips verifyOtp', async ({ page }) => {
+  await setupTelegramMocks(page, {
+    functionResponse: {
+      email: 'payload@example.com',
+      token_hash: 'hash_from_edge_function',
+      verification_type: 'invite'
+    }
+  });
+
+  await page.goto('/#/auth');
+  await page.locator('.mock-telegram-widget-button').first().click();
+
+  await expect(page.locator('#authStatus')).toContainText('Не удалось войти через Telegram');
+  await expect(page.locator('#authStatus')).toContainText('unsupported verification_type');
+
+  const verifyCalls = await page.evaluate(() => {
+    const calls = window.__TELEGRAM_TEST_CALLS || [];
+    return calls.filter((entry) => entry.method === 'verifyOtp').length;
+  });
+  expect(verifyCalls).toBe(0);
 });
 
 test('empty telegram bot config hides widget and skips script mount', async ({ page }) => {
