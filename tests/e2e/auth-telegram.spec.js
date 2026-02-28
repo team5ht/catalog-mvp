@@ -272,6 +272,8 @@ test('login telegram auth sends raw payload, verifies edge-provided type and red
     return {
       telegramLogin: script.getAttribute('data-telegram-login'),
       size: script.getAttribute('data-size'),
+      radius: script.getAttribute('data-radius'),
+      width: script.getAttribute('data-width'),
       userpic: script.getAttribute('data-userpic'),
       requestAccess: script.getAttribute('data-request-access'),
       onauth: script.getAttribute('data-onauth')
@@ -281,6 +283,8 @@ test('login telegram auth sends raw payload, verifies edge-provided type and red
   expect(scriptAttributes).toEqual({
     telegramLogin: 'the5htbot',
     size: 'large',
+    radius: '12',
+    width: '100%',
     userpic: 'false',
     requestAccess: 'write',
     onauth: 'onTelegramAuth(user)'
