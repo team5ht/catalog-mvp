@@ -321,8 +321,6 @@
   display: block;
   width: 100% !important;
   max-width: none !important;
-  min-height: 46px;
-  height: 46px;
   margin: 0;
   border: 0;
   border-radius: var(--radius-md) !important;
@@ -520,21 +518,25 @@
 }
 
 .auth-form--login .auth-form__telegram-widget {
-  min-height: 44px;
-  border: 1px solid rgba(20, 20, 18, 0.16);
+  /* Native Telegram button is rendered inside iframe; avoid outer decorative frame to prevent drift. */
+  min-height: 46px;
+  border: 0;
   border-radius: 12px;
-  background: rgba(249, 249, 247, 0.88);
+  background: transparent;
 }
 
 .auth-form--login .auth-form__telegram-widget > .mock-telegram-widget-button {
-  min-height: 44px;
-  height: 44px;
+  min-height: 46px;
+  height: 46px;
+  width: 100%;
   padding: 0 1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  background: transparent;
+  border: 1px solid rgba(20, 20, 18, 0.16);
+  border-radius: 12px !important;
+  background: rgba(249, 249, 247, 0.88);
   color: var(--color-primary);
   font-size: 1.02rem;
   font-weight: var(--font-weight-bold);
