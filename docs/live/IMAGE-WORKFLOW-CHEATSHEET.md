@@ -1,5 +1,10 @@
 # Шпаргалка по image workflow
 
+Status: Active
+Owner: webapp team
+Last reviewed: 2026-02-28
+Scope: Операционный workflow генерации и проверки изображений.
+
 В проекте два типа ассетов:
 
 - `assets/images/src/*` - исходники (`.jpg`), редактируются вручную.
