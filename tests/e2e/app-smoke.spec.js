@@ -173,8 +173,10 @@ test('login mode keeps a single reset CTA link', async ({ page }) => {
   await page.goto('/#/auth');
   await expect(page.locator('#authTitle')).toHaveText('Вход');
 
-  await expect(page.locator('.auth-form__meta a.auth-form__link', { hasText: 'Забыли пароль? Восстановить' })).toHaveCount(1);
-  await expect(page.locator('#authLoginResetCta')).toHaveCount(0);
+  await expect(page.locator('.auth-form__meta.auth-form__meta--login a.auth-form__link', { hasText: 'Забыли пароль?' })).toHaveCount(1);
+  await expect(page.locator('.auth-login-signup')).toBeVisible();
+  await expect(page.locator('.auth-login-signup .auth-form__link--accent', { hasText: 'Зарегистрироваться' })).toHaveCount(1);
+  await expect(page.locator('.auth-form__note')).toHaveCount(0);
 });
 
 test('unknown route redirects to home', async ({ page }) => {

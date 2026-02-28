@@ -152,21 +152,35 @@ function setTelegramAuthHandler(handler) {
   window.onTelegramAuth = async function onTelegramAuthNoop() {};
 }
 
-function createAuthLayout({ title, subtitle, note, formMarkup }) {
+function createAuthLayout(options) {
+  const {
+    title,
+    subtitle,
+    note = '',
+    formMarkup,
+    panelClass = 'auth-panel',
+    formClass = 'auth-form',
+    afterFormMarkup = ''
+  } = options;
+  const noteMarkup = note
+    ? `<p class="auth-form__note">${note}</p>`
+    : '';
+
   return `
     <div class="auth-page ui-enter">
-      <section class="auth-panel" aria-labelledby="authTitle">
+      <section class="${panelClass}" aria-labelledby="authTitle">
         <header class="auth-panel__header">
           <p class="screen-header__kicker">Доступ</p>
           <h1 id="authTitle" class="page-title auth-form__title">${title}</h1>
           <p class="screen-header__subtitle auth-form__subtitle text-body">${subtitle}</p>
         </header>
 
-        <form class="auth-form" id="authForm" novalidate>
+        <form class="${formClass}" id="authForm" novalidate>
           ${formMarkup}
         </form>
 
-        <p class="auth-form__note">${note}</p>
+        ${afterFormMarkup}
+        ${noteMarkup}
       </section>
     </div>
   `;
@@ -292,13 +306,15 @@ export async function renderAuthView(route, renderToken) {
     root.innerHTML = createAuthLayout({
       title: 'Вход',
       subtitle: 'Введите email и пароль, чтобы войти в аккаунт.',
-      note: 'Если забыли пароль, перейдите к восстановлению по одноразовому коду.',
+      panelClass: 'auth-panel auth-panel--login',
+      formClass: 'auth-form auth-form--login',
+      note: '',
       formMarkup: `
         <input
           type="email"
           id="authEmail"
           class="auth-form__input"
-          placeholder="name@example.com"
+          placeholder="email@email.com"
           required
           autocomplete="email"
           inputmode="email"
@@ -308,7 +324,7 @@ export async function renderAuthView(route, renderToken) {
           type="password"
           id="authPassword"
           class="auth-form__input"
-          placeholder="Пароль (мин. ${PASSWORD_MIN_LENGTH} символов)"
+          placeholder="Пароль"
           required
           autocomplete="current-password"
           aria-label="Пароль"
@@ -318,10 +334,15 @@ export async function renderAuthView(route, renderToken) {
           <button type="submit" class="button button--primary" data-action="login">Войти</button>
         </div>
         ${createTelegramAuthSectionMarkup(TELEGRAM_LOGIN_SECTION_ID, TELEGRAM_LOGIN_WIDGET_ID)}
-        <div class="auth-form__meta">
-          <a class="auth-form__link" href="${signupHash}">Нет аккаунта? Зарегистрироваться</a>
-          <a class="auth-form__link" href="${resetHash}">Забыли пароль? Восстановить</a>
+        <div class="auth-form__meta auth-form__meta--login">
+          <a class="auth-form__link" href="${resetHash}">Забыли пароль?</a>
         </div>
+      `,
+      afterFormMarkup: `
+        <p class="auth-login-signup">
+          Нет аккаунта?
+          <a class="auth-form__link auth-form__link--accent" href="${signupHash}">Зарегистрироваться</a>
+        </p>
       `
     });
   } else if (requestedMode === AUTH_MODE_SIGNUP) {
