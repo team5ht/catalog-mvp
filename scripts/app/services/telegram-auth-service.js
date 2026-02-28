@@ -2,6 +2,7 @@ import { getSupabaseClient } from './auth-service.js';
 
 export const TELEGRAM_WIDGET_SRC = 'https://telegram.org/js/telegram-widget.js?22';
 const DEFAULT_TELEGRAM_AUTH_FUNCTION_URL = 'https://dgdnmenvpkyzdvhtmhmz.supabase.co/functions/v1/telegram-auth';
+const TELEGRAM_ALLOWED_VERIFY_TYPES = new Set(['magiclink', 'signup']);
 
 export function getTelegramAuthConfig() {
   const globalScope = typeof window === 'undefined' ? null : window;
@@ -54,6 +55,22 @@ function normalizeErrorMessage(error, fallbackMessage) {
   return message || fallbackMessage;
 }
 
+function resolveTelegramVerifyType(responseData) {
+  const rawType = typeof responseData?.verification_type === 'string'
+    ? responseData.verification_type.trim().toLowerCase()
+    : '';
+
+  if (!rawType) {
+    return 'magiclink';
+  }
+
+  if (!TELEGRAM_ALLOWED_VERIFY_TYPES.has(rawType)) {
+    throw new Error(`telegram-auth response has unsupported verification_type: ${rawType}`);
+  }
+
+  return rawType;
+}
+
 export async function authenticateViaTelegram(user) {
   console.log('Telegram payload:', user);
 
@@ -90,6 +107,7 @@ export async function authenticateViaTelegram(user) {
   if (!tokenHash) {
     throw new Error('telegram-auth response is missing token_hash');
   }
+  const verificationType = resolveTelegramVerifyType(responseData);
 
   const client = getSupabaseClient();
   if (!client || !client.auth || typeof client.auth.verifyOtp !== 'function') {
@@ -98,12 +116,16 @@ export async function authenticateViaTelegram(user) {
 
   const { error } = await client.auth.verifyOtp({
     token_hash: tokenHash,
-    type: 'magiclink'
+    type: verificationType
   });
 
   if (error) {
     throw new Error(normalizeErrorMessage(error, 'Supabase verifyOtp failed'));
   }
 
-  return { email, token_hash: tokenHash };
+  return {
+    email,
+    token_hash: tokenHash,
+    verification_type: verificationType
+  };
 }

@@ -103,7 +103,7 @@ npm run test:e2e:headed
   - показывается в `mode=signup` только на Stage 1;
   - не показывается в `mode=reset`.
 - Callback виджета: глобальный `window.onTelegramAuth(user)`.
-- Flow callback: POST `user` как есть в `https://dgdnmenvpkyzdvhtmhmz.supabase.co/functions/v1/telegram-auth` -> `verifyOtp({ email, token_hash, type: 'magiclink' })` через существующий `window.supabaseClient`.
+- Flow callback: POST `user` как есть в `https://dgdnmenvpkyzdvhtmhmz.supabase.co/functions/v1/telegram-auth` -> `verifyOtp({ token_hash, type: verification_type || 'magiclink' })` через существующий `window.supabaseClient`.
 - В запрос к `telegram-auth` не добавляется `Authorization` header.
 - `mode=signup`: 2 этапа внутри экрана:
   - этап 1: email + пароль -> отправка OTP (`signInWithOtp(...shouldCreateUser=true)`).
@@ -258,7 +258,7 @@ npm run test:e2e
 - active state кнопок нижней навигации
 - sanity на отсутствие inline `background-image` в контентных обложках
 - OTP сценарии (`tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`): success/error/rate-limit/attempt-limit ветки
-- Telegram auth сценарии (`tests/e2e/auth-telegram.spec.js`): widget mount, edge-function POST contract, `magiclink` verify, ошибки и fallback-конфиг
+- Telegram auth сценарии (`tests/e2e/auth-telegram.spec.js`): widget mount, edge-function POST contract, verify type from edge (`magiclink`/`signup`), ошибки и fallback-конфиг
 - auth/navigation guard сценарии (`tests/e2e/navigation-auth-guards.spec.js`): owner redirect и поведение кнопки аккаунта
 
 ## Деплой
