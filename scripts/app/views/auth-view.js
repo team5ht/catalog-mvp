@@ -238,8 +238,29 @@ export async function renderAuthView(route, renderToken) {
       return false;
     }
 
+    // Reveal section first so widget width is measured against real layout width.
+    setTelegramSectionVisibility(sectionId, true);
     const mounted = mountTelegramWidget(widgetContainer, telegramAuthConfig.botUsername);
-    setTelegramSectionVisibility(sectionId, mounted);
+    if (!mounted) {
+      setTelegramSectionVisibility(sectionId, false);
+      return false;
+    }
+
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(() => {
+        if (!isCurrentRender(renderToken)) {
+          return;
+        }
+
+        const section = sectionId ? document.getElementById(sectionId) : null;
+        if (!section || section.hidden) {
+          return;
+        }
+
+        mountTelegramWidget(widgetContainer, telegramAuthConfig.botUsername);
+      });
+    }
+
     return mounted;
   }
 

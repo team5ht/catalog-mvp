@@ -289,6 +289,16 @@ test('login telegram auth sends raw payload, verifies edge-provided type and red
     width: '100%',
     userpic: 'false'
   });
+  const primaryButtonWidth = await page.evaluate(() => {
+    const primaryButton = document.querySelector('#authForm .button.button--primary');
+    if (!(primaryButton instanceof Element)) {
+      return 0;
+    }
+
+    return Math.round(primaryButton.getBoundingClientRect().width);
+  });
+  expect(primaryButtonWidth).toBeGreaterThan(0);
+  expect(Number(scriptAttributes.minWidth)).toBe(primaryButtonWidth);
   expect(Number(scriptAttributes.minWidth)).toBeGreaterThan(0);
   expect(scriptAttributes.maxWidth).toBe(scriptAttributes.minWidth);
   expect(scriptAttributes.requestAccess).toBe('write');
