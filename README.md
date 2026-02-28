@@ -29,11 +29,11 @@ npm run test:e2e
 npm run test:e2e:headed
 ```
 
-## Валидационный baseline (2026-02-27)
+## Валидационный baseline (2026-02-28)
 
 - `npm run images:check` -> `Проверка изображений пройдена. Проверено ассетов: 14.`
-- `npm run test:e2e` -> `43 passed` (Chromium).
-- Снимок текущего состояния кода: `docs/codebase-state-2026-02-26.md`.
+- `npm run test:e2e` -> `45 passed` (Chromium).
+- Снимок текущего состояния кода: `docs/archive/codebase-state-2026-02-26.md`.
 
 ## Структура
 
@@ -51,6 +51,11 @@ npm run test:e2e:headed
 - `scripts/images/build.mjs` - генерация responsive-изображений.
 - `scripts/images/check.mjs` - проверка data-контракта и image budgets/геометрии.
 - `styles/tokens.css`, `styles/ui.css`, `styles/pages.css` - 3 CSS-слоя.
+- `docs/INDEX.md` - карта документации и источники истины.
+- `docs/DOCS-GOVERNANCE.md` - правила ведения и архивации документации.
+- `docs/live/*` - актуальные рабочие документы.
+- `docs/adr/*` - ADR и история архитектурных решений.
+- `docs/archive/*` - исторические аудиты и снимки состояния.
 - `tests/e2e/app-smoke.spec.js`, `tests/e2e/auth-reset-otp.spec.js`, `tests/e2e/auth-signup-otp.spec.js`, `tests/e2e/auth-telegram.spec.js`, `tests/e2e/navigation-auth-guards.spec.js` - e2e сценарии.
 
 ## Маршруты

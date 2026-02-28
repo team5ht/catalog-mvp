@@ -1,5 +1,10 @@
 # Аудит архитектуры навигации и lifecycle экранов
 
+Status: Archived
+Owner: webapp team
+Last reviewed: 2026-02-28
+Scope: Исторический аудит routing/lifecycle и его status updates.
+
 Исходный аудит был выполнен 2026-02-18. Ниже зафиксирован актуальный status update по состоянию на 2026-02-26.
 
 Дата status update: 2026-02-26  

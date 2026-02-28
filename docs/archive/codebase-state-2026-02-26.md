@@ -1,5 +1,10 @@
 # Снимок состояния кодовой базы — 2026-02-26
 
+Status: Archived
+Owner: webapp team
+Last reviewed: 2026-02-28
+Scope: Исторический snapshot архитектуры и QA baseline.
+
 ## 1) Точка фиксации
 
 - Repo: `catalog-mvp`

@@ -1,5 +1,10 @@
 # Аудит auth-flow (`login/signup/reset`) — 2026-02-20
 
+Status: Archived
+Owner: webapp team
+Last reviewed: 2026-02-28
+Scope: Исторический аудит auth-flow и журнал закрытия пунктов.
+
 ## Контекст и методика
 
 - Область проверки: `scripts/app/views/auth-view.js`, `scripts/app/services/auth-service.js`, `scripts/app/routing/auth-guard.js`, `scripts/app/routing/hash.js`, связанные e2e и документация.
@@ -46,6 +51,22 @@
   - `npm run images:check` -> `Проверка изображений пройдена. Проверено ассетов: 14.`
   - `npm run test:e2e` -> `39 passed`.
 - Дополнительных auth-регрессий относительно status update от 2026-02-26 не выявлено.
+
+## Status update (2026-02-28)
+
+- Закрыт Telegram first-login дефект (`Email link is invalid or has expired`) в связке edge-функции и фронта.
+- Во фронте `scripts/app/services/telegram-auth-service.js` в `verifyOtp` теперь передается `type` из ответа edge (`verification_type`) с fallback `magiclink` и валидацией допустимых значений (`magiclink|signup`).
+- Добавлен deployable исходник edge-функции `supabase/functions/telegram-auth/index.ts`:
+  - возвращает `{ email, token_hash, verification_type }`;
+  - использует `generateLink({ type: 'magiclink', ... })` и берет `properties.verification_type`;
+  - убрана зависимость от невалидного сценария `listUsers({ email })`.
+- Добавлены e2e-анти-регрессы в `tests/e2e/auth-telegram.spec.js`:
+  - first-login `verification_type='signup'`;
+  - контрактный `verification_type='magiclink'`;
+  - неизвестный `verification_type` -> controlled error без `verifyOtp`.
+- Валидация после изменения:
+  - `npm run test:e2e`
+  - результат: `45 passed`.
 
 ## Findings
 
