@@ -274,21 +274,25 @@ test('login telegram auth sends raw payload, verifies edge-provided type and red
       size: script.getAttribute('data-size'),
       radius: script.getAttribute('data-radius'),
       width: script.getAttribute('data-width'),
+      minWidth: script.getAttribute('data-min-width'),
+      maxWidth: script.getAttribute('data-max-width'),
       userpic: script.getAttribute('data-userpic'),
       requestAccess: script.getAttribute('data-request-access'),
       onauth: script.getAttribute('data-onauth')
     };
   });
 
-  expect(scriptAttributes).toEqual({
+  expect(scriptAttributes).toMatchObject({
     telegramLogin: 'the5htbot',
     size: 'large',
     radius: '12',
     width: '100%',
-    userpic: 'false',
-    requestAccess: 'write',
-    onauth: 'onTelegramAuth(user)'
+    userpic: 'false'
   });
+  expect(Number(scriptAttributes.minWidth)).toBeGreaterThan(0);
+  expect(scriptAttributes.maxWidth).toBe(scriptAttributes.minWidth);
+  expect(scriptAttributes.requestAccess).toBe('write');
+  expect(scriptAttributes.onauth).toBe('onTelegramAuth(user)');
 
   await page.locator('.mock-telegram-widget-button').first().click();
 
