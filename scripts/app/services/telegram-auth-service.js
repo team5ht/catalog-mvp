@@ -33,15 +33,14 @@ export function mountTelegramWidget(container, botUsername) {
 
   container.innerHTML = '';
 
-  // Telegram login widget renders an inner fixed-size button in the iframe.
-  // Pass explicit min/max width in px so inner button matches design-system width.
+  // Telegram login widget renders UI inside iframe; keep width synced with actual layout width.
   const form = container.closest('form');
   const primaryButton = form ? form.querySelector('.button.button--primary') : null;
+  const containerWidth = Math.round(container.getBoundingClientRect().width);
   const primaryButtonWidth = primaryButton instanceof Element
     ? Math.round(primaryButton.getBoundingClientRect().width)
     : 0;
-  const containerWidth = Math.round(container.getBoundingClientRect().width);
-  const widgetWidth = primaryButtonWidth > 0 ? primaryButtonWidth : containerWidth;
+  const widgetWidth = containerWidth > 0 ? containerWidth : primaryButtonWidth;
 
   const script = document.createElement('script');
   script.async = true;
