@@ -38,6 +38,8 @@ export function mountTelegramWidget(container, botUsername) {
   script.src = TELEGRAM_WIDGET_SRC;
   script.setAttribute('data-telegram-login', normalizedBotUsername);
   script.setAttribute('data-size', 'large');
+  script.setAttribute('data-radius', '12');
+  script.setAttribute('data-width', '100%');
   script.setAttribute('data-userpic', 'false');
   script.setAttribute('data-request-access', 'write');
   script.setAttribute('data-onauth', 'onTelegramAuth(user)');
