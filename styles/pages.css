@@ -186,6 +186,8 @@
 
 .account-actions .button {
   width: 100%;
+  min-height: 40px;
+  height: 40px;
 }
 
 .account-password-form {
@@ -273,6 +275,9 @@
 .auth-form .button {
   width: 100%;
   display: flex;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 1rem;
 }
 
 .auth-form__actions {
@@ -307,7 +312,8 @@
 
 .auth-form__telegram-widget {
   width: 100%;
-  min-height: 46px;
+  min-height: 40px;
+  height: 40px;
   display: flex;
   justify-content: stretch;
   align-items: stretch;
@@ -320,6 +326,8 @@
 .auth-form__telegram-widget > a {
   display: block;
   width: 100% !important;
+  min-height: 40px;
+  height: 40px;
   max-width: none !important;
   margin: 0;
   border: 0;
@@ -332,9 +340,11 @@
 
 .auth-form__telegram-widget > .mock-telegram-widget-button {
   display: inline-flex;
+  min-height: 40px;
+  height: 40px;
   align-items: center;
   justify-content: center;
-  padding: 0.72rem 1.15rem;
+  padding: 0 1rem;
   font: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
@@ -385,7 +395,9 @@
 .auth-form__input {
   display: block;
   width: 100%;
-  padding: 0.75rem 0.92rem;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 0.92rem;
   margin: 0 0 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -470,7 +482,7 @@
 
 .auth-form--login .auth-form__input {
   margin: 0 0 var(--space-md);
-  padding: 0.82rem 0.9rem;
+  padding: 0 0.9rem;
   border-color: rgba(20, 20, 18, 0.16);
   border-radius: 12px;
   background: rgba(249, 249, 247, 0.9);
@@ -522,6 +534,7 @@
 .auth-form--login .auth-form__telegram-widget {
   /* Native Telegram button is rendered inside iframe; avoid outer decorative frame to prevent drift. */
   min-height: 40px;
+  height: 40px;
   border: 0;
   border-radius: 12px;
   background: transparent;

@@ -39,6 +39,13 @@ async function getFirstCatalogMaterialHash(page) {
   return hash;
 }
 
+async function expectControlHeight(locator, expectedHeight = 40) {
+  await expect(locator).toBeVisible();
+
+  const height = await locator.evaluate((element) => element.getBoundingClientRect().height);
+  expect(Math.abs(height - expectedHeight)).toBeLessThanOrEqual(0.75);
+}
+
 test('home route renders and loads materials', async ({ page }) => {
   await page.goto('/#/');
   await expect(page.locator('h1.page-title')).toHaveText('Каталог материалов');
@@ -177,6 +184,22 @@ test('login mode keeps a single reset CTA link', async ({ page }) => {
   await expect(page.locator('.auth-login-signup')).toBeVisible();
   await expect(page.locator('.auth-login-signup .auth-form__link--accent', { hasText: 'Зарегистрироваться' })).toHaveCount(1);
   await expect(page.locator('.auth-form__note')).toHaveCount(0);
+});
+
+test('auth login/signup/reset controls use 40px height', async ({ page }) => {
+  await page.goto('/#/auth');
+  await expectControlHeight(page.locator('#authEmail'));
+  await expectControlHeight(page.locator('#authPassword'));
+  await expectControlHeight(page.locator('button[data-action="login"]'));
+
+  await page.goto('/#/auth?mode=signup');
+  await expectControlHeight(page.locator('#authSignupEmail'));
+  await expectControlHeight(page.locator('#authSignupPassword'));
+  await expectControlHeight(page.locator('button[data-action="request_signup_otp"]'));
+
+  await page.goto('/#/auth?mode=reset');
+  await expectControlHeight(page.locator('#authResetEmail'));
+  await expectControlHeight(page.locator('button[data-action="request_reset_otp"]'));
 });
 
 test('unknown route redirects to home', async ({ page }) => {

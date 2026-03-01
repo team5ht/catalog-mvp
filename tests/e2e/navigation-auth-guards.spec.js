@@ -107,6 +107,13 @@ async function setupMockSupabase(page, options = {}) {
   });
 }
 
+async function expectControlHeight(locator, expectedHeight = 40) {
+  await expect(locator).toBeVisible();
+
+  const height = await locator.evaluate((element) => element.getBoundingClientRect().height);
+  expect(Math.abs(height - expectedHeight)).toBeLessThanOrEqual(0.75);
+}
+
 test('guest account-tab click opens auth with redirect to current route', async ({ page }) => {
   await setupMockSupabase(page, { authenticated: false });
 
@@ -129,6 +136,23 @@ test('authed account-tab click opens account route', async ({ page }) => {
 
   await expect(page).toHaveURL(/#\/account/);
   await expect(page.locator('#accountEmail')).toBeVisible();
+});
+
+test('account controls use 40px height', async ({ page }) => {
+  await setupMockSupabase(page, { authenticated: true });
+
+  await page.goto('/#/account');
+  await expect(page.locator('#accountEmail')).toBeVisible();
+
+  await expectControlHeight(page.locator('#changePasswordButton'));
+  await expectControlHeight(page.locator('#logoutButton'));
+
+  await page.locator('#changePasswordButton').click();
+
+  await expectControlHeight(page.locator('#accountNewPassword'));
+  await expectControlHeight(page.locator('#accountConfirmPassword'));
+  await expectControlHeight(page.locator('#accountSavePasswordButton'));
+  await expectControlHeight(page.locator('#accountCancelPasswordButton'));
 });
 
 test('authed opening auth login route redirects to redirect hash', async ({ page }) => {
