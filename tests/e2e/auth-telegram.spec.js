@@ -245,6 +245,13 @@ window.TELEGRAM_AUTH_FUNCTION_URL = ${JSON.stringify(functionUrl)};
   return { functionRequests };
 }
 
+async function expectControlHeight(locator, expectedHeight = 40) {
+  await expect(locator).toBeVisible();
+
+  const height = await locator.evaluate((element) => element.getBoundingClientRect().height);
+  expect(Math.abs(height - expectedHeight)).toBeLessThanOrEqual(0.75);
+}
+
 test('login telegram auth sends raw payload, verifies edge-provided type and redirects to account', async ({ page }) => {
   const widgetUser = {
     ...DEFAULT_WIDGET_USER,
@@ -303,6 +310,7 @@ test('login telegram auth sends raw payload, verifies edge-provided type and red
   expect(scriptAttributes.maxWidth).toBe(scriptAttributes.minWidth);
   expect(scriptAttributes.requestAccess).toBe('write');
   expect(scriptAttributes.onauth).toBe('onTelegramAuth(user)');
+  await expectControlHeight(page.locator('.mock-telegram-widget-button').first());
 
   await page.locator('.mock-telegram-widget-button').first().click();
 
@@ -354,6 +362,7 @@ test('signup mode shows telegram widget only on stage 1', async ({ page }) => {
   await page.goto('/#/auth?mode=signup');
 
   await expect(page.locator('#authTelegramSignupSection')).toBeVisible();
+  await expectControlHeight(page.locator('#authTelegramSignupSection .mock-telegram-widget-button').first());
 
   await page.locator('#authSignupEmail').fill('user@example.com');
   await page.locator('#authSignupPassword').fill('123456');
