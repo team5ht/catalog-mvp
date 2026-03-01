@@ -595,6 +595,138 @@
   margin-left: 0.3rem;
 }
 
+.auth-panel--signup {
+  max-width: 392px;
+  gap: var(--space-md);
+}
+
+.auth-panel--signup .auth-form__subtitle {
+  color: var(--color-secondary-text-strong);
+}
+
+.auth-form--signup {
+  padding: clamp(0.95rem, 3.8vw, 1.12rem);
+  border-color: rgba(20, 20, 18, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(20, 20, 18, 0.05), 0 8px 18px rgba(20, 20, 18, 0.03);
+}
+
+.auth-form--signup .auth-stepper {
+  gap: var(--space-md);
+}
+
+.auth-form--signup .auth-stepper__progress {
+  font-size: 0.84rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__input {
+  margin: 0 0 var(--space-md);
+  padding: 0 0.9rem;
+  border-color: rgba(20, 20, 18, 0.16);
+  border-radius: 12px;
+  background: rgba(249, 249, 247, 0.9);
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__actions {
+  margin-top: 0;
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .button.button--primary {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: 12px;
+  font-size: 1.02rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0;
+}
+
+.auth-form--signup .auth-form__status {
+  margin: 0;
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram {
+  margin-top: var(--space-md);
+  padding-top: 0;
+  border-top: 0;
+  gap: var(--space-md);
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-label {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-label::before,
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-label::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: rgba(20, 20, 18, 0.14);
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-widget {
+  min-height: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-widget > iframe {
+  min-height: 40px;
+  height: 40px;
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-widget > .mock-telegram-widget-button {
+  min-height: 40px;
+  height: 40px;
+  width: 100%;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 12px !important;
+  background: #54a8eb;
+  color: #fff;
+  font-size: 1.02rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0;
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-widget > .mock-telegram-widget-button:hover {
+  background: #469ee4;
+}
+
+.auth-form--signup .auth-stepper[data-stage="request"] .auth-form__telegram-widget > .mock-telegram-widget-button:active {
+  background: #3c93d8;
+}
+
+.auth-signup-links {
+  margin-top: var(--space-sm);
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: center;
+  text-align: center;
+}
+
+.auth-signup-links__row {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 1rem;
+  color: var(--color-secondary-text-strong);
+}
+
 @media (min-width: 768px) {
   .auth-page {
     padding: clamp(1rem, 4vw, 2rem);
@@ -610,7 +742,15 @@
     max-width: 100%;
   }
 
+  .auth-panel--signup {
+    max-width: 100%;
+  }
+
   .auth-login-signup {
+    font-size: 0.96rem;
+  }
+
+  .auth-signup-links__row {
     font-size: 0.96rem;
   }
 }

@@ -161,6 +161,21 @@ test('signup auth mode renders stage 1 with email and password', async ({ page }
   await expect(page.locator('#authStepProgress')).toContainText('Шаг 1 из 2');
   await expect(page.locator('#authSignupEmail')).toBeVisible();
   await expect(page.locator('#authSignupPassword')).toBeVisible();
+  await expect(page.locator('.auth-form__note')).toHaveCount(0);
+  await expect(page.locator('.auth-signup-links')).toBeVisible();
+  await expect(page.locator('.auth-signup-links .auth-form__link', { hasText: 'Войти' })).toHaveCount(1);
+  await expect(page.locator('.auth-signup-links .auth-form__link', { hasText: 'Восстановить' })).toHaveCount(1);
+  await expect(page.locator('#authForm .auth-form__meta a.auth-form__link')).toHaveCount(0);
+  const isSignupCtaBeforeTelegram = await page.evaluate(() => {
+    const ctaButton = document.querySelector('button[data-action="request_signup_otp"]');
+    const telegramSection = document.querySelector('#authTelegramSignupSection');
+    if (!(ctaButton instanceof Node) || !(telegramSection instanceof Node)) {
+      return false;
+    }
+
+    return Boolean(ctaButton.compareDocumentPosition(telegramSection) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+  expect(isSignupCtaBeforeTelegram).toBeTruthy();
 });
 
 test('reset auth mode renders stage 1 with email input', async ({ page }) => {
