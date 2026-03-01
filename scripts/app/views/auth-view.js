@@ -370,17 +370,26 @@ export async function renderAuthView(route, renderToken) {
     root.innerHTML = createAuthLayout({
       title: 'Регистрация',
       subtitle: 'Введите email и пароль, затем подтвердите код из письма.',
-      note: `Пароль не передается в Supabase до подтверждения OTP. Минимум ${PASSWORD_MIN_LENGTH} символов.`,
+      panelClass: 'auth-panel auth-panel--signup',
+      formClass: 'auth-form auth-form--signup',
       formMarkup: `
         <div class="auth-stepper" id="authStepper" data-stage="${FLOW_STAGE_REQUEST}">
           <p id="authStepProgress" class="auth-stepper__progress">Шаг 1 из 2: Email и пароль</p>
           <div id="authStepBody" class="auth-stepper__body"></div>
           <p id="authStatus" class="auth-form__status" role="alert" aria-live="polite"></p>
           <div id="authStepActions" class="auth-form__actions"></div>
-          <div class="auth-form__meta">
-            <a class="auth-form__link" href="${loginHash}">Уже есть аккаунт? Войти</a>
-            <a class="auth-form__link" href="${resetHash}">Забыли пароль? Восстановить</a>
-          </div>
+        </div>
+      `,
+      afterFormMarkup: `
+        <div class="auth-signup-links">
+          <p class="auth-signup-links__row">
+            <span>Уже есть аккаунт?</span>
+            <a class="auth-form__link auth-form__link--accent" href="${loginHash}">Войти</a>
+          </p>
+          <p class="auth-signup-links__row">
+            <span>Забыли пароль?</span>
+            <a class="auth-form__link auth-form__link--accent" href="${resetHash}">Восстановить</a>
+          </p>
         </div>
       `
     });
@@ -1085,7 +1094,6 @@ export async function renderAuthView(route, renderToken) {
           aria-label="Пароль"
           required
         />
-        ${createTelegramAuthSectionMarkup(TELEGRAM_SIGNUP_SECTION_ID, TELEGRAM_SIGNUP_WIDGET_ID)}
       `;
     },
     renderRequestActions() {
@@ -1096,6 +1104,7 @@ export async function renderAuthView(route, renderToken) {
           data-action="request_signup_otp"
           data-cooldown-button="true"
         >Зарегистрироваться</button>
+        ${createTelegramAuthSectionMarkup(TELEGRAM_SIGNUP_SECTION_ID, TELEGRAM_SIGNUP_WIDGET_ID)}
       `;
     },
     renderVerifyBody(state) {
