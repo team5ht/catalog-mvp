@@ -107,7 +107,7 @@ async function setupMockSupabase(page, options = {}) {
   });
 }
 
-async function expectControlHeight(locator, expectedHeight = 40) {
+async function expectControlHeight(locator, expectedHeight = 46) {
   await expect(locator).toBeVisible();
 
   const height = await locator.evaluate((element) => element.getBoundingClientRect().height);
@@ -138,7 +138,7 @@ test('authed account-tab click opens account route', async ({ page }) => {
   await expect(page.locator('#accountEmail')).toBeVisible();
 });
 
-test('account controls use 40px height', async ({ page }) => {
+test('account controls use 46px height', async ({ page }) => {
   await setupMockSupabase(page, { authenticated: true });
 
   await page.goto('/#/account');

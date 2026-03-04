@@ -39,7 +39,7 @@ async function getFirstCatalogMaterialHash(page) {
   return hash;
 }
 
-async function expectControlHeight(locator, expectedHeight = 40) {
+async function expectControlHeight(locator, expectedHeight = 46) {
   await expect(locator).toBeVisible();
 
   const height = await locator.evaluate((element) => element.getBoundingClientRect().height);
@@ -201,7 +201,7 @@ test('login mode keeps a single reset CTA link', async ({ page }) => {
   await expect(page.locator('.auth-form__note')).toHaveCount(0);
 });
 
-test('auth login/signup/reset controls use 40px height', async ({ page }) => {
+test('auth login/signup/reset controls use 46px height', async ({ page }) => {
   await page.goto('/#/auth');
   await expectControlHeight(page.locator('#authEmail'));
   await expectControlHeight(page.locator('#authPassword'));

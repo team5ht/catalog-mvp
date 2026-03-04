@@ -186,8 +186,8 @@
 
 .account-actions .button {
   width: 100%;
-  min-height: 40px;
-  height: 40px;
+  min-height: 46px;
+  height: 46px;
 }
 
 .account-password-form {
@@ -275,8 +275,8 @@
 .auth-form .button {
   width: 100%;
   display: flex;
-  min-height: 40px;
-  height: 40px;
+  min-height: 46px;
+  height: 46px;
   padding: 0 1rem;
 }
 
@@ -395,8 +395,8 @@
 .auth-form__input {
   display: block;
   width: 100%;
-  min-height: 40px;
-  height: 40px;
+  min-height: 46px;
+  height: 46px;
   padding: 0 0.92rem;
   margin: 0 0 0.75rem;
   border: 1px solid var(--color-border);
@@ -497,8 +497,8 @@
 }
 
 .auth-form--login .button.button--primary {
-  height: 40px;
-  min-height: 40px;
+  height: 46px;
+  min-height: 46px;
   padding: 0 1rem;
   border-radius: 12px;
   font-size: 1.02rem;
@@ -635,8 +635,8 @@
 }
 
 .auth-form--signup .auth-stepper[data-stage="request"] .button.button--primary {
-  height: 40px;
-  min-height: 40px;
+  height: 46px;
+  min-height: 46px;
   padding: 0 1rem;
   border-radius: 12px;
   font-size: 1.02rem;
@@ -765,8 +765,8 @@
 }
 
 .auth-form--signup .auth-stepper[data-stage="verify"] .button.button--primary {
-  height: 40px;
-  min-height: 40px;
+  height: 46px;
+  min-height: 46px;
   padding: 0 1rem;
   border-radius: 12px;
   font-size: 1.02rem;
@@ -776,8 +776,8 @@
 
 .auth-form--signup .auth-stepper[data-stage="verify"] .auth-signup-verify__link-button {
   width: auto;
-  min-height: 40px;
-  height: 40px;
+  min-height: 46px;
+  height: 46px;
   padding: 0 var(--space-sm);
   border: 0;
   border-radius: 0;
