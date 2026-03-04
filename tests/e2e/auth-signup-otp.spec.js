@@ -199,12 +199,14 @@ test('signup request OTP opens stage 2 and shows cooldown', async ({ page }) => 
     const email = document.querySelector('.auth-signup-verify__hint-email');
     const verifyButton = document.querySelector('button[data-action="verify_signup_otp"]');
     const resendButton = document.querySelector('button[data-action="resend_signup_otp"]');
+    const editButton = document.querySelector('button[data-action="edit_signup_credentials"]');
 
     const prefixTop = prefix ? prefix.getBoundingClientRect().top : NaN;
     const emailRects = email ? Array.from(email.getClientRects()) : [];
     const emailTop = emailRects.length > 0 ? emailRects[0].top : NaN;
     const verifyRect = verifyButton ? verifyButton.getBoundingClientRect() : null;
     const resendRect = resendButton ? resendButton.getBoundingClientRect() : null;
+    const editRect = editButton ? editButton.getBoundingClientRect() : null;
 
     return {
       prefixTop,
@@ -213,15 +215,22 @@ test('signup request OTP opens stage 2 and shows cooldown', async ({ page }) => 
       emailScrollWidth: email ? email.scrollWidth : NaN,
       emailClientWidth: email ? email.clientWidth : NaN,
       emailTextOverflow: email ? window.getComputedStyle(email).textOverflow : '',
-      ctaToResendGap: verifyRect && resendRect ? resendRect.top - verifyRect.bottom : NaN
+      ctaToResendGap: verifyRect && resendRect ? resendRect.top - verifyRect.bottom : NaN,
+      resendToEditGap: resendRect && editRect ? editRect.top - resendRect.bottom : NaN,
+      resendHeight: resendRect ? resendRect.height : NaN,
+      editHeight: editRect ? editRect.height : NaN
     };
   });
   expect(layout.emailTop).toBeGreaterThan(layout.prefixTop);
   expect(layout.emailRectsCount).toBe(1);
   expect(layout.emailScrollWidth).toBeGreaterThan(layout.emailClientWidth);
   expect(layout.emailTextOverflow).toBe('ellipsis');
-  expect(layout.ctaToResendGap).toBeGreaterThan(11);
-  expect(layout.ctaToResendGap).toBeLessThan(13.5);
+  expect(layout.ctaToResendGap).toBeGreaterThan(15);
+  expect(layout.ctaToResendGap).toBeLessThan(17.5);
+  expect(layout.resendToEditGap).toBeGreaterThan(7);
+  expect(layout.resendToEditGap).toBeLessThan(9.5);
+  expect(layout.resendHeight).toBeGreaterThanOrEqual(40);
+  expect(layout.editHeight).toBeGreaterThanOrEqual(40);
 
   const typography = await page.evaluate(() => {
     const rowText = document.querySelector('.auth-signup-links__row span');
@@ -240,6 +249,48 @@ test('signup request OTP opens stage 2 and shows cooldown', async ({ page }) => 
   expect(typography.rowText).toBe(typography.rowLink);
   expect(typography.verifyLinkButton).toBe(typography.rowLink);
   expect(typography.rowLink).toBe(typography.subtitle);
+});
+
+test.describe('signup verify actions mobile layout', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('signup verify actions keep safe tap targets on mobile', async ({ page }) => {
+    await setupMockSupabase(page, {
+      requestSignupOtp: 'success'
+    });
+
+    await page.goto('/#/auth?mode=signup');
+    await page.locator('#authSignupEmail').fill('user@example.com');
+    await page.locator('#authSignupPassword').fill('123456');
+    await page.locator('button[data-action="request_signup_otp"]').click();
+
+    await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
+    await expect(page.locator('button[data-action="resend_signup_otp"]')).toContainText('Повтор через');
+
+    const layout = await page.evaluate(() => {
+      const verifyButton = document.querySelector('button[data-action="verify_signup_otp"]');
+      const resendButton = document.querySelector('button[data-action="resend_signup_otp"]');
+      const editButton = document.querySelector('button[data-action="edit_signup_credentials"]');
+
+      const verifyRect = verifyButton ? verifyButton.getBoundingClientRect() : null;
+      const resendRect = resendButton ? resendButton.getBoundingClientRect() : null;
+      const editRect = editButton ? editButton.getBoundingClientRect() : null;
+
+      return {
+        ctaToResendGap: verifyRect && resendRect ? resendRect.top - verifyRect.bottom : NaN,
+        resendToEditGap: resendRect && editRect ? editRect.top - resendRect.bottom : NaN,
+        resendHeight: resendRect ? resendRect.height : NaN,
+        editHeight: editRect ? editRect.height : NaN
+      };
+    });
+
+    expect(layout.ctaToResendGap).toBeGreaterThan(15);
+    expect(layout.ctaToResendGap).toBeLessThan(17.5);
+    expect(layout.resendToEditGap).toBeGreaterThan(7);
+    expect(layout.resendToEditGap).toBeLessThan(9.5);
+    expect(layout.resendHeight).toBeGreaterThanOrEqual(40);
+    expect(layout.editHeight).toBeGreaterThanOrEqual(40);
+  });
 });
 
 test('signup verify success updates password and redirects to account', async ({ page }) => {

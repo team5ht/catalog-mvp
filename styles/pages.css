@@ -776,9 +776,9 @@
 
 .auth-form--signup .auth-stepper[data-stage="verify"] .auth-signup-verify__link-button {
   width: auto;
-  min-height: 0;
-  height: auto;
-  padding: 0;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 var(--space-sm);
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -786,11 +786,12 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   line-height: 1.35;
+  white-space: nowrap;
   box-shadow: none;
 }
 
 .auth-form--signup .auth-stepper[data-stage="verify"] .auth-signup-verify__resend {
-  margin-top: var(--space-xs);
+  margin-top: var(--space-sm);
 }
 
 .auth-form--signup .auth-stepper[data-stage="verify"] .auth-signup-verify__link-button:hover {
