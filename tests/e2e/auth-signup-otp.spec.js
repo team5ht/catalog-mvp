@@ -176,15 +176,70 @@ test('signup request OTP opens stage 2 and shows cooldown', async ({ page }) => 
   await setupMockSupabase(page, {
     requestSignupOtp: 'success'
   });
+  const longEmail = 'superlonglocalpartwithoutdots1234567890123456789012345678901234567890@example.com';
 
   await page.goto('/#/auth?mode=signup');
-  await page.locator('#authSignupEmail').fill('user@example.com');
+  await expect(page.locator('#authSubtitle')).toContainText('Введите email и пароль');
+  await page.locator('#authSignupEmail').fill(longEmail);
   await page.locator('#authSignupPassword').fill('123456');
   await page.locator('button[data-action="request_signup_otp"]').click();
 
   await expect(page.locator('#authStepProgress')).toContainText('Шаг 2 из 2');
-  await expect(page.locator('#authSignupEmailReadonly')).toHaveValue('user@example.com');
+  await expect(page.locator('#authSubtitle')).toContainText('Введите код из письма');
+  await expect(page.locator('.auth-signup-verify__hint-prefix')).toHaveText('Мы отправили код на:');
+  await expect(page.locator('.auth-signup-verify__hint-email')).toHaveAttribute('title', longEmail);
+  await expect(page.locator('#authSignupEmailReadonly')).toHaveCount(0);
+  await expect(page.locator('#authSignupPasswordReadonly')).toHaveCount(0);
+  await expect(page.locator('#authSignupOtp')).toHaveAttribute('placeholder', '••••••••');
+  await expect(page.locator('#authStatus')).not.toContainText('Код отправлен на email');
   await expect(page.locator('button[data-action="resend_signup_otp"]')).toContainText('Повтор через');
+
+  const layout = await page.evaluate(() => {
+    const prefix = document.querySelector('.auth-signup-verify__hint-prefix');
+    const email = document.querySelector('.auth-signup-verify__hint-email');
+    const verifyButton = document.querySelector('button[data-action="verify_signup_otp"]');
+    const resendButton = document.querySelector('button[data-action="resend_signup_otp"]');
+
+    const prefixTop = prefix ? prefix.getBoundingClientRect().top : NaN;
+    const emailRects = email ? Array.from(email.getClientRects()) : [];
+    const emailTop = emailRects.length > 0 ? emailRects[0].top : NaN;
+    const verifyRect = verifyButton ? verifyButton.getBoundingClientRect() : null;
+    const resendRect = resendButton ? resendButton.getBoundingClientRect() : null;
+
+    return {
+      prefixTop,
+      emailTop,
+      emailRectsCount: emailRects.length,
+      emailScrollWidth: email ? email.scrollWidth : NaN,
+      emailClientWidth: email ? email.clientWidth : NaN,
+      emailTextOverflow: email ? window.getComputedStyle(email).textOverflow : '',
+      ctaToResendGap: verifyRect && resendRect ? resendRect.top - verifyRect.bottom : NaN
+    };
+  });
+  expect(layout.emailTop).toBeGreaterThan(layout.prefixTop);
+  expect(layout.emailRectsCount).toBe(1);
+  expect(layout.emailScrollWidth).toBeGreaterThan(layout.emailClientWidth);
+  expect(layout.emailTextOverflow).toBe('ellipsis');
+  expect(layout.ctaToResendGap).toBeGreaterThan(11);
+  expect(layout.ctaToResendGap).toBeLessThan(13.5);
+
+  const typography = await page.evaluate(() => {
+    const rowText = document.querySelector('.auth-signup-links__row span');
+    const rowLink = document.querySelector('.auth-signup-links__row .auth-form__link');
+    const verifyLinkButton = document.querySelector('.auth-stepper[data-stage="verify"] .auth-signup-verify__link-button');
+    const subtitle = document.getElementById('authSubtitle');
+    const getFontSize = (element) => (element ? window.getComputedStyle(element).fontSize : '');
+
+    return {
+      rowText: getFontSize(rowText),
+      rowLink: getFontSize(rowLink),
+      verifyLinkButton: getFontSize(verifyLinkButton),
+      subtitle: getFontSize(subtitle)
+    };
+  });
+  expect(typography.rowText).toBe(typography.rowLink);
+  expect(typography.verifyLinkButton).toBe(typography.rowLink);
+  expect(typography.rowLink).toBe(typography.subtitle);
 });
 
 test('signup verify success updates password and redirects to account', async ({ page }) => {

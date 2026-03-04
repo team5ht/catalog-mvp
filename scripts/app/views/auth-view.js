@@ -156,6 +156,7 @@ function createAuthLayout(options) {
   const {
     title,
     subtitle,
+    subtitleId = 'authSubtitle',
     note = '',
     formMarkup,
     panelClass = 'auth-panel',
@@ -172,7 +173,7 @@ function createAuthLayout(options) {
         <header class="auth-panel__header">
           <p class="screen-header__kicker">Доступ</p>
           <h1 id="authTitle" class="page-title auth-form__title">${title}</h1>
-          <p class="screen-header__subtitle auth-form__subtitle text-body">${subtitle}</p>
+          <p id="${subtitleId}" class="screen-header__subtitle auth-form__subtitle text-body">${subtitle}</p>
         </header>
 
         <form class="${formClass}" id="authForm" novalidate>
@@ -415,6 +416,7 @@ export async function renderAuthView(route, renderToken) {
 
   const form = document.getElementById('authForm');
   const statusEl = document.getElementById('authStatus');
+  const subtitleEl = document.getElementById('authSubtitle');
 
   if (!form || !statusEl) {
     return;
@@ -731,6 +733,12 @@ export async function renderAuthView(route, renderToken) {
 
     function renderCurrentStage() {
       stepperEl.dataset.stage = currentStage;
+      if (subtitleEl && variant.subtitleText) {
+        const nextSubtitle = variant.subtitleText[currentStage];
+        if (typeof nextSubtitle === 'string' && nextSubtitle.length > 0) {
+          subtitleEl.textContent = nextSubtitle;
+        }
+      }
 
       if (currentStage === FLOW_STAGE_REQUEST) {
         stepProgressEl.textContent = variant.progressText.request;
@@ -813,7 +821,9 @@ export async function renderAuthView(route, renderToken) {
         }
 
         currentStage = FLOW_STAGE_VERIFY;
-        setStatus(variant.messages.requestSuccess, 'success');
+        if (variant.messages.requestSuccess) {
+          setStatus(variant.messages.requestSuccess, 'success');
+        }
         renderCurrentStage();
         startOtpCooldown(AUTH_OTP_COOLDOWN_SECONDS);
       } catch (error) {
@@ -1001,9 +1011,13 @@ export async function renderAuthView(route, renderToken) {
       request: 'Шаг 1 из 2: Email и пароль',
       verify: 'Шаг 2 из 2: Код из письма'
     },
+    subtitleText: {
+      request: 'Введите email и пароль, затем подтвердите код из письма.',
+      verify: 'Введите код из письма, чтобы подтвердить email.'
+    },
     messages: {
       requestError: 'Не удалось отправить код регистрации. Попробуйте ещё раз.',
-      requestSuccess: 'Код отправлен на email. Введите его для подтверждения регистрации.',
+      requestSuccess: '',
       verifyCompleteError: 'Не удалось завершить регистрацию. Попробуйте ещё раз.'
     },
     logs: {
@@ -1109,42 +1123,33 @@ export async function renderAuthView(route, renderToken) {
     },
     renderVerifyBody(state) {
       return `
-        <input
-          type="email"
-          id="authSignupEmailReadonly"
-          class="auth-form__input"
-          value="${escapeHtml(state.email)}"
-          readonly
-          aria-label="Email"
-        />
-        <input
-          type="password"
-          id="authSignupPasswordReadonly"
-          class="auth-form__input"
-          value="${escapeHtml(state.password)}"
-          readonly
-          aria-label="Пароль"
-        />
-        <input
-          type="text"
-          id="authSignupOtp"
-          class="auth-form__input auth-form__input--otp"
-          placeholder="Код из письма"
-          minlength="${AUTH_OTP_MIN_LENGTH}"
-          maxlength="${AUTH_OTP_MAX_LENGTH}"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          aria-label="Одноразовый код"
-          required
-        />
+        <div class="auth-signup-verify">
+          <p class="auth-signup-verify__hint">
+            <span class="auth-signup-verify__hint-prefix">Мы отправили код на:</span>
+            <strong class="auth-signup-verify__hint-email" title="${escapeHtml(state.email)}">${escapeHtml(state.email)}</strong>
+          </p>
+          <label class="auth-signup-verify__label" for="authSignupOtp">Код из письма</label>
+          <input
+            type="text"
+            id="authSignupOtp"
+            class="auth-form__input auth-form__input--otp"
+            placeholder="••••••••"
+            minlength="${AUTH_OTP_MIN_LENGTH}"
+            maxlength="${AUTH_OTP_MAX_LENGTH}"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            aria-label="Одноразовый код"
+            required
+          />
+        </div>
       `;
     },
     renderVerifyActions({ verifyDisabled }) {
       const disabledAttribute = verifyDisabled ? 'disabled' : '';
       return `
         <button type="submit" class="button button--primary" data-action="verify_signup_otp" ${disabledAttribute}>Подтвердить</button>
-        <button type="button" class="button button--secondary" data-action="resend_signup_otp" data-cooldown-button="true">Отправить код повторно</button>
-        <button type="button" class="button button--secondary" data-action="edit_signup_credentials">Изменить email/пароль</button>
+        <button type="button" class="button auth-signup-verify__link-button auth-signup-verify__resend" data-action="resend_signup_otp" data-cooldown-button="true">Отправить код повторно</button>
+        <button type="button" class="button auth-signup-verify__link-button auth-signup-verify__edit" data-action="edit_signup_credentials">Изменить email/пароль</button>
       `;
     }
   };
