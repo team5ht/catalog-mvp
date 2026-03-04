@@ -95,6 +95,7 @@ styles/
 
 - `#authForm`
 - `#authStatus`
+- `#authSubtitle`
 - `#authStepper`
 - `#authStepProgress`
 - `#authStepBody`
@@ -103,8 +104,6 @@ styles/
 - `#authPassword`
 - `#authSignupEmail`
 - `#authSignupPassword`
-- `#authSignupEmailReadonly`
-- `#authSignupPasswordReadonly`
 - `#authSignupOtp`
 - `#authResetEmail`
 - `#authResetEmailReadonly`
